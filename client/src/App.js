@@ -28,6 +28,7 @@ export default App;
 
 
 import React, { useEffect, useState } from 'react';
+import { Provider } from "./components/ui/provider"
 
 function App() {
   const [message, setMessage] = useState('');
@@ -38,7 +39,11 @@ function App() {
       .then((data) => setMessage(data.message));
   }, []);
 
-  return <h1>{message}</h1>;
+  return (
+    <Provider>
+      <h1>{message}</h1>
+    </Provider>
+  );
 }
 
 export default App;
