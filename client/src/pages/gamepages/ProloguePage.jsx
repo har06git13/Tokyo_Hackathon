@@ -1,0 +1,10 @@
+import React from "react";
+import { Flex, Text } from "@chakra-ui/react";
+
+export const ProloguePage = () => {
+  return (
+    <div className="page-container">
+      <Text>This is ProloguePage</Text>
+    </div>
+  );
+};
