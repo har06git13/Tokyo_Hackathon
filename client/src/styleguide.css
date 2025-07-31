@@ -2,77 +2,81 @@
    🎨 Color Palette
 ============================ */
 :root {
-/* テーマ・アクセントカラー */
-  --color-theme10: #E63946;
-  --color-theme11: #FADDE1;
+  /* テーマ・アクセントカラー */
+  --color-theme10: #e63946;
+  --color-theme11: #fadde1;
   --color-accent10: #393994;
-  --color-accent11: #A8DADC;
-  --color-accent20: #F4A261;
-  --color-accent21: #FFF0D9;
+  --color-accent11: #a8dadc;
+  --color-accent20: #f4a261;
+  --color-accent21: #fff0d9;
   /* 背景色 */
-  --color-base10: #FDFDFD;
-  --color-base101: #FDFDFDCC;
-  --color-base11: #F8F8F8;
-  --color-base12: #F1F1F1;
-  --color-base13: #A6A6A6;
-  --color-base131: #A6A6A699;
+  --color-base10: #fdfdfd;
+  --color-base101: #fdfdfdcc;
+  --color-base11: #f8f8f8;
+  --color-base12: #f1f1f1;
+  --color-base13: #a6a6a6;
+  --color-base131: #a6a6a699;
   /* 文字色 */
-  --color-font10: #2D2D2D;
+  --color-font10: #2d2d2d;
   --color-font11: #555555;
   /* ゲージカラー */
-  --color-life10: #06D6A0;
-  --color-mental10: #118AB2;
-  --color-charge10: #FDC500;
-  --color-money10: #8D6E63;
+  --color-life10: #06d6a0;
+  --color-mental10: #118ab2;
+  --color-charge10: #fdc500;
+  --color-money10: #8d6e63;
 }
 
 /* ============================
    🔤 Typography
 ============================ */
 body {
-  font-family:'Rounded Mplus 1c';
+  font-family: "Rounded Mplus 1c";
   color: var(--color-font10);
 }
 
 /* あんま使わない、重要な数字とかだけ */
-.text-pagetitle{
-    font-size: 2.5rem;
-    font-weight: normal;
+.text-pagetitle {
+  font-size: 2.5rem;
+  font-weight: normal;
 }
 
 /* ヘッダーのタイトルサイズ */
-.text-sectiontitle{
-    font-size: 2rem;
-    font-weight: normal;
+.text-sectiontitle {
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.05rem;
 }
 
 /* メインのテキスト */
-.text-maintext{
-    font-size: 1.125rem;
-    font-weight: normal;
+.text-maintext {
+  font-size: 0.8rem;
+  font-weight: normal;
+  letter-spacing: 0.04rem;
 }
 
 /* 説明とか、グレーで使いがち */
-.text-subtext{
-    font-size: 0.875rem;
-    font-weight: normal;
+.text-subtext {
+  font-size: 0.875rem;
+  font-weight: normal;
 }
 
 /* ============================
    📦 Utility Classes
 ============================ */
 /* ページ直下に置くやつ */
-.page-container{
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-}
+/* .page-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 100vh;
+  height: fit-content;
+  width: 100vw;
+} */
 
 /* page-containerの直下、HeaderとFooterと並列 */
-.page-contents{
-    display: flex;
-    flex-direction: column;
-    height: fit-content;
-    width: 100%;
-}
+/* .page-contents {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+} */

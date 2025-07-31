@@ -29,6 +29,7 @@ export default App;
 import React, { useEffect, useState } from "react";
 import { Provider } from "./components/chakra/provider";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import "./styleguide.css";
 
 // ページコンポーネント
 import { SplashPage } from "./pages/SplashPage";
@@ -67,7 +68,7 @@ function App() {
             <Route path="epilogue" element={<EpiloguePage />} />
           </Route>
         </Routes>
-        <h1>this from App.js→「{message}」</h1>
+        {/* <h1>this from App.js→「{message}」</h1> */}
       </Router>
     </Provider>
   );

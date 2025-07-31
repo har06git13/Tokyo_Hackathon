@@ -13,7 +13,7 @@ const ArrowIcon = ({ isBack = false, ...props }) => {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path d={pathData} fill="currentColor" stroke="#A6A6A6" />
+      <path d={pathData} fill="currentColor" stroke="currentColor" />
     </svg>
   );
 };
