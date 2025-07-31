@@ -9,7 +9,6 @@ export const playerResidenceAtom = atom(""); // 生活拠点
 // ゲーム進行用
 export const currentTimeAtom = atom(""); // 現在時刻
 export const currentLocationAtom = atom(""); // 現在地
-export const currentPageAtom = atom(""); // ページ名(ヘッダー表示用)
 
 // ライフゲージ（個別でも全体でも）
 export const healthAtom = atom(70);

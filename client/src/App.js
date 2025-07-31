@@ -27,7 +27,7 @@ export default App;
 */
 
 import React, { useEffect, useState } from "react";
-import { Provider } from "./components/ui/provider";
+import { Provider } from "./components/chakra/provider";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // ページコンポーネント
