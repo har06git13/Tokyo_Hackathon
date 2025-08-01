@@ -36,27 +36,27 @@ body {
 
 /* あんま使わない、重要な数字とかだけ */
 .text-pagetitle {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: normal;
 }
 
 /* ヘッダーのタイトルサイズ */
 .text-sectiontitle {
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.05rem;
 }
 
 /* メインのテキスト */
 .text-maintext {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: normal;
   letter-spacing: 0.04rem;
 }
 
 /* 説明とか、グレーで使いがち */
 .text-subtext {
-  font-size: 0.875rem;
+  font-size: 0.5625rem;
   font-weight: normal;
 }
 
