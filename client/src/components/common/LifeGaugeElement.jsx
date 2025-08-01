@@ -40,7 +40,6 @@ export const LifeGaugeElement = ({ type, amount = 0, onClick }) => {
     <Flex
       className="life-gauge-element"
       border="1px solid"
-      height="2.8vh"
       width="16.7vw"
       borderRadius="99px"
       borderColor={color}
@@ -49,7 +48,7 @@ export const LifeGaugeElement = ({ type, amount = 0, onClick }) => {
       justifyContent="space-between"
       onClick={onClick}
     >
-      <Icon height="100%" width="2.8vh" />
+      <Icon height="100%" width="6vw" />
       <Flex gap={"1vw"} paddingRight={"1.8vw"}>
         <Text className="text-subtext">{amount}</Text>
         <Text className="text-subtext">%</Text>

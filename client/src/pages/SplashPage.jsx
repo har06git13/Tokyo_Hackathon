@@ -4,6 +4,7 @@ import { Header } from "../components/common/Header";
 import { Button } from "../components/common/Button";
 import { LifeGaugeElement } from "../components/common/LifeGaugeElement";
 import { LifeGauge } from "../components/common/LifeGauge";
+import { Toggle } from "../components/common/toggle";
 
 export const SplashPage = () => {
   return (
@@ -31,6 +32,7 @@ export const SplashPage = () => {
         />
         <LifeGaugeElement />
         <LifeGauge />
+        <Toggle />
       </Flex>
     </Flex>
   );
