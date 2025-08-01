@@ -2,6 +2,8 @@ import React from "react";
 import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../components/common/Header";
 import { Button } from "../components/common/Button";
+import { LifeGaugeElement } from "../components/common/LifeGaugeElement";
+import { LifeGauge } from "../components/common/LifeGauge";
 
 export const SplashPage = () => {
   return (
@@ -27,6 +29,8 @@ export const SplashPage = () => {
           color="var(--color-theme10)"
           width="40%"
         />
+        <LifeGaugeElement />
+        <LifeGauge />
       </Flex>
     </Flex>
   );
