@@ -11,12 +11,12 @@ export const currentTimeAtom = atom(""); // 現在時刻
 export const currentLocationAtom = atom(""); // 現在地
 
 // ライフゲージ（個別でも全体でも）
-export const healthAtom = atom(70);
+export const lifeAtom = atom(70);
 export const mentalAtom = atom(70);
 export const chargeAtom = atom(60);
 export const moneyAtom = atom(0);
 export const lifeGaugeAtom = atom((get) => ({
-  health: get(healthAtom),
+  health: get(lifeAtom),
   mental: get(mentalAtom),
   charge: get(chargeAtom),
   money: get(moneyAtom),

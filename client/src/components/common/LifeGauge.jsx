@@ -2,8 +2,20 @@ import PropTypes from "prop-types";
 import React from "react";
 import { LifeGaugeElement } from "./LifeGaugeElement";
 import { Flex } from "@chakra-ui/react";
+import { useAtomValue } from "jotai";
+import {
+  lifeAtom,
+  mentalAtom,
+  chargeAtom,
+  moneyAtom,
+} from "../../atoms/playerAtoms";
 
 export const LifeGauge = ({ howto = true }) => {
+  const life = useAtomValue(lifeAtom);
+  const mental = useAtomValue(mentalAtom);
+  const charge = useAtomValue(chargeAtom);
+  const money = useAtomValue(moneyAtom);
+
   const handleClick = () => {
     alert(
       "体力(life)、精神(mental)、充電(charge)、お金(money)のゲージです。\n" +
@@ -16,27 +28,24 @@ export const LifeGauge = ({ howto = true }) => {
 
   return (
     <>
-      {howto && (
-        // 説明も表示
+      {howto ? (
         <Flex
           className={"life-gauge"}
           width={"90vw"}
           justifyContent={"space-between"}
         >
-          <LifeGaugeElement type={"life"} />
-          <LifeGaugeElement type={"mental"} />
-          <LifeGaugeElement type={"charge"} />
-          <LifeGaugeElement type={"money"} />
+          <LifeGaugeElement type={"life"} amount={life} />
+          <LifeGaugeElement type={"mental"} amount={mental} />
+          <LifeGaugeElement type={"charge"} amount={charge} />
+          <LifeGaugeElement type={"money"} amount={money} />
           <LifeGaugeElement type="howto" onClick={handleClick} />
         </Flex>
-      )}
-      {!howto && (
-        // 説明なしで、ライフゲージのみ表示
+      ) : (
         <Flex className={"life-gauge"} gap={"1.8vw"} width={"fit-content"}>
-          <LifeGaugeElement type={"life"} />
-          <LifeGaugeElement type={"mental"} />
-          <LifeGaugeElement type={"charge"} />
-          <LifeGaugeElement type={"money"} />
+          <LifeGaugeElement type={"life"} amount={life} />
+          <LifeGaugeElement type={"mental"} amount={mental} />
+          <LifeGaugeElement type={"charge"} amount={charge} />
+          <LifeGaugeElement type={"money"} amount={money} />
         </Flex>
       )}
     </>

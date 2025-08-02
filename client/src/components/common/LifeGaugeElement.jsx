@@ -33,7 +33,7 @@ const gaugeConfig = {
   },
 };
 
-export const LifeGaugeElement = ({ type, amount = 0, onClick }) => {
+export const LifeGaugeElement = ({ type, amount, onClick }) => {
   const { color, Icon } = gaugeConfig[type] || gaugeConfig["life"];
 
   return (
@@ -50,8 +50,12 @@ export const LifeGaugeElement = ({ type, amount = 0, onClick }) => {
     >
       <Icon height="100%" width="6vw" />
       <Flex gap={"1vw"} paddingRight={"1.8vw"}>
-        <Text className="text-subtext">{amount}</Text>
-        <Text className="text-subtext">%</Text>
+        <Text className="text-subtext">
+          {type === "howto" ? "説明" : amount}
+        </Text>
+        <Text className="text-subtext">
+          {type === "money" ? "円" : type === "howto" ? "" : "%"}
+        </Text>
       </Flex>
     </Flex>
   );
