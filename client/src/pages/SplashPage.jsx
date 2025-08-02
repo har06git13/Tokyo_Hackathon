@@ -1,12 +1,23 @@
-import React from "react";
-import { Flex, Box, Text } from "@chakra-ui/react";
-import { Header } from "../components/common/Header";
-import { Button } from "../components/common/Button";
-import { LifeGaugeElement } from "../components/common/LifeGaugeElement";
-import { LifeGauge } from "../components/common/LifeGauge";
-import { Toggle } from "../components/common/toggle";
+import React, { useState } from "react";
+import { Flex, Text } from "@chakra-ui/react";
+import {
+  Header,
+  Button,
+  LifeGauge,
+  LifeGaugeElement,
+  Toggle,
+} from "../components/common";
+import { TitleInputField, CheckBox } from "../components/title-page";
 
 export const SplashPage = () => {
+  const [selectedValue, setSelectedValue] = useState("");
+
+  const sampleOptions = [
+    { value: "apple", label: "りんご" },
+    { value: "banana", label: "バナナ" },
+    { value: "orange", label: "オレンジ" },
+  ];
+
   return (
     <Flex
       className="page-container"
@@ -22,6 +33,7 @@ export const SplashPage = () => {
         flex={1}
         flexDirection={"column"}
         justifyContent={"center"}
+        alignItems={"center"}
       >
         <Text>This is SplashPage</Text>
         <Button
@@ -33,6 +45,16 @@ export const SplashPage = () => {
         <LifeGaugeElement />
         <LifeGauge />
         <Toggle />
+        <TitleInputField
+          isSelect={true}
+          value={selectedValue}
+          onChange={(e) => setSelectedValue(e.target.value)}
+          options={sampleOptions}
+          label="フルーツを選んでね"
+          placeholder="選択してください"
+        />
+        <TitleInputField />
+        <CheckBox />
       </Flex>
     </Flex>
   );

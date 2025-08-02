@@ -21,7 +21,7 @@ export const Button = ({
       }}
       disabled={!isAvairable}
     >
-      <Text className="text-basetext" color={"var(--color-base10)"}>
+      <Text className="text-maintext" color={"var(--color-base10)"}>
         {text}
       </Text>
     </button>
