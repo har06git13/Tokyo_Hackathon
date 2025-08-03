@@ -8,6 +8,11 @@ import {
   Toggle,
 } from "../components/common";
 import { TitleInputField, CheckBox } from "../components/title-page";
+import {
+  SettingElement,
+  SettingInfoIndex,
+  LifeGaugeListElement,
+} from "../components/game-page";
 
 export const SplashPage = () => {
   const [selectedValue, setSelectedValue] = useState("");
@@ -55,6 +60,11 @@ export const SplashPage = () => {
         />
         <TitleInputField />
         <CheckBox />
+        <SettingElement type="top" />
+        <SettingElement type="center" />
+        <SettingElement type="bottom" />
+        <SettingInfoIndex />
+        <LifeGaugeListElement />
       </Flex>
     </Flex>
   );
