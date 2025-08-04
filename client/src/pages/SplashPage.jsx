@@ -13,6 +13,10 @@ import {
   SettingInfoIndex,
   LifeGaugeListElement,
 } from "../components/game-page";
+import { MonologueLine } from "../components/game-page/MonologueLine";
+import { LogElement } from "../components/game-page/LogElement";
+import { MapMarkerLegend } from "../components/game-page/MapMarkerLegend";
+import { MapSpotInfo } from "../components/game-page/MapSpotInfo";
 
 export const SplashPage = () => {
   const [selectedValue, setSelectedValue] = useState("");
@@ -40,6 +44,13 @@ export const SplashPage = () => {
         justifyContent={"center"}
         alignItems={"center"}
       >
+        <MapSpotInfo life={+10} mental={-10} charge={0} money={0} />
+        <MapMarkerLegend />
+        <LogElement
+          eventtype="event"
+          spottype="battery"
+          text="モバイルバッテリーをレンタルした。"
+        />
         <Text>This is SplashPage</Text>
         <Button
           text="Start"
@@ -65,6 +76,8 @@ export const SplashPage = () => {
         <SettingElement type="bottom" />
         <SettingInfoIndex />
         <LifeGaugeListElement />
+        <MonologueLine />
+        <MonologueLine type="talk" />
       </Flex>
     </Flex>
   );

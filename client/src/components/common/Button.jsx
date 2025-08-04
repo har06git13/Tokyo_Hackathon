@@ -3,11 +3,12 @@ import React from "react";
 import { Text } from "@chakra-ui/react";
 
 export const Button = ({
-  isAvairable,
+  isAvailable,
   text = "Button",
   width = "100%",
   height = "100%",
   color = "var(--color-theme10)",
+  onClick,
 }) => {
   return (
     <button
@@ -15,11 +16,12 @@ export const Button = ({
       style={{
         width,
         height,
-        backgroundColor: isAvairable ? color : "var(--color-base13)",
+        backgroundColor: isAvailable ? color : "var(--color-base13)",
         borderRadius: "9999px",
         padding: "1% 0",
       }}
-      disabled={!isAvairable}
+      disabled={!isAvailable}
+      oncClick={onClick}
     >
       <Text className="text-maintext" color={"var(--color-base10)"}>
         {text}

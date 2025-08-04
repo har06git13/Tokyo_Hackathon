@@ -10,11 +10,11 @@ import {
   moneyAtom,
 } from "../../atoms/playerAtoms";
 
-export const LifeGauge = ({ howto = true }) => {
-  const life = useAtomValue(lifeAtom);
-  const mental = useAtomValue(mentalAtom);
-  const charge = useAtomValue(chargeAtom);
-  const money = useAtomValue(moneyAtom);
+export const LifeGauge = ({ howto = true, life, mental, charge, money }) => {
+  const currentlife = useAtomValue(lifeAtom);
+  const currentmental = useAtomValue(mentalAtom);
+  const currentcharge = useAtomValue(chargeAtom);
+  const currentmoney = useAtomValue(moneyAtom);
 
   const handleClick = () => {
     alert(
@@ -34,10 +34,10 @@ export const LifeGauge = ({ howto = true }) => {
           width={"90vw"}
           justifyContent={"space-between"}
         >
-          <LifeGaugeElement type={"life"} amount={life} />
-          <LifeGaugeElement type={"mental"} amount={mental} />
-          <LifeGaugeElement type={"charge"} amount={charge} />
-          <LifeGaugeElement type={"money"} amount={money} />
+          <LifeGaugeElement type={"life"} amount={currentlife} />
+          <LifeGaugeElement type={"mental"} amount={currentmental} />
+          <LifeGaugeElement type={"charge"} amount={currentcharge} />
+          <LifeGaugeElement type={"money"} amount={currentmoney} />
           <LifeGaugeElement type="howto" onClick={handleClick} />
         </Flex>
       ) : (

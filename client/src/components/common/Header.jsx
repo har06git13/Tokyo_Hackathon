@@ -26,7 +26,7 @@ export const Header = ({
             width={"100%"}
             gap={"12%"}
           >
-            <ArrowIcon width="14%" color="var(--color-theme10)" />
+            <ArrowIcon width="14%" color="var(--color-theme10)" isBack />
             <Text
               className="text-maintext"
               whiteSpace="nowrap"

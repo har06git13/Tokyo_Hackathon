@@ -1,14 +1,14 @@
 import { atom } from "jotai";
 
 // ユーザー基本情報
-export const playerNameAtom = atom("");
-export const playerAgeAtom = atom("");
-export const playerGenderAtom = atom("");
-export const playerResidenceAtom = atom(""); // 生活拠点
+export const playerNameAtom = atom("Default Player");
+export const playerAgeAtom = atom("20代");
+export const playerGenderAtom = atom("男性");
+export const playerResidenceAtom = atom("渋谷区在学"); // 生活拠点
 
 // ゲーム進行用
-export const currentTimeAtom = atom(""); // 現在時刻
-export const currentLocationAtom = atom(""); // 現在地
+export const currentTimeAtom = atom("14:30"); // 現在時刻
+export const currentLocationAtom = atom("渋谷駅前"); // 現在地
 
 // ライフゲージ（個別でも全体でも）
 export const lifeAtom = atom(70);
