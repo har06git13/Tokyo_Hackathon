@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Button, LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
-import { spotTypes, spotStatusTypes } from "../TypeList";
+import { spotTypes, spotStatusTypes } from "../../TypeList";
 
 export const MapSpotInfo = ({
   type = "action", // "map" or "action"

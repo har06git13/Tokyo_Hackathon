@@ -37,7 +37,7 @@ body {
 /* あんま使わない、重要な数字とかだけ */
 .text-pagetitle {
   font-size: 1.5rem;
-  font-weight: normal;
+  font-weight: 1000;
 }
 
 /* ヘッダーのタイトルサイズ */

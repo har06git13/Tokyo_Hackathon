@@ -38,8 +38,7 @@ export const TitleInputField = ({
       alignItems={"center"}
       paddingX={"4vw"}
       paddingY={"3vw"}
-      outline="0.1vw solid var(--color-base13)"
-      outlineOffset="-0.05vw"
+      boxShadow={"0 0 0 0.1vw var(--color-base13)"}
     >
       <Text className="text-maintext" width={"40%"}>
         {label}

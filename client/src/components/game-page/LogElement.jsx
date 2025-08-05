@@ -4,7 +4,7 @@ import { LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { playerNameAtom } from "../../atoms/playerAtoms";
-import { spotTypes, eventTypes } from "../TypeList";
+import { spotTypes, eventTypes } from "../../TypeList";
 
 export const LogElement = ({
   eventType,

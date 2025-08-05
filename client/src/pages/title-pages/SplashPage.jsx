@@ -6,13 +6,13 @@ import {
   LifeGauge,
   LifeGaugeElement,
   Toggle,
-} from "../components/common";
-import { TitleInputField, CheckBox } from "../components/title-page";
+} from "../../components/common";
+import { TitleInputField, CheckBox } from "../../components/title-page";
 import {
   SettingElement,
   SettingInfoIndex,
   LifeGaugeListElement,
-} from "../components/game-page";
+} from "../../components/game-page";
 import {
   MonologueLine,
   LogElement,
@@ -24,7 +24,7 @@ import {
   CheckinButton,
   TweetCard,
   Footer,
-} from "../components/game-page";
+} from "../../components/game-page";
 
 export const SplashPage = () => {
   const [selectedValue, setSelectedValue] = useState("");

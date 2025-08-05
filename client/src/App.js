@@ -32,8 +32,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./styleguide.css";
 
 // ページコンポーネント
-import { SplashPage } from "./pages/SplashPage";
-import { TitlePage } from "./pages/TitlePage";
+import { TitlePage, ProfilePage, SplashPage } from "./pages/title-pages";
 import { ProloguePage } from "./pages/gamepages/ProloguePage";
 import { ActionPage } from "./pages/gamepages/ActionPage";
 import { LogPage } from "./pages/gamepages/LogPage";
@@ -56,7 +55,10 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<SplashPage />} />
-          <Route path="/title" element={<TitlePage />} />
+          <Route path="/title">
+            <Route path="gamestart" element={<TitlePage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
           <Route path="/result" element={<ResultPage />} />
           {/* /game-page内はネストルート */}
           <Route path="/game">
