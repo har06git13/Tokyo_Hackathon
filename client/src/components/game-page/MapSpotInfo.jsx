@@ -6,10 +6,10 @@ import { spotTypes, spotStatusTypes } from "../TypeList";
 
 export const MapSpotInfo = ({
   type = "action", // "map" or "action"
-  spotstatus = "default",
-  spottype,
-  spotname = "施設名を設定",
-  arrivaltime = "14:30",
+  spotStatus = "default",
+  spotType,
+  spotName = "施設名を設定",
+  arrivalTime = "14:30",
   life,
   mental,
   charge,
@@ -34,20 +34,20 @@ export const MapSpotInfo = ({
             <Text
               className="text-maintext"
               color={
-                spotstatus === "default"
+                spotStatus === "default"
                   ? "var(--color-accent20)"
                   : "var(--color-base13)"
               }
             >
-              {spotStatusTypes[spotstatus] ?? spotStatusTypes.default}
+              {spotStatusTypes[spotStatus] ?? spotStatusTypes.default}
             </Text>
 
             <Text className="text-maintext" color={"var(--color-base13)"}>
-              施設タイプ：{spotTypes[spottype] ?? spotTypes.default}
+              施設タイプ：{spotTypes[spotType] ?? spotTypes.default}
             </Text>
           </Flex>
 
-          <Text className="text-sectiontitle">{spotname}</Text>
+          <Text className="text-sectiontitle">{spotName}</Text>
         </Flex>
 
         {type === "action" && (
@@ -65,7 +65,7 @@ export const MapSpotInfo = ({
 
             <Flex flexDirection={"column"} gap={"1vw"}>
               <Text className="text-maintext" color={"var(--color-accent10)"}>
-                到着予定時刻：{arrivaltime}
+                到着予定時刻：{arrivalTime}
               </Text>
 
               <Text className="text-subtext" color={"var(--color-base13)"}>

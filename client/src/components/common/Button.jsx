@@ -21,7 +21,7 @@ export const Button = ({
         padding: "1% 0",
       }}
       disabled={!isAvailable}
-      oncClick={onClick}
+      onClick={onClick}
     >
       <Text className="text-maintext" color={"var(--color-base10)"}>
         {text}

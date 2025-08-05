@@ -17,6 +17,12 @@ import { MonologueLine } from "../components/game-page/MonologueLine";
 import { LogElement } from "../components/game-page/LogElement";
 import { MapMarkerLegend } from "../components/game-page/MapMarkerLegend";
 import { MapSpotInfo } from "../components/game-page/MapSpotInfo";
+import { EventText } from "../components/game-page/EventText";
+import { ActionTab } from "../components/game-page/ActionTab";
+import { ActionConfirmDialog } from "../components/game-page/ActionConfirmDialog";
+import { CheckinButton } from "../components/game-page/CheckinButton";
+import { TweetCard } from "../components/game-page/TweetCard";
+import { Footer } from "../components/game-page/Footer";
 
 export const SplashPage = () => {
   const [selectedValue, setSelectedValue] = useState("");
@@ -44,6 +50,12 @@ export const SplashPage = () => {
         justifyContent={"center"}
         alignItems={"center"}
       >
+        <Footer />
+        <TweetCard />
+        <CheckinButton />
+        <ActionConfirmDialog />
+        <ActionTab />
+        <EventText />
         <MapSpotInfo life={+10} mental={-10} charge={0} money={0} />
         <MapMarkerLegend />
         <LogElement

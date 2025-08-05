@@ -7,17 +7,17 @@ import { playerNameAtom } from "../../atoms/playerAtoms";
 import { spotTypes, eventTypes } from "../TypeList";
 
 export const LogElement = ({
-  eventtype,
+  eventType,
   spot = "施設の名前",
-  spottype,
+  spotType,
   time = "14:30",
-  eventtime = "0時間30分",
+  eventTime = "0時間30分",
   text = "イベントの内容",
 }) => {
   const [playerName] = useAtom(playerNameAtom);
 
   const getDescriptionByType = () => {
-    switch (eventtype) {
+    switch (eventType) {
       case "time":
         return "毎時00分に体力・精神力・電源を5%消費します";
       case "event":
@@ -58,7 +58,7 @@ export const LogElement = ({
         {/* ログタイトル & 地点 */}
         <Flex flexDirection="column">
           <Text className="text-sectiontitle">
-            {eventTypes[eventtype] ?? eventTypes.default}
+            {eventTypes[eventType] ?? eventTypes.default}
           </Text>
           <Text className="text-subtext" color="var(--color-base13)">
             地点：{spot}
@@ -66,9 +66,9 @@ export const LogElement = ({
         </Flex>
         {/* 施設タイプ & イベント内容 */}
         <Flex flexDirection="column">
-          {eventtype === "event" && (
+          {eventType === "event" && (
             <Text className="text-maintext">
-              施設タイプ：{spotTypes[spottype] ?? spotTypes.default}
+              施設タイプ：{spotTypes[spotType] ?? spotTypes.default}
             </Text>
           )}
           {getDescriptionByType() && (
@@ -83,7 +83,7 @@ export const LogElement = ({
           <LifeGauge howto={false} />
         </Flex>
         {/* 所要時間 */}
-        <Text className="text-maintext">所要時間：{eventtime}</Text>
+        <Text className="text-maintext">所要時間：{eventTime}</Text>
       </Flex>
     </Flex>
   );

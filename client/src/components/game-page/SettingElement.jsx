@@ -10,7 +10,7 @@ export const SettingElement = ({
   type = "center", // "center", "alone", "top", "bottom"
   text = "基本操作",
   to, // 遷移先のパス（operationが"button"の場合のみ必要）
-  textcolor,
+  textColor,
 }) => {
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ export const SettingElement = ({
       paddingX={"4vw"}
       onClick={handleClick}
     >
-      <Text className="text-maintext" color={textcolor}>
+      <Text className="text-maintext" color={textColor}>
         {text}
       </Text>
 
