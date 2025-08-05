@@ -13,16 +13,18 @@ import {
   SettingInfoIndex,
   LifeGaugeListElement,
 } from "../components/game-page";
-import { MonologueLine } from "../components/game-page/MonologueLine";
-import { LogElement } from "../components/game-page/LogElement";
-import { MapMarkerLegend } from "../components/game-page/MapMarkerLegend";
-import { MapSpotInfo } from "../components/game-page/MapSpotInfo";
-import { EventText } from "../components/game-page/EventText";
-import { ActionTab } from "../components/game-page/ActionTab";
-import { ActionConfirmDialog } from "../components/game-page/ActionConfirmDialog";
-import { CheckinButton } from "../components/game-page/CheckinButton";
-import { TweetCard } from "../components/game-page/TweetCard";
-import { Footer } from "../components/game-page/Footer";
+import {
+  MonologueLine,
+  LogElement,
+  MapMarkerLegend,
+  MapSpotInfo,
+  EventText,
+  ActionTab,
+  ActionConfirmDialog,
+  CheckinButton,
+  TweetCard,
+  Footer,
+} from "../components/game-page";
 
 export const SplashPage = () => {
   const [selectedValue, setSelectedValue] = useState("");

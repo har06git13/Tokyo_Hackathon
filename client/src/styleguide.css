@@ -59,24 +59,3 @@ body {
   font-size: 0.5625rem;
   font-weight: normal;
 }
-
-/* ============================
-   📦 Utility Classes
-============================ */
-/* ページ直下に置くやつ */
-/* .page-container {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  min-height: 100vh;
-  height: fit-content;
-  width: 100vw;
-} */
-
-/* page-containerの直下、HeaderとFooterと並列 */
-/* .page-contents {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  width: 100%;
-} */
