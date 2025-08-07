@@ -28,7 +28,7 @@ export const MonologueLine = ({
           justifyContent={"center"}
           alignItems={"center"}
           width={"74vw"}
-          paddingY={"1vw"}
+          paddingY={"1.6vw"}
         >
           <Text
             className="text-subtext"
@@ -51,6 +51,7 @@ export const MonologueLine = ({
           width={"90vw"}
           alignItems={isPlayer ? "flex-end" : "flex-start"}
           gap={"1vw"}
+          paddingY={"2vw"}
         >
           <Text className="text-maintext" color={"var(--color-base10)"}>
             {isPlayer ? playername : name}

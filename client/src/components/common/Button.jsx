@@ -19,6 +19,8 @@ export const Button = ({
         backgroundColor: isAvailable ? color : "var(--color-base13)",
         borderRadius: "9999px",
         padding: "1% 0",
+        minHeight: height,
+        display: "block",
       }}
       disabled={!isAvailable}
       onClick={onClick}
@@ -31,7 +33,7 @@ export const Button = ({
 };
 
 Button.propTypes = {
-  isAvairable: PropTypes.bool,
+  isAvailable: PropTypes.bool,
   text: PropTypes.string,
   width: PropTypes.string,
   height: PropTypes.string,
