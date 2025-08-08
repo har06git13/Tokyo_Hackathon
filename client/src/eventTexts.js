@@ -121,3 +121,67 @@ export const epilogueTexts = [
     text: "非常時の渋谷の一日が、静かに終わろうとしている。",
   },
 ];
+
+// デモシナリオ14:30のタイムライン
+export const dummyTweets1430 = [
+  {
+    userName: "バズジャンキー",
+    userId: "@buzz__junkie",
+    text: "🚨地震やばすぎて草 無事バズりました🫡（動画つき）",
+  },
+  {
+    userName: "白丸🚃",
+    userId: "@shiromaru_train",
+    text: "乗ってた副都心線止まった……ドア開かない。誰か情報ください；；",
+  },
+  {
+    userName: "バズバズニュース🐯",
+    userId: "@buzz_buzz_news",
+    text: "渋谷の地下街でガス漏れ→爆発ってまじ！？今は近づかない方がいいってDM来たけど……これほんとにヤバいやつかも #地震 #拡散希望",
+  },
+  {
+    userName: "タロヲ",
+    userId: "@Taro_0v0",
+    text: "職場のビル停電した。しかもWi-Fiも死んでる。詰みました。",
+  },
+  {
+    userName: "ハジメチューブ📷",
+    userId: "@HajimeTube",
+    text: "外にいる人ほんと気をつけて！どこ行っても混んでるけど、安全優先で💦",
+  },
+  {
+    userName: "サバイバル勢🌪️",
+    userId: "@survival_guy",
+    text: "道玄坂のファミマ完全にカオス。商品奪い合いでケンカ始まってる。もはや治安崩壊してる。",
+  },
+  {
+    userName: "ネット探偵🕵️‍♂️",
+    userId: "@net_tantei",
+    text: "【注意】今流れてる“渋谷ガス爆発”は嘘。信じるな！拡散希望。",
+  },
+  {
+    userName: "匿名⚠️",
+    userId: "@anonymous_warning",
+    text: "都内全域で停電、しかも復旧の見込みなしって聞いたけどマジか？情報ください！",
+  },
+  {
+    userName: "裏ニュース速報",
+    userId: "@ura_news",
+    text: "誰か知ってる？渋谷で地震の後に爆破予告あったらしいけど。これデマ？怖すぎる……",
+  },
+  {
+    userName: "ビル管理人🛠️",
+    userId: "@building_manager",
+    text: "職場のビル、エレベーター停止中。階段も混んでるし動きづらい……早く復旧してほしい。",
+  },
+  {
+    userName: "デマ撲滅隊🔥",
+    userId: "@stop_fake_news",
+    text: "デマを流す奴は許せない！渋谷の爆発情報は完全に嘘だから拡散しないで！",
+  },
+  {
+    userName: "女子大生ミカ🎒",
+    userId: "@mika_uni",
+    text: "友達と連絡取れない。電波も不安定で困ってる。とりあえず安全な場所探さなきゃ…",
+  },
+];

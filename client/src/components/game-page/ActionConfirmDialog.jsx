@@ -20,15 +20,15 @@ export const ActionConfirmDialog = ({
     <Flex
       className="action-confirm-dialog"
       flexDirection="column"
-      width={"90vw"}
+      width={actionType === "sns" ? "100%" : "90vw"}
     >
       <Flex
         flexDirection={"column"}
         width={"100%"}
         backgroundColor={"var(--color-base10)"}
-        paddingX={"4vw"}
-        paddingY={"4vw"}
-        borderRadius={"3vw"}
+        paddingX={actionType === "sns" ? "9vw" : "4vw"}
+        paddingY={actionType === "sns" ? "5vw" : "4vw"}
+        borderRadius={actionType === "sns" ? "10vw 10vw 0 0" : "3vw"}
         gap={"2vw"}
       >
         <Flex width={"100%"} alignItems={"center"} gap={"2vw"}>
@@ -87,21 +87,24 @@ export const ActionConfirmDialog = ({
           width={"100%"}
           justifyContent={"space-between"}
           paddingTop={"2vw"}
+          gap={"4vw"}
         >
-          <Button
-            text="戻る"
-            isAvailable
-            color="var(--color-base13)"
-            onClick={onBackClick}
-            width="48%"
-            height="7vw"
-          />
+          {actionType === "walk" && (
+            <Button
+              text="戻る"
+              isAvailable
+              color="var(--color-base13)"
+              onClick={onBackClick}
+              width="100%"
+              height="7vw"
+            />
+          )}
           <Button
             text={actionType === "walk" ? "移動する" : "見る"}
             isAvailable
             color="var(--color-theme10)"
             onClick={onClick}
-            width="48%"
+            width="100%"
             height="7vw"
           />
         </Flex>

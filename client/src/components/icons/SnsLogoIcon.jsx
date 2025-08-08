@@ -74,7 +74,7 @@ const SnsLogoIcon = (props) => (
     />
     <path
       d="M89.5703 118.208V104.288H90.2903L98.1143 116.888V104.288H98.8343V118.208H98.1143L90.2903 105.584V118.208H89.5703Z"
-      ffill="currentColor"
+      fill="currentColor"
     />
   </svg>
 );
