@@ -3,10 +3,16 @@ import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { MonologueViewer } from "../../components/game-page/MonologueViewer";
 import { useNavigate } from "react-router-dom";
-import { epilogueTexts } from "../../eventTexts";
+import { eventList } from "../../temporary-database";
 
 export const EpiloguePage = () => {
   const navigate = useNavigate();
+
+  const eventId = "event_epilogue_001";
+  const event = eventList.find((e) => e.id === eventId);
+  if (!event) {
+    return <div>イベントデータが見つかりませんでした</div>;
+  }
 
   return (
     <Flex className="page-container" backgroundColor={"#00000000"}>
@@ -17,7 +23,7 @@ export const EpiloguePage = () => {
       <Header prevPage={false} currentPage="エピローグ" />
 
       <MonologueViewer
-        texts={epilogueTexts}
+        texts={event.texts}
         buttonText="リザルトを見る"
         onButtonClick={() => navigate("../../result")}
       />

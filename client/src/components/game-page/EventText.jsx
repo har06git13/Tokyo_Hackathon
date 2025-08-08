@@ -20,7 +20,10 @@ export const EventText = () => {
       paddingX={"6vw"}
     >
       <Text className="text-maintext" color={"var(--color-theme10)"}>
-        {currenttime}
+        {currenttime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
       </Text>
       <Box
         height={"50%"}

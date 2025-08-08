@@ -3,10 +3,16 @@ import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { MonologueViewer } from "../../components/game-page/MonologueViewer";
 import { useNavigate } from "react-router-dom";
-import { prologueTexts } from "../../eventTexts";
+import { eventList } from "../../temporary-database";
 
 export const ProloguePage = () => {
   const navigate = useNavigate();
+
+  const eventId = "event_prologue_001";
+  const event = eventList.find((e) => e.id === eventId);
+  if (!event) {
+    return <div>イベントデータが見つかりませんでした</div>;
+  }
 
   return (
     <Flex className="page-container" backgroundColor={"#00000000"}>
@@ -17,7 +23,7 @@ export const ProloguePage = () => {
       <Header prevPage={false} currentPage="プロローグ" />
 
       <MonologueViewer
-        texts={prologueTexts}
+        texts={event.texts}
         buttonText="避難を開始する"
         onButtonClick={() => navigate("../action")}
       />

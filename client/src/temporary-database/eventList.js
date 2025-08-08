@@ -80,6 +80,53 @@ export const eventList = [
     ],
   },
   {
+    id: "event_epilogue_001",
+    type: "epilogue",
+    requiredDuration: 0,
+    locationId: null,
+    gaugeChange: { health: 0, mental: 0, battery: 0, money: 0 },
+    texts: [
+      {
+        type: "system",
+        text: "ウィズ原宿に到着した。\n 施設タイプ：帰宅困難者受け入れ施設",
+      },
+      {
+        type: "system",
+        isDecrease: true,
+        text: "移動で体力を5%消費した。",
+      },
+      {
+        type: "system",
+        text: " 受付で氏名と連絡先を記入し、毛布と水を受け取る。",
+      },
+      {
+        type: "system",
+        text: "施設内では、避難してきた人たちが床に座ったり、壁にもたれたりして静かに過ごしている。\n誰もが疲れた表情をしていた。",
+      },
+      {
+        type: "talk",
+        text: "(とりあえず、今日はここで一息つける…… \n 毛布があるだけで、ちょっと安心するな。)",
+      },
+      {
+        type: "talk",
+        text: "(電車、明日になったら動くかな。\n 水も……まだ足りるかわからない。)",
+      },
+      {
+        type: "talk",
+        text: "(でも今は、ここが安全な場所でよかった。)",
+      },
+      {
+        type: "system",
+        text: "非常時の渋谷の一日が、静かに終わろうとしている。",
+      },
+      {
+        type: "system",
+        isCritical: true,
+        text: "あなたは生還した。",
+      },
+    ],
+  },
+  {
     id: "event_sns_001",
     type: "sns",
     requiredDuration: 30,
@@ -88,10 +135,10 @@ export const eventList = [
     texts: [
       {
         type: "system",
-        isCritical,
+        isCritical: true,
         text: "時間経過で体力・精神力・電源を5%消費した。",
       },
-      { type: "system", isDecrease, text: "SNSで電源を5%消費した。" },
+      { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
       { type: "system", text: "SNSでいくつかの情報を入手した。" },
       {
         type: "talk",
@@ -113,7 +160,7 @@ export const eventList = [
         type: "talk",
         text: "……怖すぎる。",
       },
-      { type: "system", isDecrease, text: "精神を5%消費した。" },
+      { type: "system", isDecrease: true, text: "精神を5%消費した。" },
     ],
   },
   {
@@ -125,10 +172,10 @@ export const eventList = [
     texts: [
       {
         type: "system",
-        isDecrease,
+        isDecrease: true,
         text: "時間経過で体力・精神力・電源を5%消費した。",
       },
-      { type: "system", isDecrease, text: "SNSで電源を5%消費した。" },
+      { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
       { type: "system", text: "SNSでいくつかの情報を入手した。" },
       {
         type: "talk",
@@ -144,7 +191,7 @@ export const eventList = [
       },
       {
         type: "system",
-        isDecrease,
+        isDecrease: true,
         text: "電源を5%消費した。",
       },
     ],

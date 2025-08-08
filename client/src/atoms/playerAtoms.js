@@ -7,7 +7,34 @@ export const playerGenderAtom = atom("男性");
 export const playerResidenceAtom = atom("渋谷区在学"); // 生活拠点
 
 // ゲーム進行用
-export const currentTimeAtom = atom("14:30"); // 現在時刻
+const createStartTime = () => {
+  const now = new Date();
+  // 今日の日付で時刻だけ14:00にセット
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    14, // 時
+    0, // 分
+    0, // 秒
+    0 // ミリ秒
+  );
+};
+export const currentTimeAtom = atom(createStartTime()); // 現在時刻(ゲーム内)
+export const currentTimeSlotAtom = atom((get) => {
+  const now = get(currentTimeAtom);
+  const hour = now.getHours();
+  const min = now.getMinutes();
+  const totalMin = hour * 60 + min;
+
+  if (totalMin >= 14 * 60 && totalMin < 16 * 60) return "2h";
+  if (totalMin >= 16 * 60 && totalMin < 18 * 60) return "4h";
+  if (totalMin >= 18 * 60 && totalMin < 20 * 60) return "6h";
+  if (totalMin >= 20 * 60 && totalMin < 22 * 60) return "8h";
+  if (totalMin >= 22 * 60 && totalMin < 24 * 60) return "10h";
+
+  return "";
+}); // ゲーム開始からの経過時間
 export const currentLocationAtom = atom("渋谷駅前"); // 現在地
 
 // ライフゲージ（個別でも全体でも）

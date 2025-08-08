@@ -1,21 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Flex, Box } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { Header, LifeGauge, Button } from "../../components/common";
-import {
-  EventText,
-  ActionTab,
-  MapMarkerLegend,
-  MapSpotInfo,
-  Footer,
-  ActionConfirmDialog,
-  TweetCard,
-} from "../../components/game-page";
+import { EventText, Footer, TweetCard } from "../../components/game-page";
 import { SnsIcon } from "../../components/icons";
-import { dummyTweets1430 } from "../../eventTexts";
+import { snsPostList } from "../../temporary-database";
+import { useAtom } from "jotai";
+import { currentTimeSlotAtom } from "../../atoms/playerAtoms";
 
 export const SnsPage = () => {
   const navigate = useNavigate();
+  const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
+
+  const shuffleArray = (array) => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const filteredPosts = snsPostList.filter(
+    (post) => post.timeSlot === currentTimeSlot
+  ); // 時間帯でツイートを絞り込み
+  const shuffledPosts = shuffleArray(filteredPosts);
+
+  console.log("typeof currentTimeSlot:", typeof currentTimeSlot);
+  console.log("currentTimeSlot value:", currentTimeSlot);
+  console.log("filteredPosts:", filteredPosts);
+  console.log("shuffledPosts:", shuffledPosts);
 
   return (
     <Flex
@@ -46,12 +60,11 @@ export const SnsPage = () => {
             overflowY={"auto"}
             height={"109vw"}
           >
-            {dummyTweets1430.map((tweet, index) => (
+            {shuffledPosts.map((post, index) => (
               <TweetCard
-                key={index}
-                userName={tweet.userName}
-                userId={tweet.userId}
-                text={tweet.text}
+                userName={post.userName}
+                userId={post.userId}
+                text={post.text}
               />
             ))}
           </Flex>
