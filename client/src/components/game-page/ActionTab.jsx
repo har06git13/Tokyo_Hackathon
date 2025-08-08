@@ -2,14 +2,15 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Flex, Text } from "@chakra-ui/react";
 
-export const ActionTab = ({ type = "walk" }) => {
+export const ActionTab = ({ type = "walk", onWalkClick, onSnsClick }) => {
   return (
     <Flex
       className={"action-tab"}
       backgroundColor={"var(--color-base10)"}
       borderRadius={"1.6vw"}
       width={"90vw"}
-      height={"6vw"}
+      height={"7.8vw"}
+      padding={"0.4vw"}
     >
       <Flex
         backgroundColor={
@@ -19,6 +20,7 @@ export const ActionTab = ({ type = "walk" }) => {
         width={"50%"}
         justifyContent={"center"}
         alignItems={"center"}
+        onClick={onWalkClick}
       >
         <Text
           className="text-maintext"
@@ -38,6 +40,7 @@ export const ActionTab = ({ type = "walk" }) => {
         width={"50%"}
         justifyContent={"center"}
         alignItems={"center"}
+        onClick={onSnsClick}
       >
         <Text
           className="text-maintext"

@@ -88,7 +88,14 @@ export const ActionConfirmDialog = ({
           justifyContent={"space-between"}
           paddingTop={"2vw"}
         >
-          <Button text="戻る" onClick={onBackClick} width="48%" height="7vw" />
+          <Button
+            text="戻る"
+            isAvailable
+            color="var(--color-base13)"
+            onClick={onBackClick}
+            width="48%"
+            height="7vw"
+          />
           <Button
             text={actionType === "walk" ? "移動する" : "見る"}
             isAvailable

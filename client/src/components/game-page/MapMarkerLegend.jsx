@@ -25,9 +25,9 @@ export const MapMarkerLegend = () => {
       width={"90vw"}
       height={"10.6vw"}
       paddingX={"4vw"}
-      gap={"1vw"}
+      gap={"2vw"}
       alignItems={"center"}
-      justifyContent={"space-between"}
+      justifyContent={"left"}
     >
       <MarkerItem
         icon={<MapUserIcon width="3vw" height="100%" />}
