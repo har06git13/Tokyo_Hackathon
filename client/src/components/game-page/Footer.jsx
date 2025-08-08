@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { ActionIcon, FootprintIcon, MapIcon } from "../icons";
 import { Flex, Text } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
 export const Footer = ({ type = "action", isWalking = false }) => {
   const getColor = (target) => {
@@ -9,6 +10,8 @@ export const Footer = ({ type = "action", isWalking = false }) => {
     if (type === target) return "var(--color-theme10)";
     return "var(--color-base13)";
   };
+
+  const navigate = useNavigate();
 
   return (
     <Flex
@@ -28,6 +31,7 @@ export const Footer = ({ type = "action", isWalking = false }) => {
         width={"16vw"}
         alignItems={"center"}
         justifyContent={"space-between"}
+        onClick={() => navigate("/game/log")}
       >
         <FootprintIcon color={getColor("log")} height="6vw" />
         <Text className={"text-subtext"} color={getColor("log")}>
@@ -41,6 +45,7 @@ export const Footer = ({ type = "action", isWalking = false }) => {
         width={"16vw"}
         alignItems={"center"}
         justifyContent={"space-between"}
+        onClick={() => navigate("/game/action")}
       >
         <ActionIcon color={getColor("action")} height="6vw" />
         <Text className={"text-subtext"} color={getColor("action")}>
@@ -54,6 +59,7 @@ export const Footer = ({ type = "action", isWalking = false }) => {
         width={"16vw"}
         alignItems={"center"}
         justifyContent={"space-between"}
+        onClick={() => navigate("/game/map")}
       >
         <MapIcon color={getColor("map")} height={"5.4vw"} />
         <Text className={"text-subtext"} color={getColor("map")}>
