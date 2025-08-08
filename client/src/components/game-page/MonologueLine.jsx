@@ -35,9 +35,9 @@ export const MonologueLine = ({
             className="text-subtext"
             color={
               isCritical
-                ? "var(--color-theme10)"
-                : isDecrease
                 ? "var(--color-accent10)"
+                : isDecrease
+                ? "var(--color-theme10)"
                 : "currentcolor"
             }
           >

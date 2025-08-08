@@ -2,7 +2,7 @@ import React from "react";
 import { Flex, Text } from "@chakra-ui/react";
 import { Header } from "../../../components/common";
 import { SettingInfoIndex } from "../../../components/game-page";
-import { spotTypeInfoList } from "../../../staticDataList";
+import { spotTypeInfoList } from "../../../temporary-database/statics/spotTypeInfoList";
 
 export const SpotTypeInfoPage = () => {
   return (
