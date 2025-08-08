@@ -1,24 +1,30 @@
 import React from "react";
 import { Flex } from "@chakra-ui/react";
-import { Header } from "../../components/common";
-import { SettingElement, SettingInfoIndex } from "../../components/game-page";
+import { Header } from "../../../components/common";
+import { SettingElement } from "../../../components/game-page";
 
 export const SettingPage = () => {
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
-      <Header prevPage={false} currentPage="設定" />
+      <Header currentPage="設定" />
       <Flex className="page-contents" flex={1} paddingTop={"6vw"} gap={"6vw"}>
         <Flex flexDirection={"column"}>
           <SettingElement
             type="top"
             operation="button"
             text="ルール・基本操作"
+            to={"../setting/ruleinfo"}
           />
-          <SettingElement operation="button" text="ライフゲージ説明" />
+          <SettingElement
+            operation="button"
+            text="ライフゲージ説明"
+            to={"../setting/lifegaugeinfo"}
+          />
           <SettingElement
             type="bottom"
             operation="button"
             text="施設タイプ一覧"
+            to={"../setting/spottypeinfo"}
           />
         </Flex>
         <Flex flexDirection={"column"}>

@@ -28,6 +28,7 @@ export const Header = ({
             justifyContent={"flex-start"}
             width={"100%"}
             gap={"12%"}
+            onClick={() => navigate(-1)}
           >
             <ArrowIcon width="14%" color="var(--color-theme10)" isBack />
             <Text

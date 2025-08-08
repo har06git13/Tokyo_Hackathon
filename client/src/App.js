@@ -1,31 +1,3 @@
-/*
-import logo from './logo.svg';
-import './App.css';
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
-
-export default App;
-*/
-
 import React, { useEffect, useState } from "react";
 import { Provider } from "./components/chakra/provider";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -33,16 +5,23 @@ import "./styleguide.css";
 
 // ページコンポーネント
 import { TitlePage, ProfilePage, SplashPage } from "./pages/title-pages";
-import { ProloguePage } from "./pages/gamepages/ProloguePage";
-import { ActionPage } from "./pages/gamepages/ActionPage";
-import { LogPage } from "./pages/gamepages/LogPage";
-import { MapPage } from "./pages/gamepages/MapPage";
-import { SettingPage } from "./pages/gamepages/SettingPage";
-import { EpiloguePage } from "./pages/gamepages/EpiloguePage";
+import {
+  ProloguePage,
+  ActionPage,
+  LogPage,
+  MapPage,
+  EpiloguePage,
+  WalkPage,
+  CheckInPage,
+  SnsPage,
+} from "./pages/game-pages";
+import {
+  SettingPage,
+  RuleInfoPage,
+  SpotTypeInfoPage,
+  LifeGaugeInfoPage,
+} from "./pages/game-pages/setting-pages";
 import { ResultPage } from "./pages/ResultPage";
-import { WalkPage } from "./pages/gamepages/WalkPage";
-import { CheckInPage } from "./pages/gamepages/CheckInPage";
-import { SnsPage } from "./pages/gamepages/SnsPage";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -69,11 +48,17 @@ function App() {
             <Route path="action" element={<ActionPage />} />
             <Route path="log" element={<LogPage />} />
             <Route path="map" element={<MapPage />} />
-            <Route path="setting" element={<SettingPage />} />
             <Route path="epilogue" element={<EpiloguePage />} />
             <Route path="walk" element={<WalkPage />} />
             <Route path="checkin" element={<CheckInPage />} />
             <Route path="sns" element={<SnsPage />} />
+            <Route path="setting" element={<SettingPage />} />
+            <Route
+              path="setting/lifegaugeinfo"
+              element={<LifeGaugeInfoPage />}
+            />
+            <Route path="setting/ruleinfo" element={<RuleInfoPage />} />
+            <Route path="setting/spottypeinfo" element={<SpotTypeInfoPage />} />
           </Route>
         </Routes>
         {/* <h1>this from App.js→「{message}」</h1> */}
