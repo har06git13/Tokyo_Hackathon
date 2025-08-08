@@ -11,7 +11,7 @@ export const WalkPage = () => {
     <Flex
       className="page-container"
       backgroundColor={"var(--color-base12)"}
-      zIndex={-2}
+      zIndex={0}
     >
       <Box position="relative" width="100%" height="131vw">
         <Header prevPage={false} currentPage="移動中" backGround={false} />
@@ -62,7 +62,7 @@ export const WalkPage = () => {
         <Text className="text-maintext">
           現地に着いたら、QRコードでチェックイン！
         </Text>
-        <CheckinButton onClick={() => navigate("../checkin")} />
+        <CheckinButton onClick={() => navigate("/game/checkin")} />
       </Flex>
       <Footer isWalking />
     </Flex>
