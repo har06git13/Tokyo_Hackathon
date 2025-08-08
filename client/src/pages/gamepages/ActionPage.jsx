@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Flex, Box } from "@chakra-ui/react";
 import { Header, LifeGauge } from "../../components/common";
 import {
@@ -13,6 +14,8 @@ import {
 export const ActionPage = () => {
   const [spotSelected, setSpotSelected] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const navigate = useNavigate();
 
   return (
     <Flex
@@ -67,6 +70,7 @@ export const ActionPage = () => {
                   onBackClick={() => {
                     setShowConfirmDialog(false);
                   }}
+                  onClick={() => navigate("../walk")}
                 />
               </Flex>
             </>

@@ -5,8 +5,8 @@ import { Flex, Text } from "@chakra-ui/react";
 
 export const Footer = ({ type = "action", isWalking = false }) => {
   const getColor = (target) => {
-    if (type === target) return "var(--color-theme10)";
     if (target === "action" && isWalking) return "var(--color-accent10)";
+    if (type === target) return "var(--color-theme10)";
     return "var(--color-base13)";
   };
 
@@ -14,7 +14,7 @@ export const Footer = ({ type = "action", isWalking = false }) => {
     <Flex
       className={"footer"}
       width={"100vw"}
-      boxShadow="inset 0 0.6px 0 rgba(0, 0, 0, 0.1)"
+      boxShadow="inset 0 0.4px 0 rgba(0, 0, 0, 0.6)"
       backgroundColor={"var(--color-base11)"}
       paddingX={"7vw"}
       paddingTop={"2vw"}

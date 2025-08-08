@@ -3,7 +3,7 @@ import { Flex, Text } from "@chakra-ui/react";
 
 export const CheckinButton = ({ onClick }) => {
   return (
-    <Flex className="checkin-button" width={"90vw"} height={"10vw"}>
+    <Flex className="checkin-button" width={"100%"} height={"10vw"}>
       <Flex
         backgroundColor="var(--color-base12)"
         borderRadius="3vw 0 0 3vw"

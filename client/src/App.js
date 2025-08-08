@@ -40,6 +40,7 @@ import { MapPage } from "./pages/gamepages/MapPage";
 import { SettingPage } from "./pages/gamepages/SettingPage";
 import { EpiloguePage } from "./pages/gamepages/EpiloguePage";
 import { ResultPage } from "./pages/ResultPage";
+import { WalkPage } from "./pages/gamepages/WalkPage";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -68,6 +69,7 @@ function App() {
             <Route path="map" element={<MapPage />} />
             <Route path="settings" element={<SettingPage />} />
             <Route path="epilogue" element={<EpiloguePage />} />
+            <Route path="walk" element={<WalkPage />} />
           </Route>
         </Routes>
         {/* <h1>this from App.js→「{message}」</h1> */}
