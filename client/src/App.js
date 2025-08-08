@@ -69,7 +69,7 @@ function App() {
             <Route path="action" element={<ActionPage />} />
             <Route path="log" element={<LogPage />} />
             <Route path="map" element={<MapPage />} />
-            <Route path="settings" element={<SettingPage />} />
+            <Route path="setting" element={<SettingPage />} />
             <Route path="epilogue" element={<EpiloguePage />} />
             <Route path="walk" element={<WalkPage />} />
             <Route path="checkin" element={<CheckInPage />} />

@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { ArrowIcon, MenuIcon } from "../icons";
 import { Flex, Text, Image } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
 export const Header = ({
   prevPage = true,
@@ -9,6 +10,8 @@ export const Header = ({
   isSetting = false,
   currentPage = "画面名",
 }) => {
+  const navigate = useNavigate();
+
   return (
     <Flex
       className="header"
@@ -70,6 +73,7 @@ export const Header = ({
           <MenuIcon
             color={backGround ? "var(--color-theme10)" : "var(--color-base10)"}
             width="22%"
+            onClick={() => navigate("/game/setting")}
           />
         )}
       </Flex>

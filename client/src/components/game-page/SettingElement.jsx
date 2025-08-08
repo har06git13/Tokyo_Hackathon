@@ -11,10 +11,14 @@ export const SettingElement = ({
   text = "基本操作",
   to, // 遷移先のパス（operationが"button"の場合のみ必要）
   textColor,
+  alertMessage,
 }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    if (alertMessage) {
+      alert(alertMessage);
+    }
     if (operation === "button" && to) {
       navigate(to);
     }
@@ -32,8 +36,15 @@ export const SettingElement = ({
       width={"90vw"}
       height={"10.6vw"}
       borderRadius={borderRadiusValue}
-      borderTop={type === "center" ? "0.1vw solid var(--color-base13)" : "0"}
-      borderBottom={type === "center" ? "0.1vw solid var(--color-base13)" : "0"}
+      boxShadow={
+        type === "center"
+          ? "inset 0 0.05vw 0 var(--color-base13), inset 0 -0.05vw 0 var(--color-base13)"
+          : type === "top"
+          ? "inset 0 -0.05vw 0 var(--color-base13)"
+          : type === "bottom"
+          ? "inset 0 0.05vw 0 var(--color-base13)"
+          : "none"
+      }
       alignItems={"center"}
       justifyContent={"space-between"}
       paddingX={"4vw"}
@@ -56,4 +67,7 @@ SettingElement.propTypes = {
   operation: PropTypes.oneOf(["toggle", "button"]),
   type: PropTypes.oneOf(["center", "alone", "top", "bottom"]),
   text: PropTypes.string,
+  to: PropTypes.string,
+  textColor: PropTypes.string,
+  alertMessage: PropTypes.string,
 };
