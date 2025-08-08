@@ -19,6 +19,7 @@ export const MonologueLine = ({
       width={"90vw"}
       justifyContent={"center"}
       alignItems={"center"}
+      whiteSpace={"pre-line"}
     >
       {type === "system" && (
         <Flex
