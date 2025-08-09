@@ -27,7 +27,7 @@ export const LogElement = ({ id, time }) => {
   const gauge = gaugeHistory.find((g) => g.time.getTime() === time.getTime());
 
   const getDescriptionByType = () => {
-    switch (event.type) {
+    switch (event?.type) {
       case "time":
         return "毎時00分に体力・精神力・電源を5%消費します";
       case "walk":
@@ -66,8 +66,10 @@ export const LogElement = ({ id, time }) => {
         {/* ログタイトル & 地点 */}
 
         <Flex flexDirection="column">
-          <Text className="text-sectiontitle">{eventTypes[event.type]}</Text>
-          {event.type !== "time" && event.type !== "sns" && (
+          <Text className="text-sectiontitle">
+            {event ? eventTypes[event.type] : "不明なイベント"}
+          </Text>
+          {event?.type !== "time" && event?.type !== "sns" && (
             <Text className="text-subtext" color="var(--color-base13)">
               移動先：{facility?.name}
             </Text>
@@ -76,7 +78,7 @@ export const LogElement = ({ id, time }) => {
 
         {/* 施設タイプ & イベント内容 */}
         <Flex flexDirection="column">
-          {event.type === "walk" && (
+          {event?.type === "walk" && (
             <Text className="text-maintext">
               施設タイプ：
               {facility.type}
@@ -90,23 +92,23 @@ export const LogElement = ({ id, time }) => {
         </Flex>
 
         {/* ゲージ */}
-        {event.type === "time" || event.type === "prologue" ? undefined : (
+        {event?.type === "time" || event?.type === "prologue" ? undefined : (
           <Flex flexDirection="column" gap="1vw">
             <Text className="text-subtext">変動後ゲージ</Text>
             <LifeGauge
               howto={false}
-              life={gauge.life}
-              mental={gauge.mental}
-              charge={gauge.charge}
-              money={gauge.money}
+              life={gauge?.life}
+              mental={gauge?.mental}
+              charge={gauge?.charge}
+              money={gauge?.money}
             />
           </Flex>
         )}
 
         {/* 所要時間 */}
-        {event.type === "time" || event.type === "prologue" ? undefined : (
+        {event?.type === "time" || event?.type === "prologue" ? undefined : (
           <Text className="text-maintext">
-            所要時間：{event.requiredDuration}分
+            所要時間：{event?.requiredDuration}分
           </Text>
         )}
       </Flex>
