@@ -42,6 +42,7 @@ export const ActionPage = () => {
   const FacilityList = ({ currentTimeSlot, onSelect }) => {
     const visitedEventIds = eventHistory.map((e) => e.id);
     const filteredFacilities = facilityList.filter((fac) => {
+      if (fac.id === "fac_000") return;
       if (fac.type === "shelter") {
         return ["6h", "8h", "10h"].includes(currentTimeSlot);
       }

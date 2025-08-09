@@ -33,7 +33,7 @@ export const CheckInPage = () => {
               color={"var(--color-accent10)"}
               onClick={() => navigate("/game/monologue")}
             >
-              現行では画面タップで遷移するよ
+              現行ではこのあたりをタップで遷移するよ
             </Text>
             <Box
               height="0.08px"

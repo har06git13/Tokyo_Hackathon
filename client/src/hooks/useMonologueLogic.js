@@ -12,11 +12,17 @@ import {
   eventHistoryAtom,
   visitedFacilitiesAtom,
   gaugeHistoryAtom,
+  survivedAtom,
+  playerNameAtom,
 } from "../atoms/playerAtoms";
 import { eventList } from "../temporary-database";
 
 export const useMonologueLogic = () => {
   const navigate = useNavigate();
+
+  // state読み込み
+  const [survived, setSurvived] = useAtom(survivedAtom);
+  const [playerName] = useAtom(playerNameAtom);
   const [selectedEvent, setSelectedEvent] = useAtom(selectedEventAtom);
   const [, setSelectedFacility] = useAtom(selectedFacilityAtom);
   const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
@@ -29,66 +35,84 @@ export const useMonologueLogic = () => {
   const [, setVisitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [, setGaugeHistory] = useAtom(gaugeHistoryAtom);
 
-  setCurrentEventStatus("monologue");
-
   if (!selectedEvent) {
-    // ここはhook内でreturnしちゃうか、外側で条件チェックしてもOK
     return { selectedEvent: null };
   }
 
+  // 死亡フラグ設定
+  const isEvacuationFailure = life + selectedEvent.gaugeChange.life <= 0;
+  if (isEvacuationFailure) {
+    setSurvived(false);
+  }
+
+  // 時間経過によるゲージ変動の設定
   const timeEvent = eventList.find((e) => e.id === "event_time_001");
   const isTimeEventActive =
-    !(currentTime.getHours() === 14) && currentTime.getMinutes() === 0;
+    currentTime.getMinutes() === 0 && currentTime.getHours() !== 14;
 
+  // 表示テキストの結合
   const combinedTexts =
-    isTimeEventActive && timeEvent
+    survived === false
+      ? [
+          ...selectedEvent.texts,
+          { type: "system", isDecrease: true, text: "体力が0になった。" },
+          {
+            type: "system",
+            isDecrease: true,
+            text: `${playerName}は避難に失敗した。`,
+          },
+        ]
+      : isTimeEventActive && timeEvent
       ? [...timeEvent.texts, ...selectedEvent.texts]
       : selectedEvent.texts;
 
+  // ゲージ変動計算関数
+  const getSafeValue = (value) => (value ? value : 0);
   const combinedGaugeChange = {
     life:
-      selectedEvent.gaugeChange.life +
-      (isTimeEventActive && timeEvent?.gaugeChange?.life),
+      getSafeValue(selectedEvent.gaugeChange.life) +
+      (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.life) : 0),
     mental:
-      selectedEvent.gaugeChange.mental +
-      (isTimeEventActive && timeEvent?.gaugeChange?.mental),
+      getSafeValue(selectedEvent.gaugeChange.mental) +
+      (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.mental) : 0),
     battery:
-      selectedEvent.gaugeChange.battery +
-      (isTimeEventActive && timeEvent?.gaugeChange?.battery),
+      getSafeValue(selectedEvent.gaugeChange.battery) +
+      (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.battery) : 0),
     money:
-      selectedEvent.gaugeChange?.money +
-      (isTimeEventActive && timeEvent?.gaugeChange?.money),
+      getSafeValue(selectedEvent.gaugeChange.money) +
+      (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.money) : 0),
   };
 
+  // ボタン表示設定
   const buttonConfig = {
-    prologue: { text: "避難を開始する", next: "../action" },
-    epilogue: { text: "リザルトを見る", next: "../../result" },
-    sns: { text: "閉じる", next: "../" },
-    walk: { text: "閉じる", next: "../" },
+    prologue: { text: "避難を開始する", next: "/game/action" },
+    epilogue: { text: "リザルトを見る", next: "/result" },
+    sns: { text: "閉じる", next: "/game/action" },
+    walk: { text: "閉じる", next: "/game/action" },
   };
+  const currentButtonType =
+    survived === false ? "epilogue" : selectedEvent.type;
+  const { text: buttonText, next: nextPath } =
+    buttonConfig[currentButtonType] || {};
 
-  const { text: buttonText } = buttonConfig[selectedEvent.type] || {};
+  // ゲージの増減反映用ヘルパー
+  const clampGauge = (val) => Math.max(0, Math.min(100, val));
 
+  // === ボタンクリック処理 ===
   const handleButtonClick = () => {
-    const newLife = Math.max(0, Math.min(100, life + combinedGaugeChange.life));
-    const newMental = Math.max(
-      0,
-      Math.min(100, mental + combinedGaugeChange.mental)
-    );
-    const newCharge = Math.max(
-      0,
-      Math.min(100, charge + combinedGaugeChange.battery)
-    );
-    const newMoney = Math.max(
-      0,
-      Math.min(100, money + combinedGaugeChange.money)
-    );
+    // ゲージ値計算
+    const newLife = clampGauge(life + combinedGaugeChange.life);
+    const newMental = clampGauge(mental + combinedGaugeChange.mental);
+    const newCharge = clampGauge(charge + combinedGaugeChange.battery);
+    const newMoney = clampGauge(money + combinedGaugeChange.money);
 
+    // ゲージ更新
     setLife(newLife);
     setMental(newMental);
     setCharge(newCharge);
     setMoney(newMoney);
 
+    // ゲージ変動履歴に記録
     if (selectedEvent.type !== "prologue") {
       setGaugeHistory((prev) => [
         ...prev,
@@ -102,6 +126,7 @@ export const useMonologueLogic = () => {
       ]);
     }
 
+    // イベント履歴追加
     if (isTimeEventActive && timeEvent) {
       setEventHistory((prev) => [
         ...prev,
@@ -115,25 +140,29 @@ export const useMonologueLogic = () => {
       ]);
     }
 
+    // 時間更新
     if (selectedEvent.requiredDuration) {
       const newTime = new Date(currentTime.getTime());
       newTime.setMinutes(newTime.getMinutes() + selectedEvent.requiredDuration);
       setCurrentTime(newTime);
     }
 
+    // 訪問施設更新
     if (selectedEvent.locationId) {
-      setVisitedFacilities((prev) => {
-        if (prev.includes(selectedEvent.locationId)) return prev;
-        return [...prev, selectedEvent.locationId];
-      });
+      setVisitedFacilities((prev) =>
+        prev.includes(selectedEvent.locationId)
+          ? prev
+          : [...prev, selectedEvent.locationId]
+      );
     }
 
-    // 選択をリセット
+    // 選択リセット
     setSelectedEvent(null);
     setSelectedFacility(null);
     setCurrentEventStatus(null);
 
-    navigate("/game/action");
+    // 遷移先へ
+    navigate(nextPath);
   };
 
   return {

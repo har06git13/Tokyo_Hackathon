@@ -7,9 +7,7 @@ import { currentEventStatusAtom } from "../../atoms/playerAtoms";
 import { useAtom } from "jotai";
 
 export const Footer = ({ type = "action", isWalking = false }) => {
-  const [currentEventStatus, setCurrentEventStatus] = useAtom(
-    currentEventStatusAtom
-  );
+  const [currentEventStatus] = useAtom(currentEventStatusAtom);
   const getColor = (target) => {
     if (target === "action" && isWalking) return "var(--color-accent10)";
     if (type === target) return "var(--color-theme10)";
@@ -23,6 +21,8 @@ export const Footer = ({ type = "action", isWalking = false }) => {
       navigate("/game/walk");
     } else if (currentEventStatus === "sns") {
       navigate("/game/sns");
+    } else {
+      navigate("/game/action");
     }
   };
 

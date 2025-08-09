@@ -64,7 +64,7 @@ export const survivedAtom = atom(null); // true/false/null（未確定）
 
 // 生存ポイントまたは死因(暫定) あとでProptypesしたい
 export const criticalReasonList = [
-  "lowHealth",
+  "lowLife",
   "timeup",
   "batteryRental",
   "goodMeal",

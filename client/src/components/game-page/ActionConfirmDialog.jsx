@@ -4,18 +4,26 @@ import { Button } from "../common";
 import { HelpIcon } from "../icons";
 import { LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
+import { chargeAtom } from "../../atoms/playerAtoms";
+import { useAtom } from "jotai";
 
 export const ActionConfirmDialog = ({
   actionType = "sns", // "walk","sns"
   spotName = "施設名を設定",
   arrivalTime = "00:00",
-  life = 99,
-  mental = 99,
-  charge = 99,
-  money = 99,
+  life = 999,
+  mental = 999,
+  charge = 999,
+  money = 999,
   onBackClick,
   onClick,
 }) => {
+  const [currentCharge] = useAtom(chargeAtom);
+  const isLowCharge = currentCharge === 0 ? true : false;
+
+  // 数値が0で来ている場合は±0と表示
+  const formatValue = (val) => (val === 0 ? "±0" : val);
+
   return (
     <Flex
       className="action-confirm-dialog"
@@ -47,10 +55,10 @@ export const ActionConfirmDialog = ({
           <Text className="text-maintext">想定所要ゲージ</Text>
           <LifeGauge
             howto={false}
-            life={life}
-            mental={mental}
-            charge={charge}
-            money={money}
+            life={formatValue(life)}
+            mental={formatValue(mental)}
+            charge={formatValue(charge)}
+            money={formatValue(money)}
           />
           <Text className="text-subtext">
             ※想定外の変動が起こることがあります。災害時は予測不能な事態が起こりうるため、ご注意ください。
@@ -71,16 +79,20 @@ export const ActionConfirmDialog = ({
               <>
                 「移動」を押すと、目的地の変更はできません。
                 <br />
-                移動や、移動中の時間経過によって体力が0%になると、避難失敗となります。
+                移動や、移動中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
                 体力に注意して行動しましょう。
               </>
             ) : actionType === "sns" ? (
-              <>
-                「見る」を押すと、アクションの変更はできません。
-                <br />
-                SNSを見ている途中の時間経過によって体力が0%になると、避難失敗となります。
-                体力に注意して行動しましょう。
-              </>
+              isLowCharge ? (
+                <>充電が足りないため、SNSを見ることができません。</>
+              ) : (
+                <>
+                  「見る」を押すと、アクションの変更はできません。
+                  <br />
+                  SNSを見ている途中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
+                  体力に注意して行動しましょう。
+                </>
+              )
             ) : null}
           </Text>
         </Flex>
@@ -103,7 +115,7 @@ export const ActionConfirmDialog = ({
           )}
           <Button
             text={actionType === "walk" ? "移動する" : "見る"}
-            isAvailable
+            isAvailable={isLowCharge ? false : true}
             color="var(--color-theme10)"
             onClick={onClick}
             width="100%"

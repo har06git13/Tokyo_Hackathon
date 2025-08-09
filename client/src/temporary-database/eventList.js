@@ -136,11 +136,6 @@ export const eventList = [
     locationId: null,
     gaugeChange: { life: 0, mental: -5, battery: -5, money: 0 },
     texts: [
-      {
-        type: "system",
-        isCritical: true,
-        text: "時間経過で体力・精神力・電源を5%消費した。",
-      },
       { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
       { type: "system", text: "SNSでいくつかの情報を入手した。" },
       {
@@ -174,11 +169,6 @@ export const eventList = [
     locationId: null,
     gaugeChange: { life: 0, mental: 0, battery: -5, money: 0 },
     texts: [
-      {
-        type: "system",
-        isDecrease: true,
-        text: "時間経過で体力・精神力・電源を5%消費した。",
-      },
       { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
       { type: "system", text: "SNSでいくつかの情報を入手した。" },
       {
@@ -200,6 +190,183 @@ export const eventList = [
       },
     ],
   },
+  {
+    id: "event_sns_003",
+    type: "sns",
+    requiredDuration: 30,
+    timeSlot: "6h",
+    locationId: null,
+    gaugeChange: { life: 0, mental: -5, battery: -5, money: 0 },
+    texts: [
+      { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
+      { type: "system", text: "SNSでいくつかの情報を入手した。" },
+
+      {
+        type: "talk",
+        text: "やっと外に出られた人もいるけど、まだ渋谷は混乱してるみたい…",
+      },
+      {
+        type: "system",
+        text: "余震に備えて安全な場所で待機するよう呼びかけがある。",
+      },
+
+      {
+        type: "talk",
+        text: "大きな地震がまた来るなんて話もあって、正直ちょっと怖い…",
+      },
+
+      {
+        type: "talk",
+        text: "避難所はまだ空きがあるみたいだけど、体調悪い人はすぐに避難しないとね。",
+      },
+
+      { type: "system", text: "歩いて帰る人が多く、混雑も続いている様子。" },
+
+      {
+        type: "talk",
+        text: "スーパーで暴動の噂もあるけど、本当かどうかわからない。みんな冷静になってほしいな。",
+      },
+
+      {
+        type: "talk",
+        text: "友達と連絡が取れない人も多くて、不安な気持ちが伝わってくる。",
+      },
+
+      {
+        type: "system",
+        text: "停電は一部復旧しているが、まだ油断はできない。",
+      },
+
+      {
+        type: "talk",
+        text: "支援物資の仕分けを手伝う人も募集中。こういう助け合いは心強い。",
+      },
+
+      { type: "system", isDecrease: true, text: "精神を5%消費した。" },
+    ],
+  },
+  {
+    id: "event_sns_004",
+    type: "sns",
+    requiredDuration: 30,
+    timeSlot: "8h",
+    locationId: null,
+    gaugeChange: { life: 0, mental: -5, battery: -5, money: 0 },
+    texts: [
+      { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
+      { type: "system", text: "SNSでいくつかの情報を入手した。" },
+
+      {
+        type: "talk",
+        text: "避難所にやっと着いた人もいて、水や食料があるのはほんと安心だよな。",
+      },
+      { type: "system", text: "区民館が支援物資の配布拠点になっている。" },
+
+      {
+        type: "talk",
+        text: "でも近所の避難所で暴動が起きているらしいって噂もある。怖い…",
+      },
+
+      {
+        type: "talk",
+        text: "一時避難場所の利用も推奨されてるみたい。混雑緩和は大事だよね。",
+      },
+
+      {
+        type: "talk",
+        text: "学校の避難場所に到着した人はみんな無事そうでよかった。油断は禁物だけど。",
+      },
+
+      {
+        type: "talk",
+        text: "一方で、平和ボケしてスタバ来ちゃってる人もいるみたい（笑）こういうの見ると少しほっとする。",
+      },
+
+      { type: "system", text: "支援施設でボランティア募集が行われている。" },
+
+      {
+        type: "talk",
+        text: "また大きな余震が来るかもしれないっていう話もあって、まだまだ気は抜けない。",
+      },
+
+      {
+        type: "talk",
+        text: "避難所で新しい友達ができて、みんなで助け合っている様子が伝わってくる。",
+      },
+
+      {
+        type: "talk",
+        text: "そんな中、普通に寿司食べてる人もいて、日常の感覚が戻るのは嬉しいけど、複雑な気持ちだ。",
+      },
+
+      { type: "system", isDecrease: true, text: "精神を5%消費した。" },
+    ],
+  },
+  {
+    id: "event_sns_005",
+    type: "sns",
+    requiredDuration: 30,
+    timeSlot: "10h",
+    locationId: null,
+    gaugeChange: { life: 0, mental: -5, battery: -5, money: 0 },
+    texts: [
+      { type: "system", isDecrease: true, text: "SNSで電源を5%消費した。" },
+      { type: "system", text: "SNSでいくつかの情報を入手した。" },
+
+      {
+        type: "talk",
+        text: "眠すぎて限界の人もいるみたい。仮眠しつつも家が恋しい気持ち、よくわかる。",
+      },
+
+      {
+        type: "talk",
+        text: "充電スポットは混雑してて時間ずらすしかないみたい。イライラしそうだなあ。",
+      },
+
+      {
+        type: "talk",
+        text: "お腹ペコペコで差し入れを待つ声も。食料不足はマジで辛いよな…",
+      },
+
+      {
+        type: "talk",
+        text: "渋谷駅地下に秘密の非常用トンネル？そんな都市伝説、信じる人もいるんだろうなぁ。",
+      },
+
+      {
+        type: "system",
+        text: "公式からは避難所の状況が日々変わるのでサイトで確認してねとのこと。",
+      },
+
+      {
+        type: "talk",
+        text: "家に帰れなくても、少し落ち着いてきたという声もあって皆頑張ってる。",
+      },
+
+      {
+        type: "talk",
+        text: "まだ日常モードの人もいて、普通に電車に乗ってるって…ちょっと羨ましい気もする。",
+      },
+
+      {
+        type: "talk",
+        text: "体調悪い人は医療機関へ早めに相談してほしいって支援の声もある。",
+      },
+
+      {
+        type: "talk",
+        text: "不審者が避難所に出没してるって話、怖すぎるから気をつけてほしい…",
+      },
+
+      {
+        type: "talk",
+        text: "コーヒー飲みながらまったりしてる人も。長期戦だけど焦らずに進もう。",
+      },
+
+      { type: "system", isDecrease: true, text: "精神を5%消費した。" },
+    ],
+  },
+
   {
     id: "event_walk_001",
     type: "walk",
@@ -255,7 +422,7 @@ export const eventList = [
     requiredDuration: 30,
     timeSlot: null,
     locationId: "fac_002", // 薬 マツモトキヨシ SHIBUYA DOGENZAKA FLAG
-    gaugeChange: { life: -5, mental: 0, battery: 0, money: 0 },
+    gaugeChange: { life: -70, mental: 0, battery: 0, money: 0 },
     texts: [
       {
         type: "system",
