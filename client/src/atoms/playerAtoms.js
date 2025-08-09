@@ -1,4 +1,5 @@
 import { atom } from "jotai";
+import { eventList } from "../temporary-database";
 
 // ユーザー基本情報
 export const playerNameAtom = atom("Default Player");
@@ -37,27 +38,23 @@ export const currentTimeSlotAtom = atom((get) => {
 }); // ゲーム開始からの経過時間
 export const currentLocationAtom = atom("渋谷駅前"); // 現在地
 
-// ライフゲージ（個別でも全体でも）
+// ライフゲージ
 export const lifeAtom = atom(70);
 export const mentalAtom = atom(70);
 export const chargeAtom = atom(60);
 export const moneyAtom = atom(0);
-export const lifeGaugeAtom = atom((get) => ({
-  health: get(lifeAtom),
-  mental: get(mentalAtom),
-  charge: get(chargeAtom),
-  money: get(moneyAtom),
-}));
+export const gaugeHistoryAtom = atom([]); // 30分ごとのゲージログ
+
+// 現在の選択に関する情報
+export const selectedFacilityAtom = atom(null);
+const prologueEvent = eventList.find((e) => e.type === "prologue");
+export const selectedEventAtom = atom(prologueEvent);
 
 // イベント履歴
-export const sampleEvent = {
-  id: "event001",
-  time: "09:00",
-};
-export const eventHistoryAtom = atom([sampleEvent]); // イベントid,イベント時刻を保存
+export const eventHistoryAtom = atom([]); // イベントid,イベント時刻を保存
 
 // 訪問済み施設
-export const visitedFacilitiesAtom = atom([]); // 施設idを保存、最初は未訪問
+export const visitedFacilitiesAtom = atom(["fac_000"]); /// 施設idを保存、最初は被災した地点のみ
 
 // 生存または避難失敗
 export const survivedAtom = atom(null); // true/false/null（未確定）

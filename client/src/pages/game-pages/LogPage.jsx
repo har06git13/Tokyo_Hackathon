@@ -1,9 +1,14 @@
 import React from "react";
-import { Flex, Text, Box } from "@chakra-ui/react";
+import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer, LogElement } from "../../components/game-page";
+import { useAtom } from "jotai";
+import { eventHistoryAtom } from "../../atoms/playerAtoms";
 
 export const LogPage = () => {
+  const [eventHistory] = useAtom(eventHistoryAtom);
+  console.log(eventHistory);
+
   return (
     <Flex
       className="page-container"
@@ -29,15 +34,13 @@ export const LogPage = () => {
         overflowY={"auto"}
         zIndex={2}
       >
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
-        <LogElement />
+        {eventHistory.map(({ id, time }, index) => (
+          <LogElement
+            key={`${id}-${time.getTime()}-${index}`}
+            id={id}
+            time={time}
+          />
+        ))}
       </Flex>
       <Footer type="log" />
     </Flex>

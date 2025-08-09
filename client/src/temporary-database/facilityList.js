@@ -1,4 +1,17 @@
-export const facilitieList = [
+export const facilityList = [
+  {
+    id: "fac_000",
+    name: "渋谷駅前",
+    type: "default",
+    coordinates: { lat: 35.658, lng: 139.7017 },
+    timeStatuses: {
+      "2h": { crowdLevel: "low", availableItems: [] },
+      "4h": { crowdLevel: "low", availableItems: [] },
+      "6h": { crowdLevel: "medium", availableItems: [] },
+      "8h": { crowdLevel: "medium", availableItems: [] },
+      "10h": { crowdLevel: "high", availableItems: [] },
+    },
+  },
   {
     id: "fac_001",
     name: "CHARGESPOT HUB 渋谷センター街店",

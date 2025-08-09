@@ -1,4 +1,4 @@
 export { eventList } from "./eventList";
-export { facilitieList } from "./facilitieList";
+export { facilityList } from "./facilityList";
 export { snsPostList } from "./snsPostList";
-export { spotTypeInfoList } from "./statics/spotTypeInfoList";
+export { spotTypeList, spotTypeInfoList } from "./statics/spotTypeInfoList";

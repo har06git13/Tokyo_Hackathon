@@ -59,7 +59,9 @@ export const ActionConfirmDialog = ({
 
         <Flex>
           <Text className="text-maintext" color={"var(--color-accent10)"}>
-            到着予定時刻：{arrivalTime}
+            {actionType === "walk"
+              ? `到着予定時刻：${arrivalTime}`
+              : `終了予定時刻：${arrivalTime}`}
           </Text>
         </Flex>
 

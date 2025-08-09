@@ -13,11 +13,9 @@ export const spotTypes = {
 
 export const eventTypes = {
   time: "時間経過によるゲージ消費",
-  event: "移動先にて",
   walk: "移動",
   sns: "SNS",
   prologue: "プロローグ：被災",
-  default: "イベントを設定",
 };
 
 export const spotStatusTypes = {

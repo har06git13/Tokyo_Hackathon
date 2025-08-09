@@ -6,14 +6,13 @@ import "./styleguide.css";
 // ページコンポーネント
 import { TitlePage, ProfilePage, SplashPage } from "./pages/title-pages";
 import {
-  ProloguePage,
   ActionPage,
   LogPage,
   MapPage,
-  EpiloguePage,
   WalkPage,
   CheckInPage,
   SnsPage,
+  MonologuePage,
 } from "./pages/game-pages";
 import {
   SettingPage,
@@ -44,11 +43,10 @@ function App() {
           <Route path="/result" element={<ResultPage />} />
           {/* /game-page内はネストルート */}
           <Route path="/game">
-            <Route path="prologue" element={<ProloguePage />} />
+            <Route path="monologue" element={<MonologuePage />} />
             <Route path="action" element={<ActionPage />} />
             <Route path="log" element={<LogPage />} />
             <Route path="map" element={<MapPage />} />
-            <Route path="epilogue" element={<EpiloguePage />} />
             <Route path="walk" element={<WalkPage />} />
             <Route path="checkin" element={<CheckInPage />} />
             <Route path="sns" element={<SnsPage />} />

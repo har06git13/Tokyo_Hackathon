@@ -3,30 +3,38 @@ import React from "react";
 import { LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
-import { playerNameAtom } from "../../atoms/playerAtoms";
-import { spotTypes, eventTypes } from "../../TypeList";
+import { playerNameAtom, gaugeHistoryAtom } from "../../atoms/playerAtoms";
+import { eventTypes } from "../../TypeList";
+import { eventList, facilityList } from "../../temporary-database";
 
-export const LogElement = ({
-  eventType,
-  spot = "施設の名前",
-  spotType,
-  time = "14:30",
-  eventTime = "0時間30分",
-  text = "イベントの内容",
-}) => {
+export const LogElement = ({ id, time }) => {
   const [playerName] = useAtom(playerNameAtom);
+  const [gaugeHistory] = useAtom(gaugeHistoryAtom);
+
+  const event = eventList.find((e) => e.id === id);
+  const facility = event
+    ? facilityList.find((f) => f.id === event.locationId)
+    : null;
+
+  const formatTime = (date) => {
+    if (!(date instanceof Date)) return "";
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  };
+
+  // timeに一致するゲージ履歴を探す
+  const gauge = gaugeHistory.find((g) => g.time.getTime() === time.getTime());
 
   const getDescriptionByType = () => {
-    switch (eventType) {
+    switch (event.type) {
       case "time":
         return "毎時00分に体力・精神力・電源を5%消費します";
-      case "event":
-        return text;
       case "walk":
-        return undefined;
+        return event.text;
       case "sns":
         return "いくつかの情報を手に入れた。";
-      default:
+      case "prologue":
         return `${playerName}は被災した。`;
     }
   };
@@ -41,7 +49,7 @@ export const LogElement = ({
         alignItems="center"
       >
         <Text className="text-subtext" color="var(--color-base13)">
-          {time}
+          {formatTime(time)}
         </Text>
       </Flex>
 
@@ -56,19 +64,22 @@ export const LogElement = ({
         gap="2vw"
       >
         {/* ログタイトル & 地点 */}
+
         <Flex flexDirection="column">
-          <Text className="text-sectiontitle">
-            {eventTypes[eventType] ?? eventTypes.default}
-          </Text>
-          <Text className="text-subtext" color="var(--color-base13)">
-            地点：{spot}
-          </Text>
+          <Text className="text-sectiontitle">{eventTypes[event.type]}</Text>
+          {event.type !== "time" && event.type !== "sns" && (
+            <Text className="text-subtext" color="var(--color-base13)">
+              移動先：{facility?.name}
+            </Text>
+          )}
         </Flex>
+
         {/* 施設タイプ & イベント内容 */}
         <Flex flexDirection="column">
-          {eventType === "event" && (
+          {event.type === "walk" && (
             <Text className="text-maintext">
-              施設タイプ：{spotTypes[spotType] ?? spotTypes.default}
+              施設タイプ：
+              {facility.type}
             </Text>
           )}
           {getDescriptionByType() && (
@@ -77,13 +88,27 @@ export const LogElement = ({
             </Text>
           )}
         </Flex>
+
         {/* ゲージ */}
-        <Flex flexDirection="column" gap="1vw">
-          <Text className="text-subtext">変動後ゲージ</Text>
-          <LifeGauge howto={false} />
-        </Flex>
+        {event.type === "time" || event.type === "prologue" ? undefined : (
+          <Flex flexDirection="column" gap="1vw">
+            <Text className="text-subtext">変動後ゲージ</Text>
+            <LifeGauge
+              howto={false}
+              life={gauge.life}
+              mental={gauge.mental}
+              charge={gauge.charge}
+              money={gauge.money}
+            />
+          </Flex>
+        )}
+
         {/* 所要時間 */}
-        <Text className="text-maintext">所要時間：{eventTime}</Text>
+        {event.type === "time" || event.type === "prologue" ? undefined : (
+          <Text className="text-maintext">
+            所要時間：{event.requiredDuration}分
+          </Text>
+        )}
       </Flex>
     </Flex>
   );

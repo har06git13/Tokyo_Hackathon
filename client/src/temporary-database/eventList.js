@@ -1,10 +1,11 @@
 export const eventList = [
   {
     id: "event_prologue_001",
-    type: "prologue", // "walk","sns","prologue","epilogue"
+    type: "prologue", // "walk","sns","prologue","epilogue","time"
     requiredDuration: 0, // 単位: 分 デモでは30分固定
-    locationId: null, // type === 'walk' の時だけ後で動的に設定する想定
-    gaugeChange: { health: 0, mental: 0, battery: 0, money: 0 },
+    timeSlot: null, // 時間帯(snsのみ)
+    locationId: "fac_000", // type === 'walk' の時だけ後で動的に設定する想定
+    gaugeChange: { life: 0, mental: 0, battery: 0, money: 0 },
     texts: [
       {
         type: "system",
@@ -83,8 +84,9 @@ export const eventList = [
     id: "event_epilogue_001",
     type: "epilogue",
     requiredDuration: 0,
+    timeSlot: null,
     locationId: null,
-    gaugeChange: { health: 0, mental: 0, battery: 0, money: 0 },
+    gaugeChange: { life: 0, mental: 0, battery: 0, money: 0 },
     texts: [
       {
         type: "system",
@@ -130,8 +132,9 @@ export const eventList = [
     id: "event_sns_001",
     type: "sns",
     requiredDuration: 30,
+    timeSlot: "2h",
     locationId: null,
-    gaugeChange: { health: 0, mental: -5, battery: -5, money: 0 },
+    gaugeChange: { life: 0, mental: -5, battery: -5, money: 0 },
     texts: [
       {
         type: "system",
@@ -167,8 +170,9 @@ export const eventList = [
     id: "event_sns_002",
     type: "sns",
     requiredDuration: 30,
+    timeSlot: "4h",
     locationId: null,
-    gaugeChange: { health: 0, mental: 0, battery: -5, money: 0 },
+    gaugeChange: { life: 0, mental: 0, battery: -5, money: 0 },
     texts: [
       {
         type: "system",
@@ -200,8 +204,9 @@ export const eventList = [
     id: "event_walk_001",
     type: "walk",
     requiredDuration: 30,
+    timeSlot: null,
     locationId: "fac_001", // CHARGESPOT HUB 渋谷センター街店
-    gaugeChange: { health: -5, mental: +5, battery: +50, money: 0 },
+    gaugeChange: { life: -5, mental: +5, battery: +50, money: 0 },
     texts: [
       {
         type: "system",
@@ -248,8 +253,9 @@ export const eventList = [
     id: "event_walk_002",
     type: "walk",
     requiredDuration: 30,
+    timeSlot: null,
     locationId: "fac_002", // 薬 マツモトキヨシ SHIBUYA DOGENZAKA FLAG
-    gaugeChange: { health: -5, mental: 0, battery: 0, money: 0 },
+    gaugeChange: { life: -5, mental: 0, battery: 0, money: 0 },
     texts: [
       {
         type: "system",
@@ -308,8 +314,9 @@ export const eventList = [
     id: "event_walk_003",
     type: "walk",
     requiredDuration: 30,
+    timeSlot: null,
     locationId: "fac_003", // ファミリーマート 渋谷公園通り店
-    gaugeChange: { health: +5, mental: +15, battery: 0, money: +4000 },
+    gaugeChange: { life: +5, mental: +15, battery: 0, money: +4000 },
     texts: [
       {
         type: "system",
@@ -374,8 +381,9 @@ export const eventList = [
     id: "event_walk_004",
     type: "walk",
     requiredDuration: 30,
+    timeSlot: null,
     locationId: "fac_004", // 代々木公園
-    gaugeChange: { health: +5, mental: +10, battery: 0, money: 0 },
+    gaugeChange: { life: +5, mental: +10, battery: 0, money: 0 },
     texts: [
       {
         type: "system",
@@ -481,6 +489,21 @@ export const eventList = [
         type: "system",
         isCritical: true,
         text: "精神が10%回復した。",
+      },
+    ],
+  },
+  {
+    id: "event_time_001",
+    type: "time",
+    requiredDuration: 0,
+    timeSlot: null,
+    locationId: "null",
+    gaugeChange: { life: -5, mental: -5, battery: -5, money: 0 },
+    texts: [
+      {
+        type: "system",
+        isDecrease: true,
+        text: "時間経過で体力、精神力、電源を5%消費した。",
       },
     ],
   },

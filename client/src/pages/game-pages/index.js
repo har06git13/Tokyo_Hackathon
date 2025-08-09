@@ -6,3 +6,4 @@ export { MapPage } from "./MapPage";
 export { ProloguePage } from "./ProloguePage";
 export { SnsPage } from "./SnsPage";
 export { WalkPage } from "./WalkPage";
+export { MonologuePage } from "./MonologuePage";

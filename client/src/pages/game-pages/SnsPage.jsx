@@ -12,6 +12,12 @@ export const SnsPage = () => {
   const navigate = useNavigate();
   const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
 
+  // 時間帯でツイートを絞り込み
+  const filteredPosts = snsPostList.filter(
+    (post) => post.timeSlot === currentTimeSlot
+  );
+
+  // 表示順をシャッフル
   const shuffleArray = (array) => {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -20,16 +26,7 @@ export const SnsPage = () => {
     }
     return arr;
   };
-
-  const filteredPosts = snsPostList.filter(
-    (post) => post.timeSlot === currentTimeSlot
-  ); // 時間帯でツイートを絞り込み
   const shuffledPosts = shuffleArray(filteredPosts);
-
-  console.log("typeof currentTimeSlot:", typeof currentTimeSlot);
-  console.log("currentTimeSlot value:", currentTimeSlot);
-  console.log("filteredPosts:", filteredPosts);
-  console.log("shuffledPosts:", shuffledPosts);
 
   return (
     <Flex
@@ -68,7 +65,15 @@ export const SnsPage = () => {
               />
             ))}
           </Flex>
-          <Button text="次へ" width="90%" height="10.6vw" isAvailable />
+          <Button
+            text="次へ"
+            width="90%"
+            height="10.6vw"
+            isAvailable
+            onClick={() => {
+              navigate(`/game/monologue`);
+            }}
+          />
         </Flex>
       </Flex>
       <Footer />
