@@ -3,6 +3,7 @@ import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { MonologueViewer } from "../../components/game-page/MonologueViewer";
 import { useMonologueLogic } from "../../hooks/useMonologueLogic";
+import { eventTypeList } from "../../temporary-database";
 
 export const MonologuePage = () => {
   const { selectedEvent, combinedTexts, buttonText, handleButtonClick } =
@@ -18,7 +19,12 @@ export const MonologuePage = () => {
         className="background-image"
         style={{ backgroundImage: "url('/assets/image/monologue-back.png')" }}
       />
-      <Header prevPage={false} currentPage={selectedEvent.type} />
+      <Header
+        prevPage={false}
+        currentPage={
+          selectedEvent ? eventTypeList[selectedEvent.type] : "不明なイベント"
+        }
+      />
 
       <MonologueViewer
         texts={combinedTexts}

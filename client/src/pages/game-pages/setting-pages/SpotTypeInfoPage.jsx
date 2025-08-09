@@ -2,7 +2,7 @@ import React from "react";
 import { Flex, Text } from "@chakra-ui/react";
 import { Header } from "../../../components/common";
 import { SettingInfoIndex } from "../../../components/game-page";
-import { spotTypeInfoList } from "../../../temporary-database/statics/staticDataList";
+import { spotTypeList } from "../../../temporary-database";
 
 export const SpotTypeInfoPage = () => {
   return (
@@ -37,10 +37,10 @@ export const SpotTypeInfoPage = () => {
             それぞれできることや得られる効果が違うので、状況に合わせて使い分けてみましょう。
           </Text>
 
-          {spotTypeInfoList.map((spot, idx) => (
+          {Object.values(spotTypeList).map((spot, idx) => (
             <Flex key={idx} flexDirection="column" gap="1vw">
               <Text className="text-maintext" color={"var(--color-accent10)"}>
-                {spot.title}
+                {spot.name}
               </Text>
               {spot.description.map((line, lineIdx) => (
                 <Text key={lineIdx} className="text-maintext">
