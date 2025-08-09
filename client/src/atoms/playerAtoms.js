@@ -50,6 +50,9 @@ export const selectedFacilityAtom = atom(null);
 const prologueEvent = eventList.find((e) => e.type === "prologue");
 export const selectedEventAtom = atom(prologueEvent);
 
+// 現在のイベントに関する状態管理
+export const currentEventStatusAtom = atom(null); // "null","walk","sns","monologue"
+
 // イベント履歴
 export const eventHistoryAtom = atom([]); // イベントid,イベント時刻を保存
 

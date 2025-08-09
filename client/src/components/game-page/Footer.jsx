@@ -3,8 +3,13 @@ import React from "react";
 import { ActionIcon, FootprintIcon, MapIcon } from "../icons";
 import { Flex, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { currentEventStatusAtom } from "../../atoms/playerAtoms";
+import { useAtom } from "jotai";
 
 export const Footer = ({ type = "action", isWalking = false }) => {
+  const [currentEventStatus, setCurrentEventStatus] = useAtom(
+    currentEventStatusAtom
+  );
   const getColor = (target) => {
     if (target === "action" && isWalking) return "var(--color-accent10)";
     if (type === target) return "var(--color-theme10)";
@@ -12,6 +17,14 @@ export const Footer = ({ type = "action", isWalking = false }) => {
   };
 
   const navigate = useNavigate();
+
+  const onActionClick = () => {
+    if (currentEventStatus === "walk") {
+      navigate("/game/walk");
+    } else if (currentEventStatus === "sns") {
+      navigate("/game/sns");
+    }
+  };
 
   return (
     <Flex
@@ -45,7 +58,7 @@ export const Footer = ({ type = "action", isWalking = false }) => {
         width={"16vw"}
         alignItems={"center"}
         justifyContent={"space-between"}
-        onClick={() => navigate("/game/action")}
+        onClick={onActionClick}
       >
         <ActionIcon color={getColor("action")} height="6vw" />
         <Text className={"text-subtext"} color={getColor("action")}>

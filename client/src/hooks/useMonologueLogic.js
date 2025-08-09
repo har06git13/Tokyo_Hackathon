@@ -2,6 +2,8 @@ import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import {
   selectedEventAtom,
+  selectedFacilityAtom,
+  currentEventStatusAtom,
   currentTimeAtom,
   lifeAtom,
   mentalAtom,
@@ -15,7 +17,9 @@ import { eventList } from "../temporary-database";
 
 export const useMonologueLogic = () => {
   const navigate = useNavigate();
-  const [selectedEvent] = useAtom(selectedEventAtom);
+  const [selectedEvent, setSelectedEvent] = useAtom(selectedEventAtom);
+  const [, setSelectedFacility] = useAtom(selectedFacilityAtom);
+  const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
   const [currentTime, setCurrentTime] = useAtom(currentTimeAtom);
   const [life, setLife] = useAtom(lifeAtom);
   const [mental, setMental] = useAtom(mentalAtom);
@@ -24,6 +28,8 @@ export const useMonologueLogic = () => {
   const [, setEventHistory] = useAtom(eventHistoryAtom);
   const [, setVisitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [, setGaugeHistory] = useAtom(gaugeHistoryAtom);
+
+  setCurrentEventStatus("monologue");
 
   if (!selectedEvent) {
     // ここはhook内でreturnしちゃうか、外側で条件チェックしてもOK
@@ -121,6 +127,11 @@ export const useMonologueLogic = () => {
         return [...prev, selectedEvent.locationId];
       });
     }
+
+    // 選択をリセット
+    setSelectedEvent(null);
+    setSelectedFacility(null);
+    setCurrentEventStatus(null);
 
     navigate("/game/action");
   };

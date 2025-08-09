@@ -3,9 +3,12 @@ import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer, CheckinButton } from "../../components/game-page";
 import { useNavigate } from "react-router-dom";
+import { useAtom } from "jotai";
+import { selectedFacilityAtom } from "../../atoms/playerAtoms";
 
 export const WalkPage = () => {
   const navigate = useNavigate();
+  const [selectedFacility] = useAtom(selectedFacilityAtom);
 
   return (
     <Flex
@@ -49,9 +52,7 @@ export const WalkPage = () => {
           </Text>
         </Flex>
         <Text className="text-subtext">この場所に移動しています……</Text>
-        <Text className="text-sectiontitle">
-          CHARGESPOT HUB 渋谷センター街店
-        </Text>
+        <Text className="text-sectiontitle">{selectedFacility?.name}</Text>
         <Text className="text-subtext">
           災害時の移動には、落下物やガラス片など、思わぬ危険がひそんでいます。
           スマートフォンの操作は控え、足元や周囲に注意しながら移動しましょう。

@@ -85,7 +85,7 @@ export const eventList = [
     type: "epilogue",
     requiredDuration: 0,
     timeSlot: null,
-    locationId: null,
+    locationId: "fac_005",
     gaugeChange: { life: 0, mental: 0, battery: 0, money: 0 },
     texts: [
       {

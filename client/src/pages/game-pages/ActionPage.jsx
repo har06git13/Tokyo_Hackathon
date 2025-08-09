@@ -18,6 +18,7 @@ import {
   selectedFacilityAtom,
   selectedEventAtom,
   eventHistoryAtom,
+  currentEventStatusAtom,
 } from "../../atoms/playerAtoms";
 import { facilityList, eventList } from "../../temporary-database";
 
@@ -31,17 +32,18 @@ export const ActionPage = () => {
   const [currentTime] = useAtom(currentTimeAtom);
   const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
+  const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
 
   useEffect(() => {
     setSpotSelected(false);
   }, [actionType]);
 
   // マップAPIが実装されるまでの仮の施設選択リスト
-  const FacilityList = ({ currentTime, onSelect }) => {
+  const FacilityList = ({ currentTimeSlot, onSelect }) => {
     const visitedEventIds = eventHistory.map((e) => e.id);
     const filteredFacilities = facilityList.filter((fac) => {
       if (fac.type === "shelter") {
-        return ["6h", "8h", "10h"].includes(currentTime);
+        return ["6h", "8h", "10h"].includes(currentTimeSlot);
       }
       // IDチェックして、訪問済みを除外
       const hasVisited = eventList.some(
@@ -68,14 +70,19 @@ export const ActionPage = () => {
 
   // 選択した施設を、グローバルなstateにセット
   const onSelectFacility = (facilityId) => {
+    if (facilityId === "fac_000") return; // ここで即リターンして無視
+
     const facData = facilityList.find((fac) => fac.id === facilityId);
-    const evData = eventList.find(
-      (ev) => ev.locationId === facilityId && ev.type === "walk"
-    );
+    const evData =
+      eventList.find(
+        (ev) => ev.locationId === facilityId && ev.type === "walk"
+      ) || eventList.find((ev) => ev.type === "epilogue");
 
     setSelectedFacility(facData);
     setSelectedEvent(evData);
     setSpotSelected(true);
+    console.log(selectedFacility);
+    console.log(selectedEvent);
   };
 
   // snsを選択した場合のイベントセット
@@ -85,7 +92,6 @@ export const ActionPage = () => {
     );
     if (evData) {
       setSelectedEvent(evData);
-      navigate("/game/sns");
     } else {
       console.warn("該当するSNSイベントが見つからなかったよ");
     }
@@ -118,7 +124,10 @@ export const ActionPage = () => {
         <EventText />
         <ActionTab
           type={actionType}
-          onSnsClick={() => setActionType("sns")}
+          onSnsClick={() => {
+            setActionType("sns");
+            onSelectSnsEvent();
+          }}
           onWalkClick={() => setActionType("walk")}
         />
         {actionType === "walk" && (
@@ -136,7 +145,7 @@ export const ActionPage = () => {
 
             {/* 仮リスト */}
             <FacilityList
-              currentTime={currentTime}
+              currentTimeSlot={currentTimeSlot}
               onSelect={onSelectFacility}
             />
 
@@ -144,10 +153,10 @@ export const ActionPage = () => {
               <MapSpotInfo
                 spotName={selectedFacility.name}
                 spotType={selectedFacility.type}
-                life={selectedEvent.gaugeChange.life}
-                mental={selectedEvent.gaugeChange.mental}
-                charge={selectedEvent.gaugeChange.battery}
-                money={selectedEvent.gaugeChange.money}
+                life={selectedEvent?.gaugeChange.life}
+                mental={selectedEvent?.gaugeChange.mental}
+                charge={selectedEvent?.gaugeChange.battery}
+                money={selectedEvent?.gaugeChange.money}
                 arrivalTime={arrivalTime}
                 onClick={() => setShowConfirmDialog(true)}
               />
@@ -179,7 +188,10 @@ export const ActionPage = () => {
                     charge={selectedEvent.gaugeChange.battery}
                     money={selectedEvent.gaugeChange.money}
                     onBackClick={() => setShowConfirmDialog(false)}
-                    onClick={() => navigate("/game/walk")}
+                    onClick={() => {
+                      setCurrentEventStatus("walk");
+                      navigate("/game/walk");
+                    }}
                   />
                 </Flex>
               </>
@@ -199,11 +211,14 @@ export const ActionPage = () => {
             <SnsLogoIcon color="var(--color-base10)" width="20%" />
             <ActionConfirmDialog
               arrivalTime={arrivalTime}
-              life={selectedEvent.gaugeChange.life}
-              mental={selectedEvent.gaugeChange.mental}
-              charge={selectedEvent.gaugeChange.battery}
-              money={selectedEvent.gaugeChange.money}
-              onClick={onSelectSnsEvent}
+              life={selectedEvent?.gaugeChange.life}
+              mental={selectedEvent?.gaugeChange.mental}
+              charge={selectedEvent?.gaugeChange.battery}
+              money={selectedEvent?.gaugeChange.money}
+              onClick={() => {
+                setCurrentEventStatus("sns");
+                navigate("/game/sns");
+              }}
             />
           </Flex>
         )}
