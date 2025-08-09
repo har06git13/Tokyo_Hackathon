@@ -4,8 +4,11 @@ import { LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { playerNameAtom, gaugeHistoryAtom } from "../../atoms/playerAtoms";
-import { eventTypes } from "../../TypeList";
-import { eventList, facilityList } from "../../temporary-database";
+import {
+  eventList,
+  facilityList,
+  eventTypeList,
+} from "../../temporary-database";
 
 export const LogElement = ({ id, time }) => {
   const [playerName] = useAtom(playerNameAtom);
@@ -67,7 +70,7 @@ export const LogElement = ({ id, time }) => {
 
         <Flex flexDirection="column">
           <Text className="text-sectiontitle">
-            {event ? eventTypes[event.type] : "不明なイベント"}
+            {event ? eventTypeList[event.type] : "不明なイベント"}
           </Text>
           {event?.type !== "time" && event?.type !== "sns" && (
             <Text className="text-subtext" color="var(--color-base13)">

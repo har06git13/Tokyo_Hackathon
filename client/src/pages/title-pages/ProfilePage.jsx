@@ -3,7 +3,11 @@ import { Flex, Text, Image } from "@chakra-ui/react";
 import { Button } from "../../components/common";
 import { useNavigate } from "react-router-dom";
 import { CheckBox, TitleInputField } from "../../components/title-page";
-import { ageTypes, genderTypes, residenceTypes } from "../../TypeList";
+import {
+  ageTypeList,
+  genderTypeList,
+  residenceTypeList,
+} from "../../temporary-database";
 import { useSetAtom } from "jotai";
 import {
   playerNameAtom,
@@ -26,9 +30,9 @@ export const ProfilePage = () => {
   const setPlayerGenderAtom = useSetAtom(playerGenderAtom);
   const setPlayerResidenceAtom = useSetAtom(playerResidenceAtom);
 
-  const ageOptions = toSelectOptions(ageTypes);
-  const genderOptions = toSelectOptions(genderTypes);
-  const residenceOptions = toSelectOptions(residenceTypes);
+  const ageOptions = toSelectOptions(ageTypeList);
+  const genderOptions = toSelectOptions(genderTypeList);
+  const residenceOptions = toSelectOptions(residenceTypeList);
 
   const handleClick = () => {
     if (isFormComplete) {

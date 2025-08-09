@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Button, LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
-import { spotTypes, spotStatusTypes } from "../../TypeList";
+import { spotTypeList, spotStatusTypeList } from "../../temporary-database";
 
 export const MapSpotInfo = ({
   type = "action", // "map" or "action"
@@ -39,11 +39,12 @@ export const MapSpotInfo = ({
                   : "var(--color-base13)"
               }
             >
-              {spotStatusTypes[spotStatus] ?? spotStatusTypes.default}
+              {spotStatusTypeList[spotStatus] ?? spotStatusTypeList.default}
             </Text>
 
             <Text className="text-maintext" color={"var(--color-base13)"}>
-              施設タイプ：{spotTypes[spotType] ?? spotTypes.default}
+              施設タイプ：
+              {spotTypeList[spotType]?.name ?? spotTypeList.default.name}
             </Text>
           </Flex>
 
@@ -90,8 +91,8 @@ export const MapSpotInfo = ({
 
 MapSpotInfo.propTypes = {
   type: PropTypes.oneOf(["map", "action"]),
-  spotstatus: PropTypes.oneOf(Object.keys(spotStatusTypes)),
-  spottype: PropTypes.oneOf(Object.keys(spotTypes)),
+  spotstatus: PropTypes.oneOf(Object.keys(spotStatusTypeList)),
+  spottype: PropTypes.oneOf(Object.keys(spotTypeList)),
   spotname: PropTypes.string,
   arrivaltime: PropTypes.string,
   life: PropTypes.number,
