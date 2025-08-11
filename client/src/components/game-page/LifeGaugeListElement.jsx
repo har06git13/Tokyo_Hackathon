@@ -69,6 +69,4 @@ export const LifeGaugeListElement = ({
 
 LifeGaugeListElement.propTypes = {
   type: PropTypes.oneOf(["life", "mental", "charge", "money"]),
-  title: PropTypes.string,
-  text: PropTypes.string,
 };

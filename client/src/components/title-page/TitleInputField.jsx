@@ -2,18 +2,6 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Flex, Text, Input } from "@chakra-ui/react";
 
-/**
- * TitleInputFieldコンポーネント
- *
- * @param {Object} props
- * @param {'center' | 'top' | 'bottom'} props.type - 角丸スタイルの種類
- * @param {string} props.label - ラベルテキスト
- * @param {string} props.placeholder - 入力欄のプレースホルダー
- * @param {string} props.value - 入力値
- * @param {function} props.onChange - 入力変更時のコールバック
- * @param {boolean} props.isSelect - セレクトモードかどうか
- * @param {Array<{value: string, label: string}>} props.options - セレクトの選択肢リスト
- */
 export const TitleInputField = ({
   type = "center",
   label = "プレイヤー名",

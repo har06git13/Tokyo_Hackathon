@@ -7,7 +7,6 @@ import { eventHistoryAtom } from "../../atoms/playerAtoms";
 
 export const LogPage = () => {
   const [eventHistory] = useAtom(eventHistoryAtom);
-  console.log(eventHistory);
 
   return (
     <Flex

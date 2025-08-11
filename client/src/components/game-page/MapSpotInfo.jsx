@@ -91,10 +91,10 @@ export const MapSpotInfo = ({
 
 MapSpotInfo.propTypes = {
   type: PropTypes.oneOf(["map", "action"]),
-  spotstatus: PropTypes.oneOf(Object.keys(spotStatusTypeList)),
-  spottype: PropTypes.oneOf(Object.keys(spotTypeList)),
-  spotname: PropTypes.string,
-  arrivaltime: PropTypes.string,
+  spotStatus: PropTypes.oneOf(Object.keys(spotStatusTypeList)),
+  spotType: PropTypes.oneOf(Object.keys(spotTypeList)),
+  spotName: PropTypes.string,
+  arrivalTime: PropTypes.string,
   life: PropTypes.number,
   mental: PropTypes.number,
   charge: PropTypes.number,
