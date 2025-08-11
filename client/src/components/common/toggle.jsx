@@ -15,17 +15,17 @@ export const Toggle = ({ status = true }) => {
       backgroundColor={
         state.status ? "var(--color-theme10)" : "var(--color-base13)"
       }
-      width={"12.2vw"}
+      width={"15%"}
       borderRadius={"9999px"}
-      padding={"0.6vw"}
+      padding={"0.8%"}
       alignItems={"center"}
       justifyContent={state.status ? "flex-end" : "flex-start"}
     >
       <Flex
         className="toggle-elemtnt"
         backgroundColor={"var(--color-base10)"}
-        width={"6vw"}
-        height={"6vw"}
+        aspectRatio={1}
+        height={"2.6vh"}
         borderRadius={"9999px"}
       />
     </Flex>

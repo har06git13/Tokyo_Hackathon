@@ -6,9 +6,9 @@ export const SettingInfoIndex = ({ text = "ゲームの目的" }) => {
   return (
     <Flex
       className="setting-info-index"
-      width={"90vw"}
-      borderBottom={"0.8vw solid var(--color-theme10)"}
-      height={"10.6vw"}
+      width={"100%"}
+      borderBottom={"0.4vh solid var(--color-theme10)"}
+      height={"4vh"}
       alignItems={"center"}
       justifyContent={"space-between"}
     >

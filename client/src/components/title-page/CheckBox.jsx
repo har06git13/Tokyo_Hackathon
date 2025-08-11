@@ -8,13 +8,13 @@ export const CheckBox = ({ isChecked, onChange }) => {
     <Flex
       className="check-box"
       onClick={() => onChange(!isChecked)}
-      width="5vw"
-      height="5vw"
+      aspectRatio={1}
+      height="2.4vh"
       backgroundColor={
         isChecked ? "var(--color-theme10)" : "var(--color-base10)"
       }
-      paddingX="1vw"
-      borderRadius="1vw"
+      paddingX="0.6vh"
+      borderRadius="0.4vh"
       alignItems="center"
       justifyContent="center"
       cursor="pointer"

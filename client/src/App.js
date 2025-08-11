@@ -33,34 +33,39 @@ function App() {
 
   return (
     <Provider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<SplashPage />} />
-          <Route path="/title">
-            <Route path="gamestart" element={<TitlePage />} />
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-          <Route path="/result" element={<ResultPage />} />
-          {/* /game-page内はネストルート */}
-          <Route path="/game">
-            <Route path="monologue" element={<MonologuePage />} />
-            <Route path="action" element={<ActionPage />} />
-            <Route path="log" element={<LogPage />} />
-            <Route path="map" element={<MapPage />} />
-            <Route path="walk" element={<WalkPage />} />
-            <Route path="checkin" element={<CheckInPage />} />
-            <Route path="sns" element={<SnsPage />} />
-            <Route path="setting" element={<SettingPage />} />
-            <Route
-              path="setting/lifegaugeinfo"
-              element={<LifeGaugeInfoPage />}
-            />
-            <Route path="setting/ruleinfo" element={<RuleInfoPage />} />
-            <Route path="setting/spottypeinfo" element={<SpotTypeInfoPage />} />
-          </Route>
-        </Routes>
-        {/* <h1>this from App.js→「{message}」</h1> */}
-      </Router>
+      <div className="outer-wrapper">
+        <Router>
+          <Routes>
+            <Route path="/" element={<SplashPage />} />
+            <Route path="/title">
+              <Route path="gamestart" element={<TitlePage />} />
+              <Route path="profile" element={<ProfilePage />} />
+            </Route>
+            <Route path="/result" element={<ResultPage />} />
+            {/* /game-page内はネストルート */}
+            <Route path="/game">
+              <Route path="monologue" element={<MonologuePage />} />
+              <Route path="action" element={<ActionPage />} />
+              <Route path="log" element={<LogPage />} />
+              <Route path="map" element={<MapPage />} />
+              <Route path="walk" element={<WalkPage />} />
+              <Route path="checkin" element={<CheckInPage />} />
+              <Route path="sns" element={<SnsPage />} />
+              <Route path="setting" element={<SettingPage />} />
+              <Route
+                path="setting/lifegaugeinfo"
+                element={<LifeGaugeInfoPage />}
+              />
+              <Route path="setting/ruleinfo" element={<RuleInfoPage />} />
+              <Route
+                path="setting/spottypeinfo"
+                element={<SpotTypeInfoPage />}
+              />
+            </Route>
+          </Routes>
+          {/* <h1>this from App.js→「{message}」</h1> */}
+        </Router>
+      </div>
     </Provider>
   );
 }

@@ -8,13 +8,16 @@ const MarkerItem = ({ icon, label }) => (
     backgroundColor={"var(--color-base10)"}
     borderRadius={"9999px"}
     alignItems={"center"}
-    gap={"1vw"}
-    height={"6vw"}
-    paddingX={"3vw"}
-    paddingY={"1vw"}
+    gap={"6%"}
+    height={"100%"}
+    paddingX={"3%"}
+    paddingY={"1.4%"}
+    width={"100%"}
   >
     {icon}
-    <Text className="text-subtext">{label}</Text>
+    <Text className="text-subtext" whiteSpace={"nowrap"}>
+      {label}
+    </Text>
   </Flex>
 );
 
@@ -22,27 +25,45 @@ export const MapMarkerLegend = () => {
   return (
     <Flex
       className="map-marker-legend"
-      width={"90vw"}
-      height={"10.6vw"}
-      paddingX={"4vw"}
-      gap={"2vw"}
+      width={"90%"}
+      height={"3vh"}
+      gap={"2%"}
       alignItems={"center"}
-      justifyContent={"left"}
+      paddingRight={"10%"}
+      marginY={"2%"}
     >
       <MarkerItem
-        icon={<MapUserIcon width="3vw" height="100%" />}
+        icon={<MapUserIcon height="100%" width="30%" />}
         label="現在地"
       />
       <MarkerItem
-        icon={<MapmarkerIcon width="3vw" color="var(--color-theme10)" />}
+        icon={
+          <MapmarkerIcon
+            height="100%"
+            width="30%"
+            color="var(--color-theme10)"
+          />
+        }
         label="選択中"
       />
       <MarkerItem
-        icon={<MapmarkerIcon width="3vw" color="var(--color-accent20)" />}
+        icon={
+          <MapmarkerIcon
+            height="100%"
+            width="30%"
+            color="var(--color-accent20)"
+          />
+        }
         label="移動可能"
       />
       <MarkerItem
-        icon={<MapmarkerIcon width="3vw" color="var(--color-base13)" />}
+        icon={
+          <MapmarkerIcon
+            height="100%"
+            width="30%"
+            color="var(--color-base13)"
+          />
+        }
         label="来訪済み"
       />
     </Flex>

@@ -19,13 +19,14 @@ export const MonologueViewer = ({
     <Flex
       className="monologue"
       flexDirection="column"
-      gap="3vw"
+      gap="2%"
       onClick={handleClick}
       alignItems="center"
       overflowY="auto"
       height="90vh"
-      paddingY="4vw"
+      paddingY="4%"
       width="90%"
+      scrollbar={"hidden"}
     >
       {texts.slice(0, currentIndex + 1).map((line, index) => (
         <MonologueLine key={index} {...line} />
@@ -34,7 +35,7 @@ export const MonologueViewer = ({
       {showButton && (
         <Button
           text={buttonText}
-          height="10.6vw"
+          height="5.4%"
           isAvailable
           onClick={onButtonClick}
         />

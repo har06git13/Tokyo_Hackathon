@@ -13,12 +13,12 @@ export const LifeGaugeInfoPage = () => {
       <Flex
         className="page-contents"
         flex={1}
-        paddingTop={"6vw"}
-        paddingBottom={"18vw"}
-        gap={"6vw"}
+        paddingTop={"3vh"}
+        gap={"3vh"}
         overflowY={"auto"}
+        scrollbar={"hidden"}
       >
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="ライフゲージについて" />
           <Text className="text-maintext" color={"var(--color-theme10)"}>
             災害下では「体力」「精神」「電源」「現金」などのリソース（＝ライフゲージ）を管理しながら行動します。
@@ -34,7 +34,7 @@ export const LifeGaugeInfoPage = () => {
           </Text>
         </Flex>
 
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="ライフゲージ一覧" />
           <Text className="text-maintext">
             ゲージを確認しながら、状況を見極めて行動を選びましょう。

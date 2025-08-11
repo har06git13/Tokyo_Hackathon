@@ -8,6 +8,7 @@ import {
   eventList,
   facilityList,
   eventTypeList,
+  spotTypeList,
 } from "../../temporary-database";
 
 export const LogElement = ({ id, time }) => {
@@ -43,12 +44,17 @@ export const LogElement = ({ id, time }) => {
   };
 
   return (
-    <Flex className="log-element" width="90vw" alignItems="center">
+    <Flex
+      className="log-element"
+      width="90%"
+      alignItems="center"
+      justifyContent={"space-between"}
+    >
       {/* 時間表示 */}
       <Flex
-        width="10vw"
+        width="10%"
         backgroundColor="var(--color-base12)"
-        height="8vw"
+        height="4vh"
         alignItems="center"
       >
         <Text className="text-subtext" color="var(--color-base13)">
@@ -58,13 +64,13 @@ export const LogElement = ({ id, time }) => {
 
       {/* メインログ表示 */}
       <Flex
-        width="80vw"
+        width="90%"
         flexDirection="column"
-        px="4vw"
-        py="3vw"
+        px="2vh"
+        py="2vh"
         backgroundColor="var(--color-base10)"
-        borderRadius="3vw"
-        gap="2vw"
+        borderRadius="1vh"
+        gap="1vh"
       >
         {/* ログタイトル & 地点 */}
 
@@ -84,7 +90,7 @@ export const LogElement = ({ id, time }) => {
           {event?.type === "walk" && (
             <Text className="text-maintext">
               施設タイプ：
-              {facility.type}
+              {spotTypeList[facility?.type]?.name ?? spotTypeList.default.name}
             </Text>
           )}
           {getDescriptionByType() && (
@@ -96,7 +102,7 @@ export const LogElement = ({ id, time }) => {
 
         {/* ゲージ */}
         {event?.type === "time" || event?.type === "prologue" ? undefined : (
-          <Flex flexDirection="column" gap="1vw">
+          <Flex flexDirection="column" gap="0.6vh">
             <Text className="text-subtext">変動後ゲージ</Text>
             <LifeGauge
               howto={false}

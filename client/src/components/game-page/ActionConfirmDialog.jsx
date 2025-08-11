@@ -28,100 +28,91 @@ export const ActionConfirmDialog = ({
     <Flex
       className="action-confirm-dialog"
       flexDirection="column"
-      width={actionType === "sns" ? "100%" : "90vw"}
+      width={actionType === "sns" ? "100%" : "90%"}
+      backgroundColor={"var(--color-base10)"}
+      paddingX={actionType === "sns" ? "9%" : "5%"}
+      paddingY={actionType === "sns" ? "5%" : "2vh"}
+      borderRadius={actionType === "sns" ? "10vw 10vw 0 0" : "1vh"}
+      justifyContent={"space-between"}
+      gap={"1vh"}
     >
-      <Flex
-        flexDirection={"column"}
-        width={"100%"}
-        backgroundColor={"var(--color-base10)"}
-        paddingX={actionType === "sns" ? "9vw" : "4vw"}
-        paddingY={actionType === "sns" ? "5vw" : "4vw"}
-        borderRadius={actionType === "sns" ? "10vw 10vw 0 0" : "3vw"}
-        gap={"2vw"}
-      >
-        <Flex width={"100%"} alignItems={"center"} gap={"2vw"}>
-          <HelpIcon width="9vw" />
-          <Flex flexDirection={"column"}>
-            {actionType === "walk" ? (
-              <Text className="text-subtext">この場所に移動しますか？</Text>
-            ) : undefined}
-            <Text className="text-sectiontitle">
-              {actionType === "walk" ? spotName : "SNSを見ますか？"}
-            </Text>
-          </Flex>
-        </Flex>
-
-        <Flex flexDirection={"column"} gap={"1vw"}>
-          <Text className="text-maintext">想定所要ゲージ</Text>
-          <LifeGauge
-            howto={false}
-            life={formatValue(life)}
-            mental={formatValue(mental)}
-            charge={formatValue(charge)}
-            money={formatValue(money)}
-          />
-          <Text className="text-subtext">
-            ※想定外の変動が起こることがあります。災害時は予測不能な事態が起こりうるため、ご注意ください。
+      <Flex width={"100%"} alignItems={"center"} gap={"4%"}>
+        <HelpIcon width="12%" />
+        <Flex flexDirection={"column"}>
+          {actionType === "walk" ? (
+            <Text className="text-subtext">この場所に移動しますか？</Text>
+          ) : undefined}
+          <Text className="text-sectiontitle">
+            {actionType === "walk" ? spotName : "SNSを見ますか？"}
           </Text>
         </Flex>
+      </Flex>
 
-        <Flex>
-          <Text className="text-maintext" color={"var(--color-accent10)"}>
-            {actionType === "walk"
-              ? `到着予定時刻：${arrivalTime}`
-              : `終了予定時刻：${arrivalTime}`}
-          </Text>
-        </Flex>
+      <Flex flexDirection={"column"} gap={"0.6vh"}>
+        <Text className="text-maintext">想定所要ゲージ</Text>
+        <LifeGauge
+          howto={false}
+          life={formatValue(life)}
+          mental={formatValue(mental)}
+          charge={formatValue(charge)}
+          money={formatValue(money)}
+        />
+        <Text className="text-subtext">
+          ※想定外の変動が起こることがあります。災害時は予測不能な事態が起こりうるため、ご注意ください。
+        </Text>
+      </Flex>
 
-        <Flex>
-          <Text className={"text-subtext"} color={"var(--color-theme10)"}>
-            {actionType === "walk" ? (
+      <Flex>
+        <Text className="text-maintext" color={"var(--color-accent10)"}>
+          {actionType === "walk"
+            ? `到着予定時刻：${arrivalTime}`
+            : `終了予定時刻：${arrivalTime}`}
+        </Text>
+      </Flex>
+
+      <Flex>
+        <Text className={"text-subtext"} color={"var(--color-theme10)"}>
+          {actionType === "walk" ? (
+            <>
+              「移動」を押すと、目的地の変更はできません。
+              <br />
+              移動や、移動中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
+              体力に注意して行動しましょう。
+            </>
+          ) : actionType === "sns" ? (
+            isLowCharge ? (
+              <>充電が足りないため、SNSを見ることができません。</>
+            ) : (
               <>
-                「移動」を押すと、目的地の変更はできません。
+                「見る」を押すと、アクションの変更はできません。
                 <br />
-                移動や、移動中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
+                SNSを見ている途中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
                 体力に注意して行動しましょう。
               </>
-            ) : actionType === "sns" ? (
-              isLowCharge ? (
-                <>充電が足りないため、SNSを見ることができません。</>
-              ) : (
-                <>
-                  「見る」を押すと、アクションの変更はできません。
-                  <br />
-                  SNSを見ている途中の時間経過によって体力が0%になると、避難失敗(ゲームオーバー)となります。
-                  体力に注意して行動しましょう。
-                </>
-              )
-            ) : null}
-          </Text>
-        </Flex>
+            )
+          ) : null}
+        </Text>
+      </Flex>
 
-        <Flex
-          width={"100%"}
-          justifyContent={"space-between"}
-          paddingTop={"2vw"}
-          gap={"4vw"}
-        >
-          {actionType === "walk" && (
-            <Button
-              text="戻る"
-              isAvailable
-              color="var(--color-base13)"
-              onClick={onBackClick}
-              width="100%"
-              height="7vw"
-            />
-          )}
+      <Flex width={"100%"} justifyContent={"space-between"} gap={"4%"}>
+        {actionType === "walk" && (
           <Button
-            text={actionType === "walk" ? "移動する" : "見る"}
-            isAvailable={isLowCharge ? false : true}
-            color="var(--color-theme10)"
-            onClick={onClick}
+            text="戻る"
+            isAvailable
+            color="var(--color-base13)"
+            onClick={onBackClick}
             width="100%"
-            height="7vw"
+            height="3.6vh"
           />
-        </Flex>
+        )}
+        <Button
+          text={actionType === "walk" ? "移動する" : "見る"}
+          isAvailable={isLowCharge ? false : true}
+          color="var(--color-theme10)"
+          onClick={onClick}
+          width="100%"
+          height="3.6vh"
+        />
       </Flex>
     </Flex>
   );

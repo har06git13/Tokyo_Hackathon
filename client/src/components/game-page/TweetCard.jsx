@@ -20,23 +20,24 @@ export const TweetCard = ({
   return (
     <Flex
       className="tweet-card"
-      width={"90vw"}
+      width={"100%"}
       backgroundColor={"var(--color-base10)"}
-      paddingX={"4vw"}
-      paddingTop={"2vw"}
-      paddingBottom={"3vw"}
+      paddingX={"5%"}
+      paddingTop={"1vh"}
+      paddingBottom={"1.6vh"}
+      gap={"1vh"}
       justifyContent={"space-between"}
       boxShadow="inset 0 0.6px 0 rgba(0, 0, 0, 0.1)"
     >
       <Box
-        width={"9vw"}
-        height={"9vw"}
+        width={"4.6vh"}
+        height={"4.6vh"}
         borderRadius={"9999px"}
         backgroundColor={randomColor}
       />
 
       <Flex flexDirection={"column"} width={"86%"}>
-        <Flex alignItems={"center"} gap={"2vw"} width={"100%"}>
+        <Flex alignItems={"center"} gap={"0.6vh"} width={"100%"}>
           <Text className="text-maintext">{userName}</Text>
           <Text className="text-subtext" color={"var(--color-base13)"}>
             {userId}

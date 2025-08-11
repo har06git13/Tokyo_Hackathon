@@ -11,12 +11,13 @@ export const SpotTypeInfoPage = () => {
       <Flex
         className="page-contents"
         flex={1}
-        paddingTop={"6vw"}
-        paddingBottom={"18vw"}
-        gap={"6vw"}
+        paddingTop={"3vh"}
+        paddingBottom={"18vh"}
+        gap={"3vh"}
         overflowY={"auto"}
+        scrollbar={"hidden"}
       >
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="移動できる施設タイプ" />
           <Text className="text-maintext">
             渋谷の街には、さまざまな施設があります。
@@ -26,7 +27,7 @@ export const SpotTypeInfoPage = () => {
           </Text>
         </Flex>
 
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="施設タイプ一覧" />
           <Text className="text-maintext">
             状況によって使える施設が変化したり、混雑したりすることもあります。
@@ -38,7 +39,7 @@ export const SpotTypeInfoPage = () => {
           </Text>
 
           {Object.values(spotTypeList).map((spot, idx) => (
-            <Flex key={idx} flexDirection="column" gap="1vw">
+            <Flex key={idx} flexDirection="column" gap="1vh">
               <Text className="text-maintext" color={"var(--color-accent10)"}>
                 {spot.name}
               </Text>

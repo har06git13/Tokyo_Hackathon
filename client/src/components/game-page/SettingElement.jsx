@@ -25,16 +25,16 @@ export const SettingElement = ({
   };
 
   let borderRadiusValue = "0";
-  if (type === "top") borderRadiusValue = "3vw 3vw 0 0";
-  else if (type === "bottom") borderRadiusValue = "0 0 3vw 3vw";
-  else if (type === "alone") borderRadiusValue = "3vw";
+  if (type === "top") borderRadiusValue = "1vh 1vh 0 0";
+  else if (type === "bottom") borderRadiusValue = "0 0 1vh 1vh";
+  else if (type === "alone") borderRadiusValue = "1vh";
 
   return (
     <Flex
       className={"setting-element"}
       backgroundColor={"var(--color-base10)"}
-      width={"90vw"}
-      height={"10.6vw"}
+      width={"90%"}
+      height={"4.6vh"}
       borderRadius={borderRadiusValue}
       boxShadow={
         type === "center"
@@ -47,7 +47,7 @@ export const SettingElement = ({
       }
       alignItems={"center"}
       justifyContent={"space-between"}
-      paddingX={"4vw"}
+      paddingX={"2vh"}
       onClick={handleClick}
     >
       <Text className="text-maintext" color={textColor}>
@@ -55,7 +55,7 @@ export const SettingElement = ({
       </Text>
 
       {operation === "button" && (
-        <ArrowIcon height="3vw" width="1.7vw" color="var(--color-base13)" />
+        <ArrowIcon height="100%" width="2%" color="var(--color-base13)" />
       )}
 
       {operation === "toggle" && <Toggle />}

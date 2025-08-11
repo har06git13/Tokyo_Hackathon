@@ -36,27 +36,32 @@ body {
 
 /* あんま使わない、重要な数字とかだけ */
 .text-pagetitle {
-  font-size: 1.5rem;
+  /* font-size: 1.5rem; ←本来こう */
+  font-size: 2.8vh;
   font-weight: 1000;
 }
 
 /* ヘッダーのタイトルサイズ */
 .text-sectiontitle {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.05rem;
+  /* font-size: 1rem; ←本来こう */
+  font-size: 1.8vh;
+  font-weight: bold;
+  letter-spacing: 0.2vh;
+  /* letter-spacing: 0.05rem; ←本来こう */
 }
 
 /* メインのテキスト */
 .text-maintext {
-  font-size: 0.75rem;
+  /* font-size: 0.75rem; ←本来こう */
+  font-size: 1.3vh;
   font-weight: normal;
-  letter-spacing: 0.04rem;
+  /* letter-spacing: 0.04rem; ←本来こう */
 }
 
 /* 説明とか、グレーで使いがち */
 .text-subtext {
-  font-size: 0.5625rem;
+  /* font-size: 0.5625rem; ←本来こう */
+  font-size: 1vh;
   font-weight: normal;
 }
 
@@ -64,11 +69,26 @@ body {
    🔤 Utility
 ============================ */
 
+.outer-wrapper {
+  /* PCブラウザで見る用の仮ラッパー */
+  width: calc(100vh * 393 / 852);
+  height: 100vh;
+  background-color: #fadde1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
 .page-container {
   display: flex;
   flex-direction: column;
-  width: 100vw;
-  height: 100vh;
+  /* width: 100vw;
+  height: 100vh; ←本来こう*/
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
   align-items: center;
   background-color: currentColor;
   position: relative;
@@ -85,8 +105,8 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: -1;
   background-size: cover;
   background-position: center;

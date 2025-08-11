@@ -16,18 +16,18 @@ export const WalkPage = () => {
       backgroundColor={"var(--color-base12)"}
       zIndex={0}
     >
-      <Box position="relative" width="100%" height="131vw">
+      <Box position="relative" width="100%" height="80vh">
         <Header prevPage={false} currentPage="移動中" backGround={false} />
         <Box
           position="absolute"
           top={0}
           left={0}
           width="100%"
-          height="131vw"
+          height="100%"
           backgroundImage="url('/assets/image/walk-back.png')"
           backgroundSize="cover"
           backgroundColor="var(--color-accent11)"
-          borderRadius="0 0 10vw 10vw"
+          borderRadius="0 0 5vh 5vh"
           zIndex={-1}
         />
       </Box>
@@ -35,16 +35,16 @@ export const WalkPage = () => {
         className="page-contents"
         justifyContent={"space-between"}
         alignItems={"flex-start"}
-        paddingX={"9vw"}
-        paddingTop={"4vw"}
-        paddingBottom={"5vw"}
-        borderRadius="10vw 10vw 0 0"
+        paddingX={"9%"}
+        gap={"1vh"}
+        paddingY={"2vh"}
+        borderRadius="5vh 5vh 0 0"
         backgroundColor={"var(--color-base10)"}
       >
         <Flex
           backgroundColor={"var(--color-accent10)"}
-          paddingY={"0.8vw"}
-          paddingX={"4vw"}
+          paddingY={"0.6vh"}
+          paddingX={"6%"}
           borderRadius={"999px"}
         >
           <Text className="text-subtext" color={"var(--color-base10)"}>

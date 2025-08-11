@@ -20,15 +20,16 @@ export const MapSpotInfo = ({
     <Flex
       className={"map-spot-info"}
       flexDirection={"column"}
-      width={"90vw"}
+      width={"90%"}
       backgroundColor={"var(--color-base10)"}
-      marginBottom={type === "map" ? "4vw" : 0}
-      borderRadius={type === "map" ? "3vw" : "3vw 3vw 0 0"}
-      paddingX={"4vw"}
-      paddingY={"5vw"}
-      gap={"4vw"}
+      marginBottom={type === "map" ? "2vh" : 0}
+      borderRadius={type === "map" ? "1vh" : "3vh 3vh 0 0"}
+      paddingX={"5%"}
+      paddingTop={"2vh"}
+      paddingBottom={"3vh"}
+      gap={"1vh"}
     >
-      <Flex flexDirection={"column"} gap={"2vw"}>
+      <Flex flexDirection={"column"} width={"100%"} gap={"1.6vh"}>
         <Flex flexDirection={"column"}>
           <Flex width={"100%"} justifyContent={"space-between"}>
             <Text
@@ -53,7 +54,7 @@ export const MapSpotInfo = ({
 
         {type === "action" && (
           <>
-            <Flex flexDirection={"column"} gap={"1vw"}>
+            <Flex flexDirection={"column"} gap={"4%"} width={"100%"}>
               <Text className="text-maintext">想定所要ゲージ</Text>
               <LifeGauge
                 howto={false}
@@ -64,7 +65,7 @@ export const MapSpotInfo = ({
               />
             </Flex>
 
-            <Flex flexDirection={"column"} gap={"1vw"}>
+            <Flex flexDirection={"column"} width={"100%"}>
               <Text className="text-maintext" color={"var(--color-accent10)"}>
                 到着予定時刻：{arrivalTime}
               </Text>
@@ -81,7 +82,7 @@ export const MapSpotInfo = ({
         <Button
           isAvailable
           text="ここに移動する"
-          height="7.6vw"
+          height="4vh"
           onClick={onClick}
         />
       )}

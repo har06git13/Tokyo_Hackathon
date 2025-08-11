@@ -14,7 +14,7 @@ export const MonologuePage = () => {
   }
 
   return (
-    <Flex className="page-container" backgroundColor={"#00000000"}>
+    <Flex className="page-container" backgroundColor={"#00000000"} zIndex={1}>
       <Box
         className="background-image"
         style={{ backgroundImage: "url('/assets/image/monologue-back.png')" }}

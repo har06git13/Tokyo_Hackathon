@@ -7,8 +7,8 @@ export const SettingPage = () => {
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
       <Header currentPage="設定" />
-      <Flex className="page-contents" flex={1} paddingTop={"6vw"} gap={"6vw"}>
-        <Flex flexDirection={"column"}>
+      <Flex className="page-contents" flex={1} paddingTop={"3vh"} gap={"2.6vh"}>
+        <Flex flexDirection={"column"} width={"100%"} alignItems={"center"}>
           <SettingElement
             type="top"
             operation="button"
@@ -27,11 +27,11 @@ export const SettingPage = () => {
             to={"../setting/spottypeinfo"}
           />
         </Flex>
-        <Flex flexDirection={"column"}>
+        <Flex flexDirection={"column"} width={"100%"} alignItems={"center"}>
           <SettingElement type="top" text="BGM" />
           <SettingElement type="bottom" text="SE" />
         </Flex>
-        <Flex flexDirection={"column"}>
+        <Flex flexDirection={"column"} width={"100%"} alignItems={"center"}>
           <SettingElement
             type="top"
             operation="button"
@@ -46,7 +46,7 @@ export const SettingPage = () => {
             onClick={() => alert("プライバシーポリシーを表示（仮）")}
           />
         </Flex>
-        <Flex flexDirection={"column"}>
+        <Flex flexDirection={"column"} width={"100%"} alignItems={"center"}>
           <SettingElement
             type="top"
             operation="button"

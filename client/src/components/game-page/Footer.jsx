@@ -29,24 +29,25 @@ export const Footer = ({ type = "action", isWalking = false }) => {
   return (
     <Flex
       className={"footer"}
-      width={"100vw"}
-      boxShadow="inset 0 0.4px 0 rgba(0, 0, 0, 0.6)"
+      width={"100%"}
+      boxShadow="inset 0 0.2px 0 rgba(0, 0, 0, 0.4)"
       backgroundColor={"var(--color-base11)"}
-      paddingX={"7vw"}
-      paddingTop={"2vw"}
-      paddingBottom={"8vw"}
+      height={"10%"}
+      paddingX={"4%"}
+      paddingTop={"4%"}
+      paddingBottom={"6%"}
       alignItems={"center"}
       justifyContent={"space-between"}
     >
       <Flex
         flexDirection={"column"}
-        height={"11vw"}
-        width={"16vw"}
+        height={"100%"}
+        width={"24%"}
         alignItems={"center"}
         justifyContent={"space-between"}
         onClick={() => navigate("/game/log")}
       >
-        <FootprintIcon color={getColor("log")} height="6vw" />
+        <FootprintIcon color={getColor("log")} height="50%" />
         <Text className={"text-subtext"} color={getColor("log")}>
           行動履歴
         </Text>
@@ -54,13 +55,13 @@ export const Footer = ({ type = "action", isWalking = false }) => {
 
       <Flex
         flexDirection={"column"}
-        height={"11vw"}
-        width={"16vw"}
+        height={"100%"}
+        width={"24%"}
         alignItems={"center"}
         justifyContent={"space-between"}
         onClick={onActionClick}
       >
-        <ActionIcon color={getColor("action")} height="6vw" />
+        <ActionIcon color={getColor("action")} height="50%" />
         <Text className={"text-subtext"} color={getColor("action")}>
           アクション
         </Text>
@@ -68,13 +69,13 @@ export const Footer = ({ type = "action", isWalking = false }) => {
 
       <Flex
         flexDirection={"column"}
-        height={"11vw"}
-        width={"16vw"}
+        height={"100%"}
+        width={"24%"}
         alignItems={"center"}
         justifyContent={"space-between"}
         onClick={() => navigate("/game/map")}
       >
-        <MapIcon color={getColor("map")} height={"5.4vw"} />
+        <MapIcon color={getColor("map")} height={"40%"} />
         <Text className={"text-subtext"} color={getColor("map")}>
           マップ
         </Text>

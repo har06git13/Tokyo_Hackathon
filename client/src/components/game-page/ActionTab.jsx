@@ -8,9 +8,9 @@ export const ActionTab = ({ type = "walk", onWalkClick, onSnsClick }) => {
       className={"action-tab"}
       backgroundColor={"var(--color-base10)"}
       borderRadius={"1.6vw"}
-      width={"90vw"}
-      height={"7.8vw"}
-      padding={"0.4vw"}
+      width={"90%"}
+      height={"4.4%"}
+      padding={"0.4%"}
     >
       <Flex
         backgroundColor={

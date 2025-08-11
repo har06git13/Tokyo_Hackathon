@@ -16,7 +16,7 @@ export const MonologueLine = ({
   return (
     <Flex
       className={"monologue-line"}
-      width={"90vw"}
+      width={"100%"}
       justifyContent={"center"}
       alignItems={"center"}
       whiteSpace={"pre-line"}
@@ -24,12 +24,12 @@ export const MonologueLine = ({
       {type === "system" && (
         <Flex
           backgroundColor={"var(--color-base101)"}
-          paddingX={"6vw"}
+          paddingX={"8%"}
           borderRadius={"9999px"}
           justifyContent={"center"}
           alignItems={"center"}
-          width={"74vw"}
-          paddingY={"1.6vw"}
+          width={"80%"}
+          paddingY={"1.4%"}
         >
           <Text
             className="text-subtext"
@@ -38,7 +38,7 @@ export const MonologueLine = ({
                 ? "var(--color-accent10)"
                 : isDecrease
                 ? "var(--color-theme10)"
-                : "currentcolor"
+                : "var(--color-font11)"
             }
           >
             {text}
@@ -49,10 +49,10 @@ export const MonologueLine = ({
       {type === "talk" && (
         <Flex
           flexDirection={"column"}
-          width={"90vw"}
+          width={"100%"}
           alignItems={isPlayer ? "flex-end" : "flex-start"}
-          gap={"1vw"}
-          paddingY={"2vw"}
+          gap={"0.6vh"}
+          paddingY={"2%"}
         >
           <Text className="text-maintext" color={"var(--color-base10)"}>
             {isPlayer ? playername : name}
@@ -62,10 +62,10 @@ export const MonologueLine = ({
             backgroundColor={
               isPlayer ? "var(--color-theme11)" : "var(--color-base10)"
             }
-            paddingX={"3vw"}
-            paddingY={"2vw"}
+            paddingX={"4%"}
+            paddingY={"2%"}
             borderRadius={"3vw"}
-            maxWidth={"81.6vw"}
+            maxWidth={"100%"}
           >
             <Text className="text-maintext">{text} </Text>
           </Flex>

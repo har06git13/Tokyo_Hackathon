@@ -18,15 +18,16 @@ export const LifeGaugeListElement = ({
   return (
     <Flex
       className="life-gauge-list"
-      width="90vw"
+      width="100%"
       height="fit-content"
-      paddingY="2vw"
+      paddingY="1vh"
       alignItems="center"
       justifyContent="space-between"
+      gap={"2%"}
     >
-      <IconComponent width="9.1vw" height="9.1vw" />
+      <IconComponent width="5vh" height="5vh" />
 
-      <Text className="text-maintext" width="10vw">
+      <Text className="text-maintext" width="10%">
         {type === "life"
           ? "体力"
           : type === "mental"
@@ -36,7 +37,7 @@ export const LifeGaugeListElement = ({
           : "現金"}
       </Text>
 
-      <Text className="text-maintext" width="66vw">
+      <Text className="text-maintext" width="72%">
         {type === "life" ? (
           <>
             時間経過、移動などで消費。食事や水分補給、座って休むなどで回復。

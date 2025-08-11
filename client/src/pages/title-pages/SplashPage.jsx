@@ -21,7 +21,7 @@ export const SplashPage = () => {
       className="page-container"
       backgroundColor={"var(--color-theme10)"}
       justifyContent={"center"}
-      paddingBottom={"40vw"}
+      paddingBottom={"40vh"}
     >
       <MotionImage
         src="/assets/svg/applogo.svg"

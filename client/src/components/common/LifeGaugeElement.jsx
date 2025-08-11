@@ -7,7 +7,7 @@ import {
   MoneyIcon,
   ChargeIcon,
 } from "../icons";
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex, Text, Box } from "@chakra-ui/react";
 
 // typeごとの設定マップ
 const gaugeConfig = {
@@ -40,7 +40,7 @@ export const LifeGaugeElement = ({ type, amount, onClick }) => {
     <Flex
       className="life-gauge-element"
       border="0.1vw solid"
-      width="16.7vw"
+      width="100%"
       borderRadius="99px"
       borderColor={color}
       backgroundColor="var(--color-base10)"
@@ -48,9 +48,12 @@ export const LifeGaugeElement = ({ type, amount, onClick }) => {
       justifyContent="space-between"
       onClick={onClick}
     >
-      <Icon height="100%" width="6vw" />
-      <Flex gap={"1vw"} paddingRight={"1.8vw"}>
-        <Text className="text-subtext">
+      <Box height="100%" aspectRatio={1}>
+        <Icon height="100%" width="100%" />
+      </Box>
+
+      <Flex gap={"0.6%"} paddingRight={"14%"}>
+        <Text className="text-subtext" whiteSpace="nowrap">
           {type === "howto" ? "説明" : amount}
         </Text>
         <Text className="text-subtext">

@@ -58,20 +58,16 @@ export const ProfilePage = () => {
   return (
     <Flex
       className="page-container"
-      width={"100vw"}
-      minHeight={"100vh"}
-      flexDirection={"column"}
       justifyContent={"center"}
-      alignItems={"center"}
       backgroundColor={"var(--color-base12)"}
-      gap={"6vw"}
-      paddingBottom={"28vw"}
+      gap={"3%"}
+      paddingBottom={"28%"}
     >
-      <Image src="/assets/svg/titlesvg-2.svg" width={"60vw"} height={"25vw"} />
+      <Image src="/assets/svg/titlesvg-2.svg" width={"60%"} display={"block"} />
 
       <Text className="text-pagetitle">プロフィール入力</Text>
 
-      <Flex flexDirection={"column"}>
+      <Flex flexDirection={"column"} width={"90%"} height={"20%"}>
         <TitleInputField
           type="top"
           value={playerName}
@@ -106,7 +102,12 @@ export const ProfilePage = () => {
         />
       </Flex>
 
-      <Flex alignItems={"center"} gap={"2vw"} paddingY={"2vw"}>
+      <Flex
+        alignItems={"center"}
+        gap={"4%"}
+        paddingY={"4%"}
+        whiteSpace="nowrap"
+      >
         <CheckBox isChecked={agreed} onChange={setAgreed} />
         <Text className="text-subtext">
           <span
@@ -135,8 +136,8 @@ export const ProfilePage = () => {
       </Flex>
 
       <Button
-        width="90vw"
-        height="10.6vw"
+        width="90%"
+        height="5%"
         text="プロローグへ"
         isAvailable={isFormComplete}
         onClick={handleClick}

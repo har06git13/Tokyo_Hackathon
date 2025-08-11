@@ -10,12 +10,12 @@ export const RuleInfoPage = () => {
       <Flex
         className="page-contents"
         flex={1}
-        paddingTop={"6vw"}
-        paddingBottom={"18vw"}
-        gap={"6vw"}
+        paddingTop={"3vh"}
+        gap={"3vh"}
         overflowY={"auto"}
+        scrollbar={"hidden"}
       >
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="ゲームの目的" />
           <Text className="text-maintext" color={"var(--color-theme10)"}>
             災害直後の渋谷を歩き回って生き延び、24:00までに受け入れ可能な避難施設へ到着することが目標です。
@@ -25,7 +25,7 @@ export const RuleInfoPage = () => {
           </Text>
         </Flex>
 
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="基本の流れ" />
           <Text className="text-maintext">
             「移動する」で渋谷エリア内の施設を訪れ、物資の確保や人との会話ができます。
@@ -34,7 +34,7 @@ export const RuleInfoPage = () => {
           </Text>
         </Flex>
 
-        <Flex flexDirection={"column"} width={"90%"} gap={"3vw"}>
+        <Flex flexDirection={"column"} width={"90%"} gap={"1vh"}>
           <SettingInfoIndex text="画面の説明" />
           <Text className="text-maintext">【アクション画面】</Text>
           <Text className="text-maintext">

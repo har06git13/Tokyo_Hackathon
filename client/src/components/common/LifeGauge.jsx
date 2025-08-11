@@ -31,8 +31,10 @@ export const LifeGauge = ({ howto = true, life, mental, charge, money }) => {
       {howto ? (
         <Flex
           className={"life-gauge"}
-          width={"90vw"}
+          width={"90%"}
+          height={"4%"}
           justifyContent={"space-between"}
+          gap={"2%"}
         >
           <LifeGaugeElement type={"life"} amount={currentlife} />
           <LifeGaugeElement type={"mental"} amount={currentmental} />
@@ -41,7 +43,12 @@ export const LifeGauge = ({ howto = true, life, mental, charge, money }) => {
           <LifeGaugeElement type="howto" onClick={handleClick} />
         </Flex>
       ) : (
-        <Flex className={"life-gauge"} gap={"1.8vw"} width={"fit-content"}>
+        <Flex
+          className={"life-gauge"}
+          gap={"2%"}
+          width={"100%"}
+          height={"3.2vh"}
+        >
           <LifeGaugeElement type={"life"} amount={life} />
           <LifeGaugeElement type={"mental"} amount={mental} />
           <LifeGaugeElement type={"charge"} amount={charge} />

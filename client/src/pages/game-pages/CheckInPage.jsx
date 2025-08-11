@@ -15,30 +15,30 @@ export const CheckInPage = () => {
           <Box
             className={"dummy-code-reader"}
             width={"100%"}
-            height={"133vw"}
+            height={"60vh"}
             backgroundColor={"var(--color-accent11)"}
           />
           <Flex
             flexDirection={"column"}
             backgroundColor={"var(--color-base10)"}
             width={"90%"}
-            paddingX={"4vw"}
+            paddingX={"4%"}
             flex={1}
-            marginTop={"4vw"}
-            borderRadius={"3vw 3vw 0 0 "}
-            paddingY={"4vw"}
+            marginTop={"2vh"}
+            borderRadius={"1vh 1vh 0 0 "}
+            paddingY={"2vh"}
           >
             <Text
               className="text-sectiontitle"
               color={"var(--color-accent10)"}
               onClick={() => navigate("/game/monologue")}
             >
-              現行ではこのあたりをタップで遷移するよ
+              現行ではこのあたりをタップで遷移
             </Text>
             <Box
               height="0.08px"
               backgroundColor="var(--color-base12)"
-              my="2vw"
+              my="1.6vh"
               width="100%"
             />
             <Text className="text-maintext">

@@ -10,14 +10,14 @@ export const EventText = () => {
   return (
     <Flex
       className="event-text"
-      width={"90vw"}
+      width={"90%"}
       backgroundColor={"var(--color-base10)"}
       border="0.1vw solid var(--color-theme10)"
       borderRadius={"9999px"}
-      height={"8vw"}
+      height={"5%"}
       alignItems={"center"}
       justifyContent={"flex-start"}
-      paddingX={"6vw"}
+      paddingX={"6%"}
     >
       <Text className="text-maintext" color={"var(--color-theme10)"}>
         {currenttime.toLocaleTimeString([], {
@@ -27,9 +27,9 @@ export const EventText = () => {
       </Text>
       <Box
         height={"50%"}
-        width={"0.1vw"}
+        width={"0.1%"}
         backgroundColor={"var(--color-theme10)"}
-        marginX={"4vw"}
+        marginX={"6%"}
       />
       <Text className="text-maintext" color={"var(--color-theme10)"}>
         {playername}はどうする？

@@ -29,13 +29,9 @@ export const SnsPage = () => {
   const shuffledPosts = shuffleArray(filteredPosts);
 
   return (
-    <Flex
-      className="page-container"
-      backgroundColor={"var(--color-base12)"}
-      position="relative"
-    >
+    <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
       <Header prevPage={false} currentPage="SNS" />
-      <Flex className="page-contents" gap={"2vw"} paddingTop={"4vw"}>
+      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
         <LifeGauge />
         <EventText />
         <Flex
@@ -46,16 +42,15 @@ export const SnsPage = () => {
           flexDirection={"column"}
           alignItems={"center"}
           justifyContent={"space-between"}
-          overflowY={"auto"}
-          height={"109vw"}
-          paddingY={"4vw"}
+          paddingY={"2vh"}
         >
-          <SnsIcon color="var(--color-base10)" height="14vw" />
+          <SnsIcon color="var(--color-base10)" height="6vh" />
           <Flex
             width={"90%"}
             flexDirection={"column"}
             overflowY={"auto"}
-            height={"109vw"}
+            height={"50vh"}
+            scrollbar={"hidden"}
           >
             {shuffledPosts.map((post, index) => (
               <TweetCard
@@ -68,7 +63,7 @@ export const SnsPage = () => {
           <Button
             text="次へ"
             width="90%"
-            height="10.6vw"
+            height="4vh"
             isAvailable
             onClick={() => {
               navigate(`/game/monologue`);

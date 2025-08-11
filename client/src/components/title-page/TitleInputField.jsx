@@ -18,14 +18,13 @@ export const TitleInputField = ({
   return (
     <Flex
       className={"title-input-field"}
-      width={"90vw"}
-      height={"10.6vw"}
+      width={"100%"}
+      height={"100%"}
       backgroundColor={"var(--color-base10)"}
       borderRadius={borderRadiusValue}
       justifyContent={"space-between"}
       alignItems={"center"}
-      paddingX={"4vw"}
-      paddingY={"3vw"}
+      paddingX={"4%"}
       boxShadow={"0 0 0 0.1vw var(--color-base13)"}
     >
       <Text className="text-maintext" width={"40%"}>
@@ -42,6 +41,7 @@ export const TitleInputField = ({
             textAlign: "right",
             width: "60%",
             padding: 0,
+            height: "100%",
           }}
           value={value}
           onChange={onChange}
@@ -71,6 +71,7 @@ export const TitleInputField = ({
           _placeholder={{ color: "var(--color-base13)" }}
           padding={0}
           maxLength={10}
+          height={"100%"}
         />
       )}
     </Flex>

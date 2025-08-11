@@ -15,9 +15,9 @@ export const Header = ({
   return (
     <Flex
       className="header"
-      height={"10vh"}
+      height={"10%"}
       width={"100%"}
-      paddingTop={"5vh"}
+      paddingTop={"10%"}
       paddingX={"4%"}
       backgroundColor={backGround ? "var(--color-base10)" : undefined}
     >

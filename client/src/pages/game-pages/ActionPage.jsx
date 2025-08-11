@@ -120,7 +120,7 @@ export const ActionPage = () => {
       position="relative"
     >
       <Header prevPage={false} currentPage="アクション" />
-      <Flex className="page-contents" gap={"2vw"} paddingTop={"4vw"}>
+      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
         <LifeGauge />
         <EventText />
         <ActionTab
@@ -179,6 +179,10 @@ export const ActionPage = () => {
                   left="50%"
                   transform="translate(-50%, -50%)"
                   zIndex={2}
+                  w="100%"
+                  h="100%"
+                  alignItems={"center"}
+                  justifyContent={"center"}
                 >
                   <ActionConfirmDialog
                     actionType="walk"

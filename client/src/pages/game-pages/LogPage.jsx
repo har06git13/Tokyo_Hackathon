@@ -20,16 +20,16 @@ export const LogPage = () => {
         height={"100%"}
         width={"0.1px"}
         backgroundColor={"var(--color-base13)"}
-        left={"8vw"}
+        left={"3.6vh"}
         zIndex={-1}
       />
       <Header prevPage={false} currentPage="行動履歴" />
 
       <Flex
         className="page-contents"
-        gap={"2vw"}
+        gap={"1vh"}
         flex={1}
-        paddingTop={"4vw"}
+        paddingTop={"2vh"}
         overflowY={"auto"}
         zIndex={2}
       >
