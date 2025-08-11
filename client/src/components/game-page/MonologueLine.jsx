@@ -64,7 +64,7 @@ export const MonologueLine = ({
             }
             paddingX={"4%"}
             paddingY={"2%"}
-            borderRadius={"3vw"}
+            borderRadius={"1.2vh"}
             maxWidth={"100%"}
           >
             <Text className="text-maintext">{text} </Text>

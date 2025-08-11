@@ -32,7 +32,7 @@ export const ActionConfirmDialog = ({
       backgroundColor={"var(--color-base10)"}
       paddingX={actionType === "sns" ? "9%" : "5%"}
       paddingY={actionType === "sns" ? "5%" : "2vh"}
-      borderRadius={actionType === "sns" ? "10vw 10vw 0 0" : "1vh"}
+      borderRadius={actionType === "sns" ? "5vh 5vh 0 0" : "1vh"}
       justifyContent={"space-between"}
       gap={"1vh"}
     >

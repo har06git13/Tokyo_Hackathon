@@ -2,8 +2,11 @@ import React from "react";
 import { Flex } from "@chakra-ui/react";
 import { Header } from "../../../components/common";
 import { SettingElement } from "../../../components/game-page";
+import { useNavigate } from "react-router-dom";
 
 export const SettingPage = () => {
+  const navigate = useNavigate();
+
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
       <Header currentPage="設定" />
@@ -66,6 +69,15 @@ export const SettingPage = () => {
           operation="button"
           text="ゲームを最初からやり直す"
           textColor={"var(--color-theme10)"}
+          onClick={() => {
+            if (
+              window.confirm(
+                "これまでのプレイデータは削除されます。\n 本当に最初からやり直しますか？"
+              )
+            ) {
+              navigate("/");
+            }
+          }}
         />
       </Flex>
     </Flex>

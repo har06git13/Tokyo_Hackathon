@@ -12,8 +12,8 @@ export const TitleInputField = ({
   options = [], // 選択肢リスト
 }) => {
   let borderRadiusValue = "0";
-  if (type === "top") borderRadiusValue = "3vw 3vw 0 0";
-  else if (type === "bottom") borderRadiusValue = "0 0 3vw 3vw";
+  if (type === "top") borderRadiusValue = "1vh 1vh 0 0";
+  else if (type === "bottom") borderRadiusValue = "0 0 1vh 1vh";
 
   return (
     <Flex
@@ -25,7 +25,7 @@ export const TitleInputField = ({
       justifyContent={"space-between"}
       alignItems={"center"}
       paddingX={"4%"}
-      boxShadow={"0 0 0 0.1vw var(--color-base13)"}
+      boxShadow={"0 0 0 0.1vh var(--color-base13)"}
     >
       <Text className="text-maintext" width={"40%"}>
         {label}

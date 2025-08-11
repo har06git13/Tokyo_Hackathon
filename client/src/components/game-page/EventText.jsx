@@ -12,7 +12,7 @@ export const EventText = () => {
       className="event-text"
       width={"90%"}
       backgroundColor={"var(--color-base10)"}
-      border="0.1vw solid var(--color-theme10)"
+      border="0.1vh solid var(--color-theme10)"
       borderRadius={"9999px"}
       height={"5%"}
       alignItems={"center"}

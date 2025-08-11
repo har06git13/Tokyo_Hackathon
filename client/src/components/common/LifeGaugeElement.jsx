@@ -39,7 +39,7 @@ export const LifeGaugeElement = ({ type, amount, onClick }) => {
   return (
     <Flex
       className="life-gauge-element"
-      border="0.1vw solid"
+      border="0.1vh solid"
       width="100%"
       borderRadius="99px"
       borderColor={color}

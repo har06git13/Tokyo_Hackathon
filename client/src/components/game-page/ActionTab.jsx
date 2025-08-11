@@ -7,7 +7,7 @@ export const ActionTab = ({ type = "walk", onWalkClick, onSnsClick }) => {
     <Flex
       className={"action-tab"}
       backgroundColor={"var(--color-base10)"}
-      borderRadius={"1.6vw"}
+      borderRadius={"1vh"}
       width={"90%"}
       height={"4.4%"}
       padding={"0.4%"}
@@ -16,7 +16,7 @@ export const ActionTab = ({ type = "walk", onWalkClick, onSnsClick }) => {
         backgroundColor={
           type === "walk" ? "var(--color-theme10)" : "var(--color-base10)"
         }
-        borderRadius={"1.6vw"}
+        borderRadius={"1vh"}
         width={"50%"}
         justifyContent={"center"}
         alignItems={"center"}
@@ -36,7 +36,7 @@ export const ActionTab = ({ type = "walk", onWalkClick, onSnsClick }) => {
         backgroundColor={
           type === "sns" ? "var(--color-theme10)" : "var(--color-base10)"
         }
-        borderRadius={"1.6vw"}
+        borderRadius={"1vh"}
         width={"50%"}
         justifyContent={"center"}
         alignItems={"center"}

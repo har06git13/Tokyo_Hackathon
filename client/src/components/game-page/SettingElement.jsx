@@ -12,10 +12,17 @@ export const SettingElement = ({
   to, // 遷移先のパス（operationが"button"の場合のみ必要）
   textColor,
   alertMessage,
+  onClick,
 }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    // onClick が渡されてたらそれ優先
+    if (onClick) {
+      onClick();
+      return;
+    }
+
     if (alertMessage) {
       alert(alertMessage);
     }
@@ -38,11 +45,11 @@ export const SettingElement = ({
       borderRadius={borderRadiusValue}
       boxShadow={
         type === "center"
-          ? "inset 0 0.05vw 0 var(--color-base13), inset 0 -0.05vw 0 var(--color-base13)"
+          ? "inset 0 0.05vh 0 var(--color-base13), inset 0 -0.05vh 0 var(--color-base13)"
           : type === "top"
-          ? "inset 0 -0.05vw 0 var(--color-base13)"
+          ? "inset 0 -0.05vh 0 var(--color-base13)"
           : type === "bottom"
-          ? "inset 0 0.05vw 0 var(--color-base13)"
+          ? "inset 0 0.05vh 0 var(--color-base13)"
           : "none"
       }
       alignItems={"center"}
