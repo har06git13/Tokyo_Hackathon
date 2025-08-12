@@ -30,6 +30,8 @@ export default App;
 import React, { useEffect, useState } from 'react';
 import ShibuyaMap from './ShibuyaMap';
 import MapTester from './MapTester';
+import QRCodeScanner from './QRCodeScanner';
+import QRCodeGenerator from './QRCodeGenerator';
 import './App.css';
 
 function App() {
@@ -49,6 +51,8 @@ function App() {
       </header>
       
       <main style={{ padding: '20px' }}>
+        <QRCodeScanner />
+        <QRCodeGenerator />
         <MapTester />
         <ShibuyaMap />
       </main>
