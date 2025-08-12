@@ -28,6 +28,9 @@ export default App;
 
 
 import React, { useEffect, useState } from 'react';
+import ShibuyaMap from './ShibuyaMap';
+import MapTester from './MapTester';
+import './App.css';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -38,7 +41,19 @@ function App() {
       .then((data) => setMessage(data.message));
   }, []);
 
-  return <h1>{message}</h1>;
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>Tokyo Hackathon - Map Demo</h1>
+        <p>バックエンドからのメッセージ: {message}</p>
+      </header>
+      
+      <main style={{ padding: '20px' }}>
+        <MapTester />
+        <ShibuyaMap />
+      </main>
+    </div>
+  );
 }
 
 export default App;
