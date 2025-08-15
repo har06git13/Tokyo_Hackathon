@@ -120,7 +120,16 @@ export const ActionPage = () => {
       position="relative"
     >
       <Header prevPage={false} currentPage="アクション" />
-      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
+      <Flex
+        className="page-contents"
+        gap={"1.6%"}
+        paddingTop={"4%"}
+        onClick={() => {
+          if (spotSelected) {
+            setSpotSelected(false);
+          }
+        }}
+      >
         <LifeGauge />
         <EventText />
         <ActionTab
@@ -142,26 +151,63 @@ export const ActionPage = () => {
             justifyContent={"space-between"}
             position="relative"
           >
-            <MapMarkerLegend />
-
-            {/* 仮リスト */}
-            <FacilityList
-              currentTimeSlot={currentTimeSlot}
-              onSelect={onSelectFacility}
-            />
-
-            {spotSelected && (
-              <MapSpotInfo
-                spotName={selectedFacility.name}
-                spotType={selectedFacility.type}
-                life={selectedEvent?.gaugeChange.life}
-                mental={selectedEvent?.gaugeChange.mental}
-                charge={selectedEvent?.gaugeChange.battery}
-                money={selectedEvent?.gaugeChange.money}
-                arrivalTime={arrivalTime}
-                onClick={() => setShowConfirmDialog(true)}
+            <Box
+              className="mapUI"
+              position="absolute"
+              inset={0}
+              zIndex={0}
+              width={"100%"}
+              height={"100%"}
+              backgroundColor={"var(--color-accent10)"}
+            >
+              {/* ここにマップ入れてほしい！ */}
+              {/* ↓仮の施設選択リスト、マップ実装したらロジックだけ移植して消してね */}
+              <FacilityList
+                currentTimeSlot={currentTimeSlot}
+                onSelect={onSelectFacility}
               />
-            )}
+            </Box>
+
+            <Flex
+              className="map-overlay"
+              position="absolute"
+              inset={0}
+              zIndex={1}
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="space-between"
+              pointerEvents="none"
+              onClick={() => {
+                if (spotSelected) {
+                  setSpotSelected(false);
+                }
+              }}
+            >
+              <MapMarkerLegend />
+
+              {spotSelected && (
+                <Flex
+                  pointerEvents="auto"
+                  width={"100%"}
+                  justifyContent="center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <MapSpotInfo
+                    spotName={selectedFacility.name}
+                    spotType={selectedFacility.type}
+                    life={selectedEvent?.gaugeChange.life}
+                    mental={selectedEvent?.gaugeChange.mental}
+                    charge={selectedEvent?.gaugeChange.battery}
+                    money={selectedEvent?.gaugeChange.money}
+                    arrivalTime={arrivalTime}
+                    onClick={() => setShowConfirmDialog(true)}
+                  />
+                </Flex>
+              )}
+            </Flex>
+
             {showConfirmDialog && (
               <>
                 <Box

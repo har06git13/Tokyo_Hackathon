@@ -1,11 +1,31 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer } from "../../components/game-page";
 import { useNavigate } from "react-router-dom";
+import { selectedFacilityAtom } from "../../atoms/playerAtoms";
+import { useAtom } from "jotai";
+
+// 仮コードリーダーからIDを取得するフック
+const useScannedCodeId = () => {
+  const [scannedId, setScannedId] = React.useState(null);
+
+  // ここでコードリーダーが値を返すタイミングで setScannedId を呼ぶ
+  // setScannedId(読み込んだID); ←たぶんこれでできる
+  return [scannedId, setScannedId];
+};
 
 export const CheckInPage = () => {
   const navigate = useNavigate();
+  const [selectedFacility] = useAtom(selectedFacilityAtom);
+  const [scannedId, setScannedId] = useScannedCodeId();
+
+  // 監視して、一致したら自動遷移
+  useEffect(() => {
+    if (scannedId && selectedFacility?.id === scannedId) {
+      navigate("/game/monologue");
+    }
+  }, [scannedId, selectedFacility, navigate]);
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -17,7 +37,10 @@ export const CheckInPage = () => {
             width={"100%"}
             height={"60vh"}
             backgroundColor={"var(--color-accent11)"}
-          />
+          >
+            {/* ここにコードリーダー入れてほしい！読み取り成功時に setScannedId を呼ぶ */}
+          </Box>
+
           <Flex
             flexDirection={"column"}
             backgroundColor={"var(--color-base10)"}
