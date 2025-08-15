@@ -4,7 +4,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./styleguide.css";
 
 // ページコンポーネント
-import { TitlePage, ProfilePage, SplashPage } from "./pages/title-pages";
+import {
+  TitlePage,
+  ProfilePage,
+  SplashPage,
+  NotFoundPage,
+} from "./pages/title-pages";
 import {
   ActionPage,
   LogPage,
@@ -62,6 +67,7 @@ function App() {
                 element={<SpotTypeInfoPage />}
               />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           {/* <h1>this from App.js→「{message}」</h1> */}
         </Router>
