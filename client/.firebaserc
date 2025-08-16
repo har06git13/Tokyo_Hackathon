@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "shibuya-waitan"
+  },
+  "targets": {
+    "shibuya-waitan": {
+      "hosting": {
+        "shibuya-waitan": [
+          "shibuya-waitan"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
