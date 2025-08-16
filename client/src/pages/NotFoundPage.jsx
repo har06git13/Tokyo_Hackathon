@@ -1,8 +1,8 @@
 // src/pages/NotFoundPage.js
 import React from "react";
 import { Flex, Box } from "@chakra-ui/react";
-import { Header } from "../../components/common";
-import { MonologueViewer } from "../../components/game-page/MonologueViewer";
+import { Header } from "../components/common";
+import { MonologueViewer } from "../components/game-page/MonologueViewer";
 import { useNavigate } from "react-router-dom";
 
 export const NotFoundPage = () => {
