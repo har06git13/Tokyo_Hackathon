@@ -26,9 +26,6 @@ async function start() {
   Events = db.collection('events');
   Facilities = db.collection('facilities');
 
-  // ざっくりインデックス（存在していてもOK）
-  await Events.createIndex({ event_id: 1 }, { unique: true }).catch(() => {});
-  await Facilities.createIndex({ facility_id: 1 }, { unique: true }).catch(() => {});
 
   app.listen(PORT, () =>
     console.log(`Server listening on http://localhost:${PORT}`)
@@ -101,42 +98,6 @@ app.get('/api/users/:id/summary', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-/*
-// 開発用シード（任意）
-app.post('/api/dev/seed', async (_req, res, next) => {
-  try {
-    await Promise.all([Users.deleteMany({}), Events.deleteMany({}), Facilities.deleteMany({})]);
-
-    await Facilities.insertOne({
-      facility_id: 1,
-      type: 'ChargeSpot',
-      name: 'CHARGESPOT HUB 渋谷センター街店',
-      coordinate: { lat: 35.6583944, lng: 139.7023056 }
-    });
-
-    await Events.insertOne({
-      event_id: 0,
-      time: 30,
-      event_type: 'Move',
-      facility_id: 1,
-      hp_d: { stamina: -10, mental: 0, battery: 10, money: 0 },
-      text: { type: 'dialogue', speaker: 'NPC', content: '渋谷に到着！', button: '次へ' }
-    });
-
-    const u = await Users.insertOne({
-      name: 'AAA',
-      age: 25,
-      gender: 'Woman',
-      shibuya_relation: 'Resident',
-      icon: 'Image1.png',
-      visited_list: [1],
-      hp_log: [{ time: new Date(), stamina: 70, mental: 70, battery: 60, money: 0, source: 'interval' }]
-    });
-
-    res.json({ userId: u.insertedId });
-  } catch (e) { next(e); }
-});
-*/
 
 // エラーハンドラ
 app.use((err, _req, res, _next) => {
