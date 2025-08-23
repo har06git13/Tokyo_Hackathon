@@ -19,7 +19,10 @@ export const MonologuePage = () => {
     <Flex className="page-container" backgroundColor={"#00000000"} zIndex={1}>
       <Box
         className="background-image"
-        style={{ backgroundImage: "url('/assets/image/monologue-back.png')" }}
+        style={{
+          backgroundImage: "url('/assets/image/monologue-back.png')",
+          filter: "brightness(1.2) contrast(0.9) blur(4px) opacity(0.7)",
+        }}
       />
       <Header
         prevPage={false}

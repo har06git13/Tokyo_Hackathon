@@ -107,7 +107,7 @@ export const ActionConfirmDialog = ({
         )}
         <Button
           text={actionType === "walk" ? "移動する" : "見る"}
-          isAvailable={isLowCharge ? false : true}
+          isAvailable={actionType === "sns" ? !isLowCharge : true}
           color="var(--color-theme10)"
           onClick={onClick}
           width="100%"

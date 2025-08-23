@@ -26,6 +26,7 @@ export const ActionPage = () => {
   const [spotSelected, setSpotSelected] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [actionType, setActionType] = useState("walk");
+
   const navigate = useNavigate();
   const [selectedFacility, setSelectedFacility] = useAtom(selectedFacilityAtom);
   const [selectedEvent, setSelectedEvent] = useAtom(selectedEventAtom);
@@ -36,22 +37,22 @@ export const ActionPage = () => {
 
   useEffect(() => {
     setSpotSelected(false);
+    setShowConfirmDialog(false);
   }, [actionType]);
 
-  // マップAPIが実装されるまでの仮の施設選択リスト
+  // --- 仮の施設選択リスト ---
   const FacilityList = ({ currentTimeSlot, onSelect }) => {
     const visitedEventIds = eventHistory.map((e) => e.id);
     const filteredFacilities = facilityList.filter((fac) => {
-      if (fac.id === "fac_000") return;
+      if (fac.id === "fac_000") return false;
       if (fac.type === "shelter") {
         return ["6h", "8h", "10h"].includes(currentTimeSlot);
       }
-      // IDチェックして、訪問済みを除外
+      // その施設で既に発生したイベントに紐づく施設は除外
       const hasVisited = eventList.some(
         (ev) => ev.locationId === fac.id && visitedEventIds.includes(ev.id)
       );
-      if (hasVisited) return false;
-      return true;
+      return !hasVisited;
     });
 
     return (
@@ -69,19 +70,24 @@ export const ActionPage = () => {
     );
   };
 
-  // 選択した施設を、グローバルなstateにセット
+  // 施設選択時の処理
   const onSelectFacility = async (facilityId) => {
-    if (facilityId === "fac_000") return; // ここで即リターンして無視
+    if (facilityId === "fac_000") return;
 
     const facData = facilityList.find((fac) => fac.id === facilityId);
+    if (!facData) return;
+
     setSelectedFacility(facData);
+
     try {
-      // まずはこの施設の walk イベントをDBから検索
-      const walkRes = await fetch(`/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`);
+      // walk を優先して取得
+      const walkRes = await fetch(
+        `/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`
+      );
       if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
       const walkArr = await walkRes.json();
 
-      // 見つからなければ epilogue をフォールバックで1件
+      // なければ epilogue をフォールバック
       let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
       if (!evData) {
         const epiRes = await fetch("/api/events?type=epilogue");
@@ -101,7 +107,7 @@ export const ActionPage = () => {
     }
   };
 
-  // snsを選択した場合のイベントセット
+  // SNS イベント選択
   const onSelectSnsEvent = () => {
     const evData = eventList.find(
       (ev) => ev.type === "sns" && ev.timeSlot === currentTimeSlot
@@ -114,10 +120,9 @@ export const ActionPage = () => {
   };
 
   // 到着時刻の計算
-  const calcArrivalTime = (currentTime, requiredDuration) => {
-    const arrival = new Date(currentTime.getTime());
-    arrival.setMinutes(arrival.getMinutes() + requiredDuration);
-
+  const calcArrivalTime = (now, requiredDuration) => {
+    const arrival = new Date(now.getTime());
+    arrival.setMinutes(arrival.getMinutes() + (requiredDuration || 0));
     const hh = String(arrival.getHours()).padStart(2, "0");
     const mm = String(arrival.getMinutes()).padStart(2, "0");
     return `${hh}:${mm}`;
@@ -133,11 +138,23 @@ export const ActionPage = () => {
       className="page-container"
       backgroundColor={"var(--color-base12)"}
       position="relative"
+      direction="column"
+      minH="100dvh"
     >
       <Header prevPage={false} currentPage="アクション" />
-      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
+
+      {/* -------- ページ本体 -------- */}
+      <Flex
+        className="page-contents"
+        gap={"1.6%"}
+        paddingTop={"4%"}
+        onClick={() => {
+          if (spotSelected) setSpotSelected(false);
+        }}
+      >
         <LifeGauge />
         <EventText />
+
         <ActionTab
           type={actionType}
           onSnsClick={() => {
@@ -146,6 +163,8 @@ export const ActionPage = () => {
           }}
           onWalkClick={() => setActionType("walk")}
         />
+
+        {/* ===== WALK モード ===== */}
         {actionType === "walk" && (
           <Flex
             className="map"
@@ -157,27 +176,62 @@ export const ActionPage = () => {
             justifyContent={"space-between"}
             position="relative"
           >
-            <MapMarkerLegend />
-
-            {/* 仮リスト */}
-            <FacilityList
-              currentTimeSlot={currentTimeSlot}
-              onSelect={onSelectFacility}
-            />
-
-            {spotSelected && (
-              <MapSpotInfo
-                spotName={selectedFacility.name}
-                spotType={selectedFacility.type}
-                life={selectedEvent?.gaugeChange?.life}
-                mental={selectedEvent?.gaugeChange?.mental}
-                charge={selectedEvent?.gaugeChange?.battery}
-                money={selectedEvent?.gaugeChange?.money}
-                arrivalTime={arrivalTime}
-                onClick={() => setShowConfirmDialog(true)}
+            {/* マップ土台（実マップをここに差し替え予定） */}
+            <Box
+              className="mapUI"
+              position="absolute"
+              inset={0}
+              zIndex={0}
+              width={"100%"}
+              height={"100%"}
+              backgroundColor={"var(--color-accent10)"}
+            >
+              {/* 仮の施設選択リスト（マップ実装後はロジックだけ移植） */}
+              <FacilityList
+                currentTimeSlot={currentTimeSlot}
+                onSelect={onSelectFacility}
               />
-            )}
-            {showConfirmDialog && (
+            </Box>
+
+            {/* マップのオーバーレイ（レジェンド／スポット情報） */}
+            <Flex
+              className="map-overlay"
+              position="absolute"
+              inset={0}
+              zIndex={1}
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="space-between"
+              pointerEvents="none"
+              onClick={() => {
+                if (spotSelected) setSpotSelected(false);
+              }}
+            >
+              <MapMarkerLegend />
+
+              {spotSelected && selectedFacility && (
+                <Flex
+                  pointerEvents="auto"
+                  width={"100%"}
+                  justifyContent="center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MapSpotInfo
+                    spotName={selectedFacility.name}
+                    spotType={selectedFacility.type}
+                    life={selectedEvent?.gaugeChange?.life}
+                    mental={selectedEvent?.gaugeChange?.mental}
+                    charge={selectedEvent?.gaugeChange?.battery}
+                    money={selectedEvent?.gaugeChange?.money}
+                    arrivalTime={arrivalTime}
+                    onClick={() => setShowConfirmDialog(true)}
+                  />
+                </Flex>
+              )}
+            </Flex>
+
+            {/* 確認ダイアログ（モーダル） */}
+            {showConfirmDialog && selectedFacility && (
               <>
                 <Box
                   position="absolute"
@@ -186,14 +240,14 @@ export const ActionPage = () => {
                   w="100%"
                   h="100%"
                   bg="rgba(0,0,0,0.5)"
-                  zIndex={1}
+                  zIndex={2}
                 />
                 <Flex
                   position="absolute"
                   top="50%"
                   left="50%"
                   transform="translate(-50%, -50%)"
-                  zIndex={2}
+                  zIndex={3}
                   w="100%"
                   h="100%"
                   alignItems={"center"}
@@ -203,10 +257,10 @@ export const ActionPage = () => {
                     actionType="walk"
                     spotName={selectedFacility.name}
                     arrivalTime={arrivalTime}
-                    life={selectedEvent.gaugeChange.life}
-                    mental={selectedEvent.gaugeChange.mental}
-                    charge={selectedEvent.gaugeChange.battery}
-                    money={selectedEvent.gaugeChange.money}
+                    life={selectedEvent?.gaugeChange?.life}
+                    mental={selectedEvent?.gaugeChange?.mental}
+                    charge={selectedEvent?.gaugeChange?.battery}
+                    money={selectedEvent?.gaugeChange?.money}
                     onBackClick={() => setShowConfirmDialog(false)}
                     onClick={() => {
                       setCurrentEventStatus("walk");
@@ -218,23 +272,27 @@ export const ActionPage = () => {
             )}
           </Flex>
         )}
+
+        {/* ===== SNS モード ===== */}
         {actionType === "sns" && (
           <Flex
             className="sns"
             backgroundColor={"var(--color-theme10)"}
             flex={1}
             width={"100%"}
+            minH="60vh"
             flexDirection={"column"}
             alignItems={"center"}
             justifyContent={"end"}
+            gap={6}
           >
             <SnsLogoIcon color="var(--color-base10)" width="20%" />
             <ActionConfirmDialog
               arrivalTime={arrivalTime}
-              life={selectedEvent?.gaugeChange.life}
-              mental={selectedEvent?.gaugeChange.mental}
-              charge={selectedEvent?.gaugeChange.battery}
-              money={selectedEvent?.gaugeChange.money}
+              life={selectedEvent?.gaugeChange?.life}
+              mental={selectedEvent?.gaugeChange?.mental}
+              charge={selectedEvent?.gaugeChange?.battery}
+              money={selectedEvent?.gaugeChange?.money}
               onClick={() => {
                 setCurrentEventStatus("sns");
                 navigate("/game/sns");
@@ -243,6 +301,7 @@ export const ActionPage = () => {
           </Flex>
         )}
       </Flex>
+
       <Footer />
     </Flex>
   );

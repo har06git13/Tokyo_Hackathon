@@ -60,7 +60,7 @@ export const eventHistoryAtom = atom([]); // イベントid,イベント時刻�
 export const visitedFacilitiesAtom = atom(["fac_000"]); /// 施設idを保存、最初は被災した地点のみ
 
 // 生存または避難失敗
-export const survivedAtom = atom(null); // true/false/null（未確定）
+export const survivedAtom = atom(true); // true/false
 
 // 生存ポイントまたは死因(暫定) あとでProptypesしたい
 export const criticalReasonList = [
