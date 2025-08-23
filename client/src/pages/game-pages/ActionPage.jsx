@@ -9,6 +9,7 @@ import {
   MapSpotInfo,
   Footer,
   ActionConfirmDialog,
+  GoogleMapComponent,
 } from "../../components/game-page";
 import { SnsLogoIcon } from "../../components/icons";
 import { useAtom } from "jotai";
@@ -19,6 +20,8 @@ import {
   selectedEventAtom,
   eventHistoryAtom,
   currentEventStatusAtom,
+  currentLocationAtom,
+  visitedFacilitiesAtom,
 } from "../../atoms/playerAtoms";
 import { facilityList, eventList } from "../../temporary-database";
 
@@ -33,6 +36,32 @@ export const ActionPage = () => {
   const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
   const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
+  const [currentLocationName] = useAtom(currentLocationAtom);
+  const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
+
+  // 現在地の施設オブジェクトを取得
+  const currentLocationFacility = facilityList.find(fac => fac.name === currentLocationName);
+
+  // チェックイン状態を判定する関数
+  const getFacilityStatus = (facilityId) => {
+    const visitedEventIds = eventHistory.map((e) => e.id);
+    const hasVisited = eventList.some(
+      (ev) => ev.locationId === facilityId && visitedEventIds.includes(ev.id)
+    );
+    const isCurrentLocation = currentLocationFacility?.id === facilityId;
+    
+    return {
+      isVisited: hasVisited,
+      isCurrentLocation: isCurrentLocation,
+      isCheckedIn: visitedFacilities.includes(facilityId)
+    };
+  };
+
+  // 施設の状態情報をマップして渡す
+  const facilityStatusMap = facilityList.reduce((acc, facility) => {
+    acc[facility.id] = getFacilityStatus(facility.id);
+    return acc;
+  }, {});
 
   useEffect(() => {
     setSpotSelected(false);
@@ -42,7 +71,7 @@ export const ActionPage = () => {
   const FacilityList = ({ currentTimeSlot, onSelect }) => {
     const visitedEventIds = eventHistory.map((e) => e.id);
     const filteredFacilities = facilityList.filter((fac) => {
-      if (fac.id === "fac_000") return;
+      if (fac.id === "fac_000") return false;
       if (fac.type === "shelter") {
         return ["6h", "8h", "10h"].includes(currentTimeSlot);
       }
@@ -70,10 +99,21 @@ export const ActionPage = () => {
   };
 
   // 選択した施設を、グローバルなstateにセット
-  const onSelectFacility = (facilityId) => {
+  const onSelectFacility = (facilityData) => {
+    // facilityDataが文字列（ID）かオブジェクトかを判定
+    let facilityId, facData;
+    
+    if (typeof facilityData === 'string') {
+      facilityId = facilityData;
+      facData = facilityList.find((fac) => fac.id === facilityId);
+    } else {
+      // オブジェクトの場合
+      facilityId = facilityData.id;
+      facData = facilityData;
+    }
+    
     if (facilityId === "fac_000") return; // ここで即リターンして無視
 
-    const facData = facilityList.find((fac) => fac.id === facilityId);
     const evData =
       eventList.find(
         (ev) => ev.locationId === facilityId && ev.type === "walk"
@@ -139,28 +179,67 @@ export const ActionPage = () => {
             width={"100%"}
             flexDirection={"column"}
             alignItems={"center"}
-            justifyContent={"space-between"}
+            justifyContent={"center"}
             position="relative"
           >
-            <MapMarkerLegend />
-
-            {/* 仮リスト */}
-            <FacilityList
-              currentTimeSlot={currentTimeSlot}
-              onSelect={onSelectFacility}
-            />
-
-            {spotSelected && (
-              <MapSpotInfo
-                spotName={selectedFacility.name}
-                spotType={selectedFacility.type}
-                life={selectedEvent?.gaugeChange.life}
-                mental={selectedEvent?.gaugeChange.mental}
-                charge={selectedEvent?.gaugeChange.battery}
-                money={selectedEvent?.gaugeChange.money}
-                arrivalTime={arrivalTime}
-                onClick={() => setShowConfirmDialog(true)}
+            {/* Google Map Component */}
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              zIndex={1}
+            >
+              <GoogleMapComponent 
+                onSelectFacility={onSelectFacility}
+                selectedSpot={selectedFacility}
+                eventHistory={eventHistory}
+                currentLocation={currentLocationFacility}
+                visitedFacilities={visitedFacilities}
+                facilityStatusMap={facilityStatusMap}
               />
+            </Box>
+
+            {/* マップ凡例 - 絶対配置で上に表示 */}
+            <Box
+              position="absolute"
+              top="16px"
+              left="16px"
+              zIndex={100}
+            >
+              <MapMarkerLegend />
+            </Box>
+
+            {/* デバッグ用：仮の施設選択リスト */}
+            {process.env.NODE_ENV === 'development' && false && (
+              <FacilityList
+                currentTimeSlot={currentTimeSlot}
+                onSelect={onSelectFacility}
+              />
+            )}
+
+            {spotSelected && !showConfirmDialog && (
+              <Box
+                position="absolute"
+                bottom="16px"
+                left="50%"
+                transform="translateX(-50%)"
+                zIndex={10}
+                width="90%" 
+                maxWidth="400px"
+              >
+                <MapSpotInfo
+                  spotName={selectedFacility.name}
+                  spotType={selectedFacility.type}
+                  life={selectedEvent?.gaugeChange.life}
+                  mental={selectedEvent?.gaugeChange.mental}
+                  charge={selectedEvent?.gaugeChange.battery}
+                  money={selectedEvent?.gaugeChange.money}
+                  arrivalTime={arrivalTime}
+                  onClick={() => setShowConfirmDialog(true)}
+                />
+              </Box>
             )}
             {showConfirmDialog && (
               <>
@@ -171,14 +250,14 @@ export const ActionPage = () => {
                   w="100%"
                   h="100%"
                   bg="rgba(0,0,0,0.5)"
-                  zIndex={1}
+                  zIndex={20}
                 />
                 <Flex
                   position="absolute"
                   top="50%"
                   left="50%"
                   transform="translate(-50%, -50%)"
-                  zIndex={2}
+                  zIndex={21}
                   w="100%"
                   h="100%"
                   alignItems={"center"}

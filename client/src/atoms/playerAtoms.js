@@ -71,3 +71,7 @@ export const criticalReasonList = [
   "getInfo",
 ];
 export const criticalReasonAtom = atom("lowHealth"); // Listから1つ自動でセットされる
+
+// デバイス現在地（GPS）
+export const deviceLocationAtom = atom({ lat: null, lng: null, accuracy: null, timestamp: null });
+export const geolocationErrorAtom = atom(null);

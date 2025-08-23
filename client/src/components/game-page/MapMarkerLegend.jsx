@@ -1,47 +1,102 @@
 import React from "react";
-import { MapmarkerIcon, MapUserIcon } from "../icons";
+import { MapmarkerIcon } from "../icons";
+import { useAtom } from "jotai";
+import { deviceLocationAtom, geolocationErrorAtom } from "../../atoms/playerAtoms";
 import { Flex, Text } from "@chakra-ui/react";
 
-const MarkerItem = ({ icon, label }) => (
+const MarkerItem = ({ icon, label, disabled = false, onClick }) => (
   <Flex
     className="spotstatusinfo"
     backgroundColor={"var(--color-base10)"}
     borderRadius={"9999px"}
     alignItems={"center"}
-    gap={"6%"}
-    height={"100%"}
-    paddingX={"3%"}
-    paddingY={"1.4%"}
-    width={"100%"}
+    gap={"8px"}
+    height={"32px"}
+    paddingX={"12px"}
+    paddingY={"4px"}
+    minWidth={"fit-content"}
+    opacity={disabled ? 0.4 : 1}
+    cursor={disabled && onClick ? "pointer" : "default"}
+    onClick={disabled ? onClick : undefined}
+    role={disabled && onClick ? "button" : undefined}
+    tabIndex={disabled && onClick ? 0 : undefined}
+    onKeyDown={(e) => {
+      if (!disabled || !onClick) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick();
+      }
+    }}
   >
-    {icon}
-    <Text className="text-subtext" whiteSpace={"nowrap"}>
+    <div style={{ width: "16px", height: "16px", flexShrink: 0 }}>
+      {icon}
+    </div>
+    <Text className="text-subtext" whiteSpace={"nowrap"} fontSize={"12px"}>
       {label}
     </Text>
   </Flex>
 );
 
 export const MapMarkerLegend = () => {
+  const [loc] = useAtom(deviceLocationAtom);
+  const [geoError] = useAtom(geolocationErrorAtom);
+  const [, setLoc] = useAtom(deviceLocationAtom);
+  const [, setGeoError] = useAtom(geolocationErrorAtom);
+  const hasDeviceGps =
+    loc && typeof loc.lat === "number" && typeof loc.lng === "number" && !geoError;
+
+  const requestGeolocation = () => {
+    try {
+      if (!('geolocation' in navigator)) {
+        setGeoError('Geolocation not available');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          setLoc({ lat: latitude, lng: longitude, accuracy, timestamp: pos.timestamp });
+          setGeoError(null);
+        },
+        (err) => {
+          setGeoError(err?.message || 'Geolocation error');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } catch (e) {
+      setGeoError('Failed to request geolocation');
+    }
+  };
   return (
     <Flex
       className="map-marker-legend"
-      width={"90%"}
-      height={"3vh"}
-      gap={"2%"}
+      width={"fit-content"}
+      height={"fit-content"}
+      gap={"8px"}
       alignItems={"center"}
-      paddingRight={"10%"}
-      marginY={"2%"}
+      backgroundColor={"rgba(255, 255, 255, 0.95)"}
+      borderRadius={"8px"}
+      padding={"8px"}
+      boxShadow={"0 2px 8px rgba(0,0,0,0.1)"}
+      border={"1px solid rgba(0,0,0,0.1)"}
     >
       <MarkerItem
-        icon={<MapUserIcon height="100%" width="30%" />}
+        icon={
+          <MapmarkerIcon
+            height="16px"
+            width="16px"
+            style={{ color: "var(--color-accent10)" }}
+          />
+        }
         label="現在地"
+        disabled={!hasDeviceGps}
+        onClick={requestGeolocation}
       />
       <MarkerItem
         icon={
           <MapmarkerIcon
-            height="100%"
-            width="30%"
-            color="var(--color-theme10)"
+            height="16px"
+            width="16px"
+            style={{ color: "var(--color-theme10)" }}
           />
         }
         label="選択中"
@@ -49,9 +104,9 @@ export const MapMarkerLegend = () => {
       <MarkerItem
         icon={
           <MapmarkerIcon
-            height="100%"
-            width="30%"
-            color="var(--color-accent20)"
+            height="16px"
+            width="16px"
+            style={{ color: "var(--color-accent20)" }}
           />
         }
         label="移動可能"
@@ -59,9 +114,9 @@ export const MapMarkerLegend = () => {
       <MarkerItem
         icon={
           <MapmarkerIcon
-            height="100%"
-            width="30%"
-            color="var(--color-base13)"
+            height="16px"
+            width="16px"
+            style={{ color: "var(--color-base13)" }}
           />
         }
         label="来訪済み"
