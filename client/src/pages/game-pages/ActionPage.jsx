@@ -70,20 +70,35 @@ export const ActionPage = () => {
   };
 
   // 選択した施設を、グローバルなstateにセット
-  const onSelectFacility = (facilityId) => {
+  const onSelectFacility = async (facilityId) => {
     if (facilityId === "fac_000") return; // ここで即リターンして無視
 
     const facData = facilityList.find((fac) => fac.id === facilityId);
-    const evData =
-      eventList.find(
-        (ev) => ev.locationId === facilityId && ev.type === "walk"
-      ) || eventList.find((ev) => ev.type === "epilogue");
-
     setSelectedFacility(facData);
-    setSelectedEvent(evData);
-    setSpotSelected(true);
-    console.log(selectedFacility);
-    console.log(selectedEvent);
+    try {
+      // まずはこの施設の walk イベントをDBから検索
+      const walkRes = await fetch(`/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`);
+      if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
+      const walkArr = await walkRes.json();
+
+      // 見つからなければ epilogue をフォールバックで1件
+      let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
+      if (!evData) {
+        const epiRes = await fetch("/api/events?type=epilogue");
+        if (!epiRes.ok) throw new Error(`epilogue fetch HTTP ${epiRes.status}`);
+        const epiArr = await epiRes.json();
+        evData = Array.isArray(epiArr) ? epiArr[0] : null;
+      }
+
+      if (!evData) {
+        console.warn("該当イベントが見つかりませんでした");
+        return;
+      }
+      setSelectedEvent(evData);
+      setSpotSelected(true);
+    } catch (e) {
+      console.warn("イベント取得に失敗:", e);
+    }
   };
 
   // snsを選択した場合のイベントセット
@@ -154,10 +169,10 @@ export const ActionPage = () => {
               <MapSpotInfo
                 spotName={selectedFacility.name}
                 spotType={selectedFacility.type}
-                life={selectedEvent?.gaugeChange.life}
-                mental={selectedEvent?.gaugeChange.mental}
-                charge={selectedEvent?.gaugeChange.battery}
-                money={selectedEvent?.gaugeChange.money}
+                life={selectedEvent?.gaugeChange?.life}
+                mental={selectedEvent?.gaugeChange?.mental}
+                charge={selectedEvent?.gaugeChange?.battery}
+                money={selectedEvent?.gaugeChange?.money}
                 arrivalTime={arrivalTime}
                 onClick={() => setShowConfirmDialog(true)}
               />

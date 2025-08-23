@@ -83,14 +83,12 @@ export const useMonologueLogic = () => {
   }
 
   // 死亡フラグ設定
-  //const isEvacuationFailure = life + selectedEvent.gaugeChange.life <= 0;
   const isEvacuationFailure = life + (effectiveEvent.gaugeChange?.life ?? 0) <= 0;
   if (isEvacuationFailure) {
     setSurvived(false);
   }
 
   // 時間経過によるゲージ変動の設定
-  //const timeEvent = eventList.find((e) => e.id === "event_time_001");
   const isTimeEventActive =
     currentTime.getMinutes() === 0 && currentTime.getHours() !== 14;
 
@@ -98,7 +96,6 @@ export const useMonologueLogic = () => {
   const combinedTexts =
     survived === false
       ? [
-          //...selectedEvent.texts,
           ...effectiveEvent.texts,
           { type: "system", isDecrease: true, text: "体力が0になった。" },
           {
@@ -175,13 +172,13 @@ export const useMonologueLogic = () => {
     if (isTimeEventActive && timeEvent) {
       setEventHistory((prev) => [
         ...prev,
-        { id: timeEvent.id, time: currentTime },
-        { id: effectiveEvent.id, time: currentTime },
+        { id: timeEvent.id ?? timeEvent._id, time: currentTime },
+        { id: effectiveEvent.id ?? effectiveEvent._id, time: currentTime },
       ]);
     } else {
       setEventHistory((prev) => [
         ...prev,
-        { id: effectiveEvent.id, time: currentTime },
+        { id: effectiveEvent.id ?? effectiveEvent._id, time: currentTime },
       ]);
     }
 

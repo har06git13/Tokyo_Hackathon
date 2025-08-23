@@ -65,6 +65,28 @@ app.post('/api/users', async (req, res, next) => {
 });
 
 
+// 施設一覧
+app.get('/api/facilities', async (_req, res, next) => {
+  try {
+    const list = await Facilities.find({}).toArray();
+    res.json(list);
+  } catch (e) { next(e); }
+});
+
+
+// イベント検索（type / timeSlot / locationId で絞り込み）
+app.get('/api/events', async (req, res, next) => {
+  try {
+    const q = {};
+    if (req.query.type) q.type = req.query.type;
+    if (req.query.timeSlot) q.timeSlot = req.query.timeSlot;
+    if (req.query.locationId) q.locationId = req.query.locationId;
+    const list = await Events.find(q).toArray();
+    res.json(list);
+  } catch (e) { next(e); }
+});
+
+
 // イベントの取得
 app.get('/api/events/:id', async (req, res, next) => {
   try {

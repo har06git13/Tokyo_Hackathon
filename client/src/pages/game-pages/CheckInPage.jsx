@@ -3,9 +3,13 @@ import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer } from "../../components/game-page";
 import { useNavigate } from "react-router-dom";
+import { useAtom } from "jotai";
+import { selectedEventAtom } from "../../atoms/playerAtoms";
 
 export const CheckInPage = () => {
   const navigate = useNavigate();
+  const [selectedEvent] = useAtom(selectedEventAtom);
+  const eventId = selectedEvent?._id || selectedEvent?.id; // DBは _id、メモリは id の互換
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -31,7 +35,15 @@ export const CheckInPage = () => {
             <Text
               className="text-sectiontitle"
               color={"var(--color-accent10)"}
-              onClick={() => navigate("/game/monologue")}
+              onClick={() => {
+                if (eventId) {
+                  navigate(`/game/monologue/${eventId}`);
+                } else {
+                  // フォールバック（想定外：イベント未設定）
+                  alert("モノローグ用のイベントが見つかりませんでした。アクション画面に戻ります。");
+                  navigate("/game/action");
+                }
+              }}
             >
               現行ではこのあたりをタップで遷移
             </Text>
