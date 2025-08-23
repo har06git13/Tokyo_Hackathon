@@ -4,10 +4,12 @@ import { Header } from "../../components/common";
 import { MonologueViewer } from "../../components/game-page/MonologueViewer";
 import { useMonologueLogic } from "../../hooks/useMonologueLogic";
 import { eventTypeList } from "../../temporary-database";
+import { useParams } from "react-router-dom";
 
 export const MonologuePage = () => {
+  const { eventId } = useParams();
   const { selectedEvent, combinedTexts, buttonText, handleButtonClick } =
-    useMonologueLogic();
+    useMonologueLogic(eventId);
 
   if (!selectedEvent) {
     return <div>イベントデータが見つかりませんでした</div>;

@@ -1,5 +1,6 @@
 import { useAtom } from "jotai";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   selectedEventAtom,
   selectedFacilityAtom,
@@ -15,10 +16,14 @@ import {
   survivedAtom,
   playerNameAtom,
 } from "../atoms/playerAtoms";
-import { eventList } from "../temporary-database";
+//import { eventList } from "../temporary-database";
 
 export const useMonologueLogic = () => {
   const navigate = useNavigate();
+  const { eventId } = useParams();
+  // URL直指定時の補完用
+  const [fetchedEvent, setFetchedEvent] = useState(null);
+  const [timeEvent, setTimeEvent] = useState(null);
 
   // state読み込み
   const [survived, setSurvived] = useAtom(survivedAtom);
@@ -35,18 +40,57 @@ export const useMonologueLogic = () => {
   const [, setVisitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [, setGaugeHistory] = useAtom(gaugeHistoryAtom);
 
-  if (!selectedEvent) {
+
+  // selectedEvent が無い場合だけ API から取得（/api/events/:id）
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      if (selectedEvent || !eventId) return;
+      try {
+        const res = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
+        if (!res.ok) throw new Error('not found');
+        const data = await res.json(); // {_id, ...}
+        // 既存ロジック互換のため _id → id に正規化
+        if (!aborted) setFetchedEvent({ id: data._id, ...data });
+      } catch {
+        if (!aborted) setFetchedEvent(null);
+      }
+    })();
+    return () => { aborted = true; };
+  }, [selectedEvent, eventId]);
+
+  // 時間イベントはDBから取得（固定ID: event_time_001）
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/events/event_time_001');
+        if (!res.ok) return;
+        const data = await res.json();
+        // こちらも id に正規化
+        if (!aborted) setTimeEvent({ id: data._id, ...data });
+      } catch {}
+    })();
+    return () => { aborted = true; };
+  }, []);
+
+  // 実際に使うイベント（Jotai優先、無ければAPI）
+  const effectiveEvent = selectedEvent ?? fetchedEvent;
+
+  //if (!selectedEvent) {
+  if (!effectiveEvent) {
     return { selectedEvent: null };
   }
 
   // 死亡フラグ設定
-  const isEvacuationFailure = life + selectedEvent.gaugeChange.life <= 0;
+  //const isEvacuationFailure = life + selectedEvent.gaugeChange.life <= 0;
+  const isEvacuationFailure = life + (effectiveEvent.gaugeChange?.life ?? 0) <= 0;
   if (isEvacuationFailure) {
     setSurvived(false);
   }
 
   // 時間経過によるゲージ変動の設定
-  const timeEvent = eventList.find((e) => e.id === "event_time_001");
+  //const timeEvent = eventList.find((e) => e.id === "event_time_001");
   const isTimeEventActive =
     currentTime.getMinutes() === 0 && currentTime.getHours() !== 14;
 
@@ -54,7 +98,8 @@ export const useMonologueLogic = () => {
   const combinedTexts =
     survived === false
       ? [
-          ...selectedEvent.texts,
+          //...selectedEvent.texts,
+          ...effectiveEvent.texts,
           { type: "system", isDecrease: true, text: "体力が0になった。" },
           {
             type: "system",
@@ -63,23 +108,23 @@ export const useMonologueLogic = () => {
           },
         ]
       : isTimeEventActive && timeEvent
-      ? [...timeEvent.texts, ...selectedEvent.texts]
-      : selectedEvent.texts;
+      ? [...(timeEvent?.texts ?? []), ...effectiveEvent.texts]
+      : effectiveEvent.texts;
 
   // ゲージ変動計算関数
   const getSafeValue = (value) => (value ? value : 0);
   const combinedGaugeChange = {
     life:
-      getSafeValue(selectedEvent.gaugeChange.life) +
+      getSafeValue(effectiveEvent.gaugeChange?.life) +
       (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.life) : 0),
     mental:
-      getSafeValue(selectedEvent.gaugeChange.mental) +
+      getSafeValue(effectiveEvent.gaugeChange?.mental) +
       (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.mental) : 0),
     battery:
-      getSafeValue(selectedEvent.gaugeChange.battery) +
+      getSafeValue(effectiveEvent.gaugeChange?.battery) +
       (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.battery) : 0),
     money:
-      getSafeValue(selectedEvent.gaugeChange.money) +
+      getSafeValue(effectiveEvent.gaugeChange?.money) +
       (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.money) : 0),
   };
 
@@ -91,7 +136,7 @@ export const useMonologueLogic = () => {
     walk: { text: "閉じる", next: "/game/action" },
   };
   const currentButtonType =
-    survived === false ? "epilogue" : selectedEvent.type;
+    survived === false ? "epilogue" : effectiveEvent.type;
   const { text: buttonText, next: nextPath } =
     buttonConfig[currentButtonType] || {};
 
@@ -113,7 +158,7 @@ export const useMonologueLogic = () => {
     setMoney(newMoney);
 
     // ゲージ変動履歴に記録
-    if (selectedEvent.type !== "prologue") {
+    if (effectiveEvent.type !== "prologue") {
       setGaugeHistory((prev) => [
         ...prev,
         {
@@ -131,28 +176,28 @@ export const useMonologueLogic = () => {
       setEventHistory((prev) => [
         ...prev,
         { id: timeEvent.id, time: currentTime },
-        { id: selectedEvent.id, time: currentTime },
+        { id: effectiveEvent.id, time: currentTime },
       ]);
     } else {
       setEventHistory((prev) => [
         ...prev,
-        { id: selectedEvent.id, time: currentTime },
+        { id: effectiveEvent.id, time: currentTime },
       ]);
     }
 
     // 時間更新
-    if (selectedEvent.requiredDuration) {
+    if (effectiveEvent.requiredDuration) {
       const newTime = new Date(currentTime.getTime());
-      newTime.setMinutes(newTime.getMinutes() + selectedEvent.requiredDuration);
+      newTime.setMinutes(newTime.getMinutes() + effectiveEvent.requiredDuration);
       setCurrentTime(newTime);
     }
 
     // 訪問施設更新
-    if (selectedEvent.locationId) {
+    if (effectiveEvent.locationId) {
       setVisitedFacilities((prev) =>
-        prev.includes(selectedEvent.locationId)
+        prev.includes(effectiveEvent.locationId)
           ? prev
-          : [...prev, selectedEvent.locationId]
+          : [...prev, effectiveEvent.locationId]
       );
     }
 
@@ -166,7 +211,7 @@ export const useMonologueLogic = () => {
   };
 
   return {
-    selectedEvent,
+    selectedEvent: effectiveEvent,
     currentTime,
     combinedTexts,
     buttonText,

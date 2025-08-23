@@ -44,7 +44,7 @@ app.get('/api/hello', (req, res) => {
 });
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-/* --- 必要最小のAPI --- */
+
 // ユーザー作成
 app.post('/api/users', async (req, res, next) => {
   try {
@@ -62,6 +62,18 @@ app.post('/api/users', async (req, res, next) => {
     res.json({ _id: r.insertedId, ...user });
   } catch (e) { next(e); }
 });
+
+
+// イベントの取得
+app.get('/api/events/:id', async (req, res, next) => {
+  try {
+    const ev = await Events.findOne({ _id: req.params.id });
+    if (!ev) return res.status(404).json({ error: 'Event not found' });
+    res.json(ev); // _id を含むそのまま返す
+  } catch (e) { next(e); }
+});
+
+
 
 // HPログ追加（event/interval 両対応）
 app.post('/api/users/:id/hp', async (req, res, next) => {
