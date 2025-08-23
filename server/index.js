@@ -16,7 +16,7 @@ if (!uri) {
 }
 
 const client = new MongoClient(uri);
-let db, Users, Events, Facilities;
+let db, Users, Events, Facilities, SnsPosts;
 
 async function start() {
   // MongoDB 接続
@@ -25,6 +25,7 @@ async function start() {
   Users = db.collection('users');
   Events = db.collection('events');
   Facilities = db.collection('facilities');
+  SnsPosts = db.collection('sns');
 
 
   app.listen(PORT, () =>
@@ -72,6 +73,20 @@ app.get('/api/events/:id', async (req, res, next) => {
     res.json(ev); // _id を含むそのまま返す
   } catch (e) { next(e); }
 });
+
+/* --- SNS --- */
+// 時間帯での取得（例: /api/sns?timeSlot=2h）
+app.get('/api/sns', async (req, res, next) => {
+  try {
+    const { timeSlot } = req.query;
+    const filter = timeSlot ? { timeSlot } : {};
+    const posts = await SnsPosts.find(filter, {
+      projection: { /* 全フィールド返すなら projection 省略もOK */ }
+    }).toArray();
+    res.json(posts);
+  } catch (e) { next(e); }
+});
+
 
 
 

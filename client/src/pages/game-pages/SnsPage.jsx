@@ -1,32 +1,58 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Flex } from "@chakra-ui/react";
 import { Header, LifeGauge, Button } from "../../components/common";
 import { EventText, Footer, TweetCard } from "../../components/game-page";
 import { SnsIcon } from "../../components/icons";
-import { snsPostList } from "../../temporary-database";
+//import { snsPostList } from "../../temporary-database";
 import { useAtom } from "jotai";
-import { currentTimeSlotAtom } from "../../atoms/playerAtoms";
+import { currentTimeSlotAtom, selectedEventAtom } from "../../atoms/playerAtoms";
 
 export const SnsPage = () => {
   const navigate = useNavigate();
   const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
+  const [selectedEvent] = useAtom(selectedEventAtom);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 時間帯でツイートを絞り込み
-  const filteredPosts = snsPostList.filter(
-    (post) => post.timeSlot === currentTimeSlot
-  );
+  const SNS_ID_BY_SLOT = {
+  "2h": "event_sns_001",
+  "4h": "event_sns_002",
+  "6h": "event_sns_003",
+  "8h": "event_sns_004",
+  "10h": "event_sns_005",
+  };
+
+  // 取得（時間帯でサーバー側フィルタ）
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/sns?timeSlot=${encodeURIComponent(currentTimeSlot)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!aborted) setPosts(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!aborted) setError(e.message);
+      } finally {
+        if (!aborted) setLoading(false);
+      }
+    })();
+    return () => { aborted = true; };
+  }, [currentTimeSlot]);
 
   // 表示順をシャッフル
-  const shuffleArray = (array) => {
-    const arr = [...array];
+  const shuffledPosts = useMemo(() => {
+    const arr = [...posts];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  };
-  const shuffledPosts = shuffleArray(filteredPosts);
+  }, [posts]);
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -52,8 +78,11 @@ export const SnsPage = () => {
             height={"50vh"}
             scrollbar={"hidden"}
           >
-            {shuffledPosts.map((post, index) => (
+            {loading && <div style={{color: "var(--color-base1)"}}>読み込み中...</div>}
+            {error && <div style={{color: "tomato"}}>読み込みに失敗しました：{error}</div>}
+            {!loading && !error && shuffledPosts.map((post) => (
               <TweetCard
+                key={post._id /* DBは _id を返します */}
                 userName={post.userName}
                 userId={post.userId}
                 text={post.text}
@@ -66,7 +95,16 @@ export const SnsPage = () => {
             height="4vh"
             isAvailable
             onClick={() => {
-              navigate(`/game/monologue`);
+              const eventId =
+                selectedEvent?._id ||
+                selectedEvent?.id ||
+                SNS_ID_BY_SLOT[currentTimeSlot];
+
+              if (!eventId) {
+                console.warn("SNSイベントIDが特定できませんでした");
+                return;
+              }
+              navigate(`/game/monologue/${eventId}`);
             }}
           />
         </Flex>
