@@ -1,24 +1,67 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LifeGauge } from "../common";
 import { Flex, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { playerNameAtom, gaugeHistoryAtom } from "../../atoms/playerAtoms";
-import {
-  eventList,
-  facilityList,
-  eventTypeList,
-  spotTypeList,
-} from "../../temporary-database";
+import { eventTypeList, spotTypeList } from "../../temporary-database";
 
 export const LogElement = ({ id, time }) => {
   const [playerName] = useAtom(playerNameAtom);
   const [gaugeHistory] = useAtom(gaugeHistoryAtom);
 
-  const event = eventList.find((e) => e.id === id);
-  const facility = event
-    ? facilityList.find((f) => f.id === event.locationId)
-    : null;
+  // --- API state ---
+  const [facilities, setFacilities] = useState([]);
+  const [facErr, setFacErr] = useState(null);
+  const [eventDoc, setEventDoc] = useState(null);
+  const [evErr, setEvErr] = useState(null);
+
+  // 施設一覧を取得
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/facilities");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        const normalized = Array.isArray(list)
+          ? list.map((f) => ({ id: f.id ?? f._id, ...f }))
+          : [];
+        if (!aborted) setFacilities(normalized);
+      } catch (e) {
+        if (!aborted) setFacErr(e.message);
+      }
+    })();
+    return () => { aborted = true; };
+  }, []);
+
+  // イベント詳細を取得
+  useEffect(() => {
+    if (!id) return;
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/events/${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!aborted) setEventDoc({ id: data._id ?? data.id, ...data });
+      } catch (e) {
+        if (!aborted) setEvErr(e.message);
+        setEventDoc(null);
+      }
+    })();
+    return () => { aborted = true; };
+  }, [id]);
+
+  // 施設参照インデックス
+  const facIndex = useMemo(
+    () => Object.fromEntries((facilities ?? []).map((f) => [f.id ?? f._id, f])),
+    [facilities]
+  );
+
+  // 以降、従来の変数名に合わせる
+  const event = eventDoc;
+  const facility = event?.locationId ? facIndex[event.locationId] : null;
 
   const formatTime = (date) => {
     if (!(date instanceof Date)) return "";
@@ -27,7 +70,7 @@ export const LogElement = ({ id, time }) => {
     return `${hh}:${mm}`;
   };
 
-  // timeに一致するゲージ履歴を探す
+  // time に一致するゲージ履歴
   const gauge = gaugeHistory.find((g) => g.time.getTime() === time.getTime());
 
   const getDescriptionByType = () => {
@@ -35,7 +78,7 @@ export const LogElement = ({ id, time }) => {
       case "time":
         return "毎時00分に体力・精神力・電源を5%消費します";
       case "walk":
-        return event.text;
+        return "施設に移動しました。";
       case "sns":
         return "いくつかの情報を手に入れた。";
       case "prologue":
@@ -73,14 +116,13 @@ export const LogElement = ({ id, time }) => {
         gap="1vh"
       >
         {/* ログタイトル & 地点 */}
-
         <Flex flexDirection="column">
           <Text className="text-sectiontitle">
-            {event ? eventTypeList[event.type] : "不明なイベント"}
+            {event ? eventTypeList[event.type] ?? "イベント" : "不明なイベント"}
           </Text>
           {event?.type !== "time" && event?.type !== "sns" && (
             <Text className="text-subtext" color="var(--color-base13)">
-              移動先：{facility?.name}
+              移動先：{facility?.name ?? "不明な施設"}
             </Text>
           )}
         </Flex>
@@ -117,7 +159,7 @@ export const LogElement = ({ id, time }) => {
         {/* 所要時間 */}
         {event?.type === "time" || event?.type === "prologue" ? undefined : (
           <Text className="text-maintext">
-            所要時間：{event?.requiredDuration}分
+            所要時間：{event?.requiredDuration ?? 0}分
           </Text>
         )}
       </Flex>
@@ -129,7 +171,8 @@ LogElement.propTypes = {
   eventtype: PropTypes.oneOf(["time", "event", "walk", "sns", "monologue"]),
   spot: PropTypes.string,
   spottype: PropTypes.string,
-  time: PropTypes.string,
+  time: PropTypes.instanceOf(Date),
   eventtime: PropTypes.string,
   text: PropTypes.string,
+  id: PropTypes.string, // ← 追加しておくと良い
 };

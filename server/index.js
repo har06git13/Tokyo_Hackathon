@@ -73,6 +73,16 @@ app.get('/api/facilities', async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
+app.get('/api/facilities/:id', async (req, res) => {
+  try {
+    const row = await db.collection('facilities').findOne({ _id: req.params.id });
+    if (!row) return res.status(404).json({ message: 'not found' });
+    res.json(row);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'failed to fetch facility' });
+  }
+});
 
 // イベント検索（type / timeSlot / locationId で絞り込み）
 app.get('/api/events', async (req, res, next) => {
@@ -111,28 +121,6 @@ app.get('/api/sns', async (req, res, next) => {
 
 
 
-
-// HPログ追加（event/interval 両対応）
-app.post('/api/users/:id/hp', async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const record = {
-      time: req.body.time ? new Date(req.body.time) : new Date(),
-      stamina: req.body.stamina ?? 0,
-      mental: req.body.mental ?? 0,
-      battery: req.body.battery ?? 0,
-      money: req.body.money ?? 0,
-      source: req.body.source, // 'event' | 'interval'
-      eventId: req.body.eventId ? new ObjectId(req.body.eventId) : undefined
-    };
-    const r = await Users.updateOne(
-      { _id: new ObjectId(id) },
-      { $push: { hp_log: record } }
-    );
-    if (r.matchedCount === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ ok: true });
-  } catch (e) { next(e); }
-});
 
 // ゴール時の可視化用まとめ
 app.get('/api/users/:id/summary', async (req, res, next) => {
