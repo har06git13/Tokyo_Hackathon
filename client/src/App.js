@@ -56,7 +56,7 @@ function App() {
           backgroundSize="cover"
           backgroundPosition="center"
           zIndex={-1} // 背景として下に置く
-          filter="brightness(1.2) contrast(0.9) blur(4px) opacity(0.7)"
+          filter="brightness(1.2) contrast(0.9) blur(8px) opacity(0.4)"
         />
 
         <div
