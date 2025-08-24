@@ -1,3 +1,4 @@
+// src/pages/game-pages/ActionPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Flex, Box } from "@chakra-ui/react";
@@ -9,6 +10,7 @@ import {
   MapSpotInfo,
   Footer,
   ActionConfirmDialog,
+  GoogleMapComponent,
 } from "../../components/game-page";
 import { SnsLogoIcon } from "../../components/icons";
 import { useAtom } from "jotai";
@@ -19,6 +21,8 @@ import {
   selectedEventAtom,
   eventHistoryAtom,
   currentEventStatusAtom,
+  currentLocationAtom,
+  visitedFacilitiesAtom,
 } from "../../atoms/playerAtoms";
 
 export const ActionPage = () => {
@@ -33,6 +37,13 @@ export const ActionPage = () => {
   const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
   const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
+  const [currentLocationName] = useAtom(currentLocationAtom);
+  const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
+
+  useEffect(() => {
+    setSpotSelected(false);
+    setShowConfirmDialog(false);
+  }, [actionType]);
 
   // ---- facilities (API) ----
   const [facilities, setFacilities] = useState([]);
@@ -40,16 +51,12 @@ export const ActionPage = () => {
   const [facError, setFacError] = useState(null);
 
   // ---- walk events index for visited check (API) ----
-  const [walkIndex, setWalkIndex] = useState({}); // locationId -> walkEvent
+  // locationId -> walkEvent（{ _id, locationId, ... }）
+  const [walkIndex, setWalkIndex] = useState({});
   const [walkLoading, setWalkLoading] = useState(true);
   const [walkError, setWalkError] = useState(null);
 
-  useEffect(() => {
-    setSpotSelected(false);
-    setShowConfirmDialog(false);
-  }, [actionType]);
-
-  // fetch facilities
+  // facilities を取得
   useEffect(() => {
     let aborted = false;
     (async () => {
@@ -74,7 +81,7 @@ export const ActionPage = () => {
     };
   }, []);
 
-  // fetch walk events -> build index
+  // walk イベントを取得して locationId -> walkEvent の索引を作成
   useEffect(() => {
     let aborted = false;
     (async () => {
@@ -102,51 +109,45 @@ export const ActionPage = () => {
     };
   }, []);
 
-  // --- 仮の施設選択リスト（表示は同じだがデータはAPI由来） ---
-  const FacilityList = ({ currentTimeSlot, onSelect }) => {
-    const visitedEventIds = eventHistory.map((e) => e.id); // DBのevent _id が入っている想定
+  // 現在地の施設（名前一致で検索）
+  const currentLocationFacility =
+    facilities.find((f) => f.name === currentLocationName) ?? null;
 
-    const filtered = facilities.filter((fac) => {
-      if (fac.id === "fac_000") return false;
-
-      // 避難所は時間帯で出す/隠す（元仕様踏襲）
-      if (fac.type === "shelter" && !["6h", "8h", "10h"].includes(currentTimeSlot))
-        return false;
-
-      // その施設の walk イベントID をインデックスから取得して既訪問チェック
-      const walkEv = walkIndex[fac.id]; // walkEv?._id が該当施設のwalkイベントID
-      if (walkEv && visitedEventIds.includes(walkEv._id)) return false;
-
-      return true;
-    });
-
-    if (facLoading || walkLoading) return <div style={{ color: "var(--color-base1)" }}>読み込み中...</div>;
-    if (facError) return <div style={{ color: "tomato" }}>施設の取得に失敗：{facError}</div>;
-    if (walkError) return <div style={{ color: "tomato" }}>イベント索引の取得に失敗：{walkError}</div>;
-
-    return (
-      <div>
-        {filtered.map((fac) => (
-          <button
-            key={fac.id}
-            onClick={() => onSelect(fac.id)}
-            style={{ display: "block", margin: "8px 0" }}
-          >
-            {fac.name}
-          </button>
-        ))}
-      </div>
-    );
+  // チェックイン状態を判定（visited は walkIndex と eventHistory を突合）
+  const visitedEventIds = eventHistory.map((e) => e.id); // DBイベントID（_id）が入っている想定
+  const getFacilityStatus = (facilityId) => {
+    const walkEv = walkIndex[facilityId];
+    const isVisited = !!(walkEv && visitedEventIds.includes(walkEv._id));
+    const isCurrentLocation = currentLocationFacility?.id === facilityId;
+    const isCheckedIn = visitedFacilities.includes(facilityId);
+    return { isVisited, isCurrentLocation, isCheckedIn };
   };
 
-  // 施設選択時：イベントはAPIから取得
-  const onSelectFacility = async (facilityId) => {
-    if (!facilityId || facilityId === "fac_000") return;
+  // 施設の状態情報をマップして渡す（GoogleMapComponent向け）
+  const facilityStatusMap = facilities.reduce((acc, facility) => {
+    acc[facility.id] = getFacilityStatus(facility.id);
+    return acc;
+  }, {});
 
-    const facData = facilities.find((f) => f.id === facilityId);
-    if (!facData) return;
+  useEffect(() => {
+    console.log("spotSelected changed:", spotSelected);
+  }, [spotSelected]);
+
+  // 施設選択（GoogleMapComponentからは facility オブジェクトが来る想定。ID文字列でもOK）
+  const onSelectFacility = async (facilityData) => {
+    const facilityId =
+      typeof facilityData === "string" ? facilityData : facilityData?.id;
+    const facData =
+      typeof facilityData === "string"
+        ? facilities.find((f) => f.id === facilityId)
+        : facilityData;
+
+    console.log("facilityId", facilityId, facData);
+
+    if (!facilityId || facilityId === "fac_000" || !facData) return;
 
     setSelectedFacility(facData);
+    setSpotSelected(true);
 
     try {
       // walk を優先
@@ -156,7 +157,7 @@ export const ActionPage = () => {
       if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
       const walkArr = await walkRes.json();
 
-      // なければ epilogue
+      // 見つからなければ epilogue にフォールバック
       let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
       if (!evData) {
         const epiRes = await fetch("/api/events?type=epilogue");
@@ -170,13 +171,12 @@ export const ActionPage = () => {
         return;
       }
       setSelectedEvent(evData);
-      setSpotSelected(true);
     } catch (e) {
       console.warn("イベント取得に失敗:", e);
     }
   };
 
-  // SNS 選択：API 化
+  // SNS（API）
   const onSelectSnsEvent = async () => {
     try {
       const res = await fetch(
@@ -221,9 +221,9 @@ export const ActionPage = () => {
         className="page-contents"
         gap={"1.6%"}
         paddingTop={"4%"}
-        onClick={() => {
-          if (spotSelected) setSpotSelected(false);
-        }}
+        // onClick={() => {
+        //   if (spotSelected) setSpotSelected(false);
+        // }}
       >
         <LifeGauge />
         <EventText />
@@ -246,62 +246,74 @@ export const ActionPage = () => {
             width={"100%"}
             flexDirection={"column"}
             alignItems={"center"}
-            justifyContent={"space-between"}
+            justifyContent={"center"}
             position="relative"
           >
-            {/* マップ土台（実マップをここに差し替え予定） */}
+            {/* Google Map（相手ブランチを採用） */}
             <Box
-              className="mapUI"
               position="absolute"
-              inset={0}
-              zIndex={0}
-              width={"100%"}
-              height={"100%"}
-              backgroundColor={"var(--color-accent10)"}
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              zIndex={1}
             >
-              {/* 仮の施設選択リスト（マップ実装後はロジックだけ移植） */}
+              <GoogleMapComponent
+                onSelectFacility={onSelectFacility}
+                selectedSpot={selectedFacility}
+                eventHistory={eventHistory}
+                currentLocation={currentLocationFacility}
+                visitedFacilities={visitedFacilities}
+                facilityStatusMap={facilityStatusMap}
+                showControls={false}
+              />
+            </Box>
+
+            {/* マップ凡例 */}
+            <Box
+              className="legend"
+              position="absolute"
+              top="1vh"
+              left="1vh"
+              width="100%"
+              zIndex={100}
+            >
+              <MapMarkerLegend />
+            </Box>
+
+            {/* （開発用）仮のリストUIを見たいときは true に */}
+            {process.env.NODE_ENV === "development" && false && (
               <FacilityList
                 currentTimeSlot={currentTimeSlot}
                 onSelect={onSelectFacility}
               />
-            </Box>
+            )}
 
-            <Flex
-              className="map-overlay"
-              position="absolute"
-              inset={0}
-              zIndex={1}
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="space-between"
-              pointerEvents="none"
-              onClick={() => {
-                if (spotSelected) setSpotSelected(false);
-              }}
-            >
-              <MapMarkerLegend />
-              {spotSelected && selectedFacility && (
-                <Flex
-                  pointerEvents="auto"
-                  width={"100%"}
-                  justifyContent="center"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MapSpotInfo
-                    spotName={selectedFacility.name}
-                    spotType={selectedFacility.type}
-                    life={selectedEvent?.gaugeChange?.life}
-                    mental={selectedEvent?.gaugeChange?.mental}
-                    charge={selectedEvent?.gaugeChange?.battery}
-                    money={selectedEvent?.gaugeChange?.money}
-                    arrivalTime={arrivalTime}
-                    onClick={() => setShowConfirmDialog(true)}
-                  />
-                </Flex>
-              )}
-            </Flex>
+            {/* 選択カード */}
+            {spotSelected && (
+              <Box
+                position="absolute"
+                bottom="0"
+                left="50%"
+                transform="translateX(-50%)"
+                zIndex={10}
+                width="90%"
+                maxWidth="400px"
+              >
+                <MapSpotInfo
+                  spotName={selectedFacility.name}
+                  spotType={selectedFacility.type}
+                  life={selectedEvent?.gaugeChange?.life}
+                  mental={selectedEvent?.gaugeChange?.mental}
+                  charge={selectedEvent?.gaugeChange?.battery}
+                  money={selectedEvent?.gaugeChange?.money}
+                  arrivalTime={arrivalTime}
+                  onClick={() => setShowConfirmDialog(true)}
+                />
+              </Box>
+            )}
 
-            {/* 確認ダイアログ（モーダル） */}
+            {/* 確認ダイアログ */}
             {showConfirmDialog && selectedFacility && (
               <>
                 <Box
@@ -311,14 +323,14 @@ export const ActionPage = () => {
                   w="100%"
                   h="100%"
                   bg="rgba(0,0,0,0.5)"
-                  zIndex={2}
+                  zIndex={20}
                 />
                 <Flex
                   position="absolute"
                   top="50%"
                   left="50%"
                   transform="translate(-50%, -50%)"
-                  zIndex={3}
+                  zIndex={21}
                   w="100%"
                   h="100%"
                   alignItems={"center"}
