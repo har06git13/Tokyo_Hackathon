@@ -7,6 +7,7 @@ import { playerNameAtom, gaugeHistoryAtom } from "../../atoms/playerAtoms";
 import { eventTypeList, spotTypeList } from "../../temporary-database";
 
 export const LogElement = ({ id, time }) => {
+  const BASE_URL = process.env.REACT_APP_API_URL;
   const [playerName] = useAtom(playerNameAtom);
   const [gaugeHistory] = useAtom(gaugeHistoryAtom);
 
@@ -21,7 +22,7 @@ export const LogElement = ({ id, time }) => {
     let aborted = false;
     (async () => {
       try {
-        const res = await fetch("/api/facilities");
+        const res = await fetch(`${BASE_URL}/api/facilities`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         const normalized = Array.isArray(list)
@@ -32,7 +33,9 @@ export const LogElement = ({ id, time }) => {
         if (!aborted) setFacErr(e.message);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // イベント詳細を取得
@@ -41,7 +44,9 @@ export const LogElement = ({ id, time }) => {
     let aborted = false;
     (async () => {
       try {
-        const res = await fetch(`/api/events/${encodeURIComponent(id)}`);
+        const res = await fetch(
+          `${BASE_URL}/api/events/${encodeURIComponent(id)}`
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!aborted) setEventDoc({ id: data._id ?? data.id, ...data });
@@ -50,7 +55,9 @@ export const LogElement = ({ id, time }) => {
         setEventDoc(null);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [id]);
 
   // 施設参照インデックス

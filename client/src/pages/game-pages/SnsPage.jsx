@@ -6,7 +6,10 @@ import { EventText, Footer, TweetCard } from "../../components/game-page";
 import { SnsIcon } from "../../components/icons";
 //import { snsPostList } from "../../temporary-database";
 import { useAtom } from "jotai";
-import { currentTimeSlotAtom, selectedEventAtom } from "../../atoms/playerAtoms";
+import {
+  currentTimeSlotAtom,
+  selectedEventAtom,
+} from "../../atoms/playerAtoms";
 
 export const SnsPage = () => {
   const navigate = useNavigate();
@@ -16,12 +19,14 @@ export const SnsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   const SNS_ID_BY_SLOT = {
-  "2h": "event_sns_001",
-  "4h": "event_sns_002",
-  "6h": "event_sns_003",
-  "8h": "event_sns_004",
-  "10h": "event_sns_005",
+    "2h": "event_sns_001",
+    "4h": "event_sns_002",
+    "6h": "event_sns_003",
+    "8h": "event_sns_004",
+    "10h": "event_sns_005",
   };
 
   // 取得（時間帯でサーバー側フィルタ）
@@ -31,7 +36,9 @@ export const SnsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/sns?timeSlot=${encodeURIComponent(currentTimeSlot)}`);
+        const res = await fetch(
+          `${BASE_URL}/api/sns?timeSlot=${encodeURIComponent(currentTimeSlot)}`
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!aborted) setPosts(Array.isArray(data) ? data : []);
@@ -41,7 +48,9 @@ export const SnsPage = () => {
         if (!aborted) setLoading(false);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [currentTimeSlot]);
 
   // 表示順をシャッフル
@@ -78,16 +87,24 @@ export const SnsPage = () => {
             height={"50vh"}
             scrollbar={"hidden"}
           >
-            {loading && <div style={{color: "var(--color-base1)"}}>読み込み中...</div>}
-            {error && <div style={{color: "tomato"}}>読み込みに失敗しました：{error}</div>}
-            {!loading && !error && shuffledPosts.map((post) => (
-              <TweetCard
-                key={post._id /* DBは _id を返します */}
-                userName={post.userName}
-                userId={post.userId}
-                text={post.text}
-              />
-            ))}
+            {loading && (
+              <div style={{ color: "var(--color-base1)" }}>読み込み中...</div>
+            )}
+            {error && (
+              <div style={{ color: "tomato" }}>
+                読み込みに失敗しました：{error}
+              </div>
+            )}
+            {!loading &&
+              !error &&
+              shuffledPosts.map((post) => (
+                <TweetCard
+                  key={post._id /* DBは _id を返します */}
+                  userName={post.userName}
+                  userId={post.userId}
+                  text={post.text}
+                />
+              ))}
           </Flex>
           <Button
             text="次へ"

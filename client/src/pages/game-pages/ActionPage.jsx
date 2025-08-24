@@ -11,6 +11,7 @@ import {
   Footer,
   ActionConfirmDialog,
   GoogleMapComponent,
+  FacilityList,
 } from "../../components/game-page";
 import { SnsLogoIcon } from "../../components/icons";
 import { useAtom } from "jotai";
@@ -56,6 +57,8 @@ export const ActionPage = () => {
   const [walkLoading, setWalkLoading] = useState(true);
   const [walkError, setWalkError] = useState(null);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   // facilities を取得
   useEffect(() => {
     let aborted = false;
@@ -63,7 +66,7 @@ export const ActionPage = () => {
       setFacLoading(true);
       setFacError(null);
       try {
-        const res = await fetch("/api/facilities");
+        const res = await fetch(`${BASE_URL}/api/facilities`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         const normalized = Array.isArray(list)
@@ -88,7 +91,7 @@ export const ActionPage = () => {
       setWalkLoading(true);
       setWalkError(null);
       try {
-        const res = await fetch("/api/events?type=walk");
+        const res = await fetch(`${BASE_URL}/api/events?type=walk`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const arr = await res.json();
         const idx = {};
@@ -152,7 +155,9 @@ export const ActionPage = () => {
     try {
       // walk を優先
       const walkRes = await fetch(
-        `/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`
+        `${BASE_URL}/api/events?type=walk&locationId=${encodeURIComponent(
+          facilityId
+        )}`
       );
       if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
       const walkArr = await walkRes.json();
@@ -160,7 +165,7 @@ export const ActionPage = () => {
       // 見つからなければ epilogue にフォールバック
       let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
       if (!evData) {
-        const epiRes = await fetch("/api/events?type=epilogue");
+        const epiRes = await fetch(`${BASE_URL}/api/events?type=epilogue`);
         if (!epiRes.ok) throw new Error(`epilogue fetch HTTP ${epiRes.status}`);
         const epiArr = await epiRes.json();
         evData = Array.isArray(epiArr) ? epiArr[0] : null;
@@ -180,7 +185,9 @@ export const ActionPage = () => {
   const onSelectSnsEvent = async () => {
     try {
       const res = await fetch(
-        `/api/events?type=sns&timeSlot=${encodeURIComponent(currentTimeSlot)}`
+        `${BASE_URL}/api/events?type=sns&timeSlot=${encodeURIComponent(
+          currentTimeSlot
+        )}`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const arr = await res.json();

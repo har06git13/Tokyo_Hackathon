@@ -46,13 +46,17 @@ export const useMonologueLogic = () => {
   const [playerGender] = useAtom(playerGenderAtom);
   const [playerResidence] = useAtom(playerResidenceAtom);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   // selectedEvent が無い場合だけ API から取得（/api/events/:id）
   useEffect(() => {
     let aborted = false;
     (async () => {
       if (selectedEvent || !eventId) return;
       try {
-        const res = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
+        const res = await fetch(
+          `${BASE_URL}/api/events/${encodeURIComponent(eventId)}`
+        );
         if (!res.ok) throw new Error("not found");
         const data = await res.json(); // {_id, ...}
         // 既存ロジック互換のため _id → id に正規化
@@ -71,7 +75,7 @@ export const useMonologueLogic = () => {
     let aborted = false;
     (async () => {
       try {
-        const res = await fetch("/api/events/event_time_001");
+        const res = await fetch(`${BASE_URL}/api/events/event_time_001`);
         if (!res.ok) return;
         const data = await res.json();
         // こちらも id に正規化
@@ -100,7 +104,7 @@ export const useMonologueLogic = () => {
           })) ?? [],
       };
       try {
-        const res = await fetch("/api/results", {
+        const res = await fetch(`${BASE_URL}/api/results`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

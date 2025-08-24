@@ -30,9 +30,10 @@ import { ResultPage } from "./pages/ResultPage";
 
 function App() {
   const [message, setMessage] = useState("");
+  const BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch("/api/hello")
+    fetch(`${BASE_URL}/api/hello`)
       .then((res) => res.json())
       .then((data) => setMessage(data.message));
   }, []);
