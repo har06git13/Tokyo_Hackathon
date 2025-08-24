@@ -1,226 +1,215 @@
-import React, { useEffect, useRef } from "react";
+// src/pages/game-pages/CheckInPage.jsx
+import React, { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
-import { Flex, Box, Text, Button } from "@chakra-ui/react";
+import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer } from "../../components/game-page";
 import { useNavigate } from "react-router-dom";
-import {
-  selectedFacilityAtom,
-  selectedEventAtom,
-} from "../../atoms/playerAtoms";
-import { eventList } from "../../temporary-database";
+import { selectedFacilityAtom, selectedEventAtom } from "../../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
-import { facilityList } from "../../temporary-database"; //後で消す
 
-// 仮コードリーダーからIDを取得するフック
+// 仮コードリーダーからIDを取得するフック（UI表示用）
 const useScannedCodeId = () => {
   const [scannedId, setScannedId] = React.useState(null);
-
-  // ここでコードリーダーが値を返すタイミングで setScannedId を呼ぶ
-  // setScannedId(読み込んだID); ←たぶんこれでできる
   return [scannedId, setScannedId];
 };
 
 export const CheckInPage = () => {
   const navigate = useNavigate();
 
-  const [selectedEvent] = useAtom(selectedEventAtom);
-  const eventId = selectedEvent?._id || selectedEvent?.id; // DBは _id、メモリは id の互換
-  // const [selectedFacility] = useAtom(selectedFacilityAtom);
-  // const [scannedId, setScannedId] = useScannedCodeId();
-
-  // // 監視して、一致したら自動遷移
-  // useEffect(() => {
-  //   if (scannedId && selectedFacility?.id === scannedId) {
-  //     navigate("/game/monologue");
-  //   }
-  // }, [scannedId, selectedFacility, navigate]);
-
+  // Jotai
   const [selectedFacility] = useAtom(selectedFacilityAtom);
+  const setSelectedFacilityAtom = useSetAtom(selectedFacilityAtom);
+  const [selectedEvent] = useAtom(selectedEventAtom);
+  const setSelectedEventAtom = useSetAtom(selectedEventAtom);
+
+  const eventId = selectedEvent?._id || selectedEvent?.id || null;
+
+  // UI 用
   const [scannedId, setScannedId] = useScannedCodeId();
-  const setSelectedFacility = useSetAtom(selectedFacilityAtom);
-  const setSelectedEvent = useSetAtom(selectedEventAtom);
   const videoRef = useRef(null);
   const qrScannerRef = useRef(null);
-  const [isScanning, setIsScanning] = React.useState(false);
-  const [scanError, setScanError] = React.useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState("");
 
-  // Note: modern qr-scanner releases manage the worker automatically when bundled.
-  // Setting QrScanner.WORKER_PATH is deprecated and causes warnings; do not set it here.
+  // facilities(API)
+  const [facilities, setFacilities] = useState([]);
+  const [facLoading, setFacLoading] = useState(true);
+  const [facError, setFacError] = useState(null);
 
-  // We will handle scanned results directly inside the QR callback.
+  // 最新の選択中施設・施設一覧をコールバックから参照できるように ref へ
+  const selectedFacilityRef = useRef(selectedFacility);
+  const facilitiesRef = useRef([]);
+  useEffect(() => { selectedFacilityRef.current = selectedFacility; }, [selectedFacility]);
+  useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
 
+  // 施設一覧を取得
   useEffect(() => {
+    let aborted = false;
+    (async () => {
+      setFacLoading(true);
+      setFacError(null);
+      try {
+        const res = await fetch("/api/facilities");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        const normalized = Array.isArray(list)
+          ? list.map((d) => ({
+              ...d,
+              // QRは "fac_***" を想定。DBに id があるならそれを優先、無い場合は _id を使う
+              id: d.id ?? d._id,
+            }))
+          : [];
+        if (!aborted) setFacilities(normalized);
+      } catch (e) {
+        if (!aborted) setFacError(e.message);
+      } finally {
+        if (!aborted) setFacLoading(false);
+      }
+    })();
+    return () => { aborted = true; };
+  }, []);
+
+  // スキャナ開始（施設一覧が取れてから起動）
+  useEffect(() => {
+    if (facLoading || facError) return; // ロード失敗/中は起動しない
     let mounted = true;
+
     const start = async () => {
       if (!navigator?.mediaDevices?.getUserMedia) return;
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
           audio: false,
         });
+
         if (!mounted) {
-          // stop tracks if unmounted quickly
-          try {
-            stream.getTracks().forEach((t) => t.stop());
-          } catch (e) {}
+          try { stream.getTracks().forEach((t) => t.stop()); } catch {}
           return;
         }
+
         if (videoRef.current) {
-          try {
-            videoRef.current.srcObject = stream;
-          } catch (e) {}
-          // wait loadedmetadata
+          try { videoRef.current.srcObject = stream; } catch {}
           await new Promise((res) => {
             const onLoaded = () => {
-              try {
-                videoRef.current.removeEventListener(
-                  "loadedmetadata",
-                  onLoaded
-                );
-              } catch (e) {}
+              try { videoRef.current.removeEventListener("loadedmetadata", onLoaded); } catch {}
               res();
             };
-            try {
-              videoRef.current.addEventListener("loadedmetadata", onLoaded);
-            } catch (e) {
-              res();
-            }
+            try { videoRef.current.addEventListener("loadedmetadata", onLoaded); } catch { res(); }
             if (videoRef.current?.readyState >= 1) {
-              try {
-                videoRef.current.removeEventListener(
-                  "loadedmetadata",
-                  onLoaded
-                );
-              } catch (e) {}
+              try { videoRef.current.removeEventListener("loadedmetadata", onLoaded); } catch {}
               res();
             }
           });
-          try {
-            await videoRef.current.play();
-          } catch (e) {}
+          try { await videoRef.current.play(); } catch {}
 
-          // init scanner
-          qrScannerRef.current = new QrScanner(
-            videoRef.current,
-            (result) => {
-              try {
-                console.debug("[CheckInPage] qr callback", result);
-                const data = typeof result === "string" ? result : result?.data;
-                if (!data) return;
-                // try to find facility by id (temporary-database)
-                const fac = facilityList.find(
-                  (f) => f.id === data || f.id === String(data)
-                );
-                if (fac) {
-                  // set selected facility globally and derive/set the event, then navigate
-                  try {
-                    setSelectedFacility(fac);
-                  } catch (e) {
-                    console.debug(
-                      "[CheckInPage] setSelectedFacility failed",
-                      e
-                    );
-                  }
-                  try {
-                    // find a walk event for this facility, fallback to epilogue
-                    const evData =
-                      eventList.find(
-                        (ev) => ev.locationId === fac.id && ev.type === "walk"
-                      ) || eventList.find((ev) => ev.type === "epilogue");
-                    if (evData) {
-                      try {
-                        setSelectedEvent(evData);
-                      } catch (e) {
-                        console.debug(
-                          "[CheckInPage] setSelectedEvent failed",
-                          e
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    console.debug("[CheckInPage] find/set event failed", e);
-                  }
-                  try {
-                    navigate("/game/monologue");
-                  } catch (e) {
-                    console.debug("[CheckInPage] navigate failed", e);
-                  }
-                } else {
-                  setScanError("このQRは施設のものではありません");
-                  try {
-                    if (navigator?.vibrate) navigator.vibrate(200);
-                  } catch (e) {}
-                  setTimeout(() => {
-                    setScanError("");
-                    try {
-                      setScannedId(null);
-                    } catch (e) {}
-                  }, 1500);
+          // QR コールバック
+          const onScan = async (result) => {
+            const data = typeof result === "string" ? result : result?.data;
+            if (!data) return;
+
+            setScannedId(String(data));
+
+            // 仕様：まず「移動先が選ばれていること」を要求
+            const sel = selectedFacilityRef.current;
+            if (!sel) {
+              setScanError("先にマップで移動先を選択してください");
+              try { navigator?.vibrate?.(200); } catch {}
+              setTimeout(() => setScanError(""), 1500);
+              return;
+            }
+
+            // 施設一覧(API)の id と照合
+            const list = facilitiesRef.current || [];
+            const scannedFac = list.find((f) => f.id === data);
+            if (!scannedFac) {
+              setScanError("このQRは施設のものではありません");
+              try { navigator?.vibrate?.(200); } catch {}
+              setTimeout(() => setScanError(""), 1500);
+              return;
+            }
+
+            // 仕様：選択中の施設IDと一致したときだけ遷移許可
+            if (sel.id !== scannedFac.id) {
+              setScanError("選択中の施設と異なるQRです");
+              try { navigator?.vibrate?.(200); } catch {}
+              setTimeout(() => setScanError(""), 1500);
+              return;
+            }
+
+            // グローバルへ反映（施設）
+            try { setSelectedFacilityAtom(scannedFac); } catch {}
+
+            // イベントをAPIから取得（walk優先→epilogueフォールバック）
+            try {
+              const wRes = await fetch(`/api/events?type=walk&locationId=${encodeURIComponent(scannedFac.id)}`);
+              if (!wRes.ok) throw new Error(`HTTP ${wRes.status}`);
+              const wArr = await wRes.json();
+              let ev = Array.isArray(wArr) && wArr[0] ? wArr[0] : null;
+
+              if (!ev) {
+                const eRes = await fetch("/api/events?type=epilogue");
+                if (eRes.ok) {
+                  const eArr = await eRes.json();
+                  ev = Array.isArray(eArr) ? eArr[0] : null;
                 }
-              } catch (e) {
-                console.debug("[CheckInPage] qr callback error", e);
               }
-            },
-            { highlightScanRegion: false, highlightCodeOutline: false }
-          );
+
+              if (!ev) {
+                setScanError("イベントが見つかりませんでした");
+                try { navigator?.vibrate?.(200); } catch {}
+                setTimeout(() => setScanError(""), 1500);
+                return;
+              }
+
+              // グローバルへ反映（イベント）
+              try { setSelectedEventAtom(ev); } catch {}
+
+              // モノローグへ（/game/monologue/:id を推奨）
+              const nextId = ev._id || ev.id;
+              navigate(nextId ? `/game/monologue/${nextId}` : "/game/monologue");
+            } catch (e) {
+              setScanError("イベント取得に失敗しました");
+              try { navigator?.vibrate?.(200); } catch {}
+              setTimeout(() => setScanError(""), 1500);
+            }
+          };
+
+          // スキャナ作成・開始
+          qrScannerRef.current = new QrScanner(videoRef.current, onScan, {
+            highlightScanRegion: false,
+            highlightCodeOutline: false,
+          });
 
           try {
             await qrScannerRef.current.start();
-            try {
-              console.debug("[CheckInPage] scanner started", {
-                isRunning:
-                  typeof qrScannerRef.current.isRunning === "function"
-                    ? qrScannerRef.current.isRunning()
-                    : undefined,
-              });
-            } catch (er) {
-              console.debug("[CheckInPage] scanner started (no isRunning)", er);
-            }
-            // reflect scanning state for UI
-            try {
-              setIsScanning(true);
-            } catch (e) {}
+            setIsScanning(true);
           } catch (e) {
             console.error("[CheckInPage] scanner start failed", e);
-            try {
-              console.debug("scanner instance", qrScannerRef.current);
-            } catch (er) {}
-            try {
-              setIsScanning(false);
-            } catch (e) {}
+            setIsScanning(false);
           }
         }
       } catch (e) {
         console.debug("[CheckInPage] getUserMedia failed", e);
       }
     };
+
     start();
+
     return () => {
       mounted = false;
-      try {
-        setIsScanning(false);
-      } catch (e) {}
-      try {
-        qrScannerRef.current && qrScannerRef.current.stop();
-      } catch (e) {}
+      setIsScanning(false);
+      try { qrScannerRef.current && qrScannerRef.current.stop(); } catch {}
       try {
         if (videoRef.current?.srcObject) {
           const s = videoRef.current.srcObject;
-          try {
-            s.getTracks().forEach((t) => {
-              try {
-                t.stop();
-              } catch (e) {}
-            });
-          } catch (e) {}
-          try {
-            videoRef.current.srcObject = null;
-          } catch (e) {}
+          try { s.getTracks().forEach((t) => t.stop()); } catch {}
+          try { videoRef.current.srcObject = null; } catch {}
         }
-      } catch (e) {}
+      } catch {}
     };
-  }, [setScannedId]);
+  }, [facLoading, facError, setSelectedFacilityAtom, setSelectedEventAtom, navigate]);
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -237,34 +226,40 @@ export const CheckInPage = () => {
             alignItems="center"
             justifyContent="center"
           >
-            <video
-              ref={videoRef}
-              playsInline
-              autoPlay
-              muted
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                background: "#222",
-              }}
-            />
+            {/* 施設ロード状態 */}
+            {facLoading && (
+              <Box color="var(--color-base1)">施設リストを読み込み中...</Box>
+            )}
+            {facError && (
+              <Box color="tomato">施設の取得に失敗：{facError}</Box>
+            )}
 
-            {/* white guide frame */}
-            <Box
-              className="checkin-guide"
-              position="absolute"
-              top={0}
-              left={0}
-              width="100%"
-              height="100%"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              pointerEvents="none"
-            >
-              {/* animation keyframes for scanning pulse */}
-              <Box as="style">{`
+            {/* カメラプレビュー */}
+            {!facLoading && !facError && (
+              <video
+                ref={videoRef}
+                playsInline
+                autoPlay
+                muted
+                style={{ width: "100%", height: "100%", objectFit: "cover", background: "#222" }}
+              />
+            )}
+
+            {/* ガイド枠 */}
+            {!facLoading && !facError && (
+              <Box
+                className="checkin-guide"
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                pointerEvents="none"
+              >
+                <Box as="style">{`
                   .checkin-guide .guide-frame { border: 3px solid rgba(255,255,255,0.95) !important; border-radius: 8px !important; }
                   @keyframes scanScale {
                     0% { transform: scale(1); }
@@ -272,99 +267,20 @@ export const CheckInPage = () => {
                     100% { transform: scale(1); }
                   }
                 `}</Box>
-              <Box
-                className="guide-frame"
-                width="64%"
-                style={{
-                  aspectRatio: "1/1",
-                  boxSizing: "border-box",
-                  transformOrigin: "center",
-                  animation: isScanning
-                    ? "scanScale 1s ease-in-out infinite"
-                    : "none",
-                  zIndex: 50,
-                  pointerEvents: "none",
-                }}
-              />
-              {/* centered QR icon scaled to the guide-frame size */}
-              {isScanning && (
                 <Box
-                  position="absolute"
-                  zIndex={60}
-                  pointerEvents="none"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
+                  className="guide-frame"
                   width="64%"
-                  sx={{ aspectRatio: "1/1" }}
-                >
-                  {/* icon box sized as percentage of guide-frame so it scales with it */}
-                  <Box
-                    width="40%"
-                    height="40%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    bg="rgba(0,0,0,0.08)"
-                    borderRadius="6px"
-                    border="1px solid rgba(255,255,255,0.14)"
-                  >
-                    <Box
-                      as="svg"
-                      width="100%"
-                      height="100%"
-                      viewBox="0 0 24 24"
-                      preserveAspectRatio="xMidYMid meet"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      role="img"
-                      aria-label="QR guide icon"
-                    >
-                      <rect
-                        x="1"
-                        y="1"
-                        width="6"
-                        height="6"
-                        rx="1"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.6"
-                        fill="none"
-                      />
-                      <rect
-                        x="1"
-                        y="17"
-                        width="6"
-                        height="6"
-                        rx="1"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.6"
-                        fill="none"
-                      />
-                      <rect
-                        x="17"
-                        y="1"
-                        width="6"
-                        height="6"
-                        rx="1"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.6"
-                        fill="none"
-                      />
-                      <rect x="9" y="9" width="2" height="2" fill="#FFFFFF" />
-                      <rect x="12" y="9" width="2" height="2" fill="#FFFFFF" />
-                      <rect x="9" y="12" width="2" height="2" fill="#FFFFFF" />
-                      <rect
-                        x="15"
-                        y="13"
-                        width="1.6"
-                        height="1.6"
-                        fill="#FFFFFF"
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-            </Box>
+                  style={{
+                    aspectRatio: "1/1",
+                    boxSizing: "border-box",
+                    transformOrigin: "center",
+                    animation: isScanning ? "scanScale 1s ease-in-out infinite" : "none",
+                    zIndex: 50,
+                    pointerEvents: "none",
+                  }}
+                />
+              </Box>
+            )}
           </Box>
 
           <Flex
@@ -384,10 +300,7 @@ export const CheckInPage = () => {
                 if (eventId) {
                   navigate(`/game/monologue/${eventId}`);
                 } else {
-                  // フォールバック（想定外：イベント未設定）
-                  alert(
-                    "モノローグ用のイベントが見つかりませんでした。アクション画面に戻ります。"
-                  );
+                  alert("モノローグ用のイベントが見つかりませんでした。アクション画面に戻ります。");
                   navigate("/game/action");
                 }
               }}
@@ -406,21 +319,12 @@ export const CheckInPage = () => {
               ※移動中以外はチェックインを行うことができません。
             </Text>
           </Flex>
-          <Box
-            mt="2vh"
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-          >
+
+          <Box mt="2vh" display="flex" flexDirection="column" alignItems="center">
             <Box fontSize="sm" color="gray.200">
-              Last scanned:{" "}
-              <Box as="span" color="white">
-                {scannedId || "-"}
-              </Box>
+              Last scanned: <Box as="span" color="white">{scannedId || "-"}</Box>
             </Box>
-            <Box fontSize="sm" color="orange.200" mt="1">
-              {scanError}
-            </Box>
+            <Box fontSize="sm" color="orange.200" mt="1">{scanError}</Box>
           </Box>
         </Flex>
       </Flex>
