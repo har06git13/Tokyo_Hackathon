@@ -155,6 +155,4 @@ npm start
 - `npm run seed:*` : モックデータ投入  
 - `npm run wipe` : DBリセット（注意）  
 
----
-
 <p align="right">(<a href="#top">トップへ</a>)</p>
