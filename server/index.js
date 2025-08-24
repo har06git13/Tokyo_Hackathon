@@ -16,7 +16,7 @@ if (!uri) {
 }
 
 const client = new MongoClient(uri);
-let db, Users, Events, Facilities;
+let db, Users, Events, Facilities, SnsPosts;
 
 async function start() {
   // MongoDB 接続
@@ -25,6 +25,7 @@ async function start() {
   Users = db.collection('users');
   Events = db.collection('events');
   Facilities = db.collection('facilities');
+  SnsPosts = db.collection('sns');
 
 
   app.listen(PORT, () =>
@@ -44,7 +45,7 @@ app.get('/api/hello', (req, res) => {
 });
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-/* --- 必要最小のAPI --- */
+
 // ユーザー作成
 app.post('/api/users', async (req, res, next) => {
   try {
@@ -63,27 +64,63 @@ app.post('/api/users', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// HPログ追加（event/interval 両対応）
-app.post('/api/users/:id/hp', async (req, res, next) => {
+
+// 施設一覧
+app.get('/api/facilities', async (_req, res, next) => {
   try {
-    const { id } = req.params;
-    const record = {
-      time: req.body.time ? new Date(req.body.time) : new Date(),
-      stamina: req.body.stamina ?? 0,
-      mental: req.body.mental ?? 0,
-      battery: req.body.battery ?? 0,
-      money: req.body.money ?? 0,
-      source: req.body.source, // 'event' | 'interval'
-      eventId: req.body.eventId ? new ObjectId(req.body.eventId) : undefined
-    };
-    const r = await Users.updateOne(
-      { _id: new ObjectId(id) },
-      { $push: { hp_log: record } }
-    );
-    if (r.matchedCount === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ ok: true });
+    const list = await Facilities.find({}).toArray();
+    res.json(list);
   } catch (e) { next(e); }
 });
+
+app.get('/api/facilities/:id', async (req, res) => {
+  try {
+    const row = await db.collection('facilities').findOne({ _id: req.params.id });
+    if (!row) return res.status(404).json({ message: 'not found' });
+    res.json(row);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'failed to fetch facility' });
+  }
+});
+
+// イベント検索（type / timeSlot / locationId で絞り込み）
+app.get('/api/events', async (req, res, next) => {
+  try {
+    const q = {};
+    if (req.query.type) q.type = req.query.type;
+    if (req.query.timeSlot) q.timeSlot = req.query.timeSlot;
+    if (req.query.locationId) q.locationId = req.query.locationId;
+    const list = await Events.find(q).toArray();
+    res.json(list);
+  } catch (e) { next(e); }
+});
+
+
+// イベントの取得
+app.get('/api/events/:id', async (req, res, next) => {
+  try {
+    const ev = await Events.findOne({ _id: req.params.id });
+    if (!ev) return res.status(404).json({ error: 'Event not found' });
+    res.json(ev); // _id を含むそのまま返す
+  } catch (e) { next(e); }
+});
+
+/* --- SNS --- */
+// 時間帯での取得（例: /api/sns?timeSlot=2h）
+app.get('/api/sns', async (req, res, next) => {
+  try {
+    const { timeSlot } = req.query;
+    const filter = timeSlot ? { timeSlot } : {};
+    const posts = await SnsPosts.find(filter, {
+      projection: { /* 全フィールド返すなら projection 省略もOK */ }
+    }).toArray();
+    res.json(posts);
+  } catch (e) { next(e); }
+});
+
+
+
 
 // ゴール時の可視化用まとめ
 app.get('/api/users/:id/summary', async (req, res, next) => {

@@ -72,7 +72,7 @@ function App() {
               </Route>
               <Route path="/result" element={<ResultPage />} />
               <Route path="/game">
-                <Route path="monologue" element={<MonologuePage />} />
+                <Route path="monologue/:eventId" element={<MonologuePage />} />
                 <Route path="action" element={<ActionPage />} />
                 <Route path="log" element={<LogPage />} />
                 <Route path="map" element={<MapPage />} />

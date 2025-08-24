@@ -43,7 +43,7 @@ export const ProfilePage = () => {
       setPlayerResidenceAtom(selectedResidenceValue || "渋谷区在学");
 
       // プロローグに遷移
-      navigate("/game/monologue");
+      navigate("/game/monologue/event_prologue_001");
     }
   };
 
