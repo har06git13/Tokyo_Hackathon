@@ -129,50 +129,6 @@ export const ActionPage = () => {
     return acc;
   }, {});
 
-  // --- デバッグ/代替用の仮の施設選択リスト（API由来） ---
-  const FacilityList = ({ currentTimeSlot, onSelect }) => {
-    // 避難所は時間帯フィルタ（従来仕様）
-    const filtered = facilities.filter((fac) => {
-      if (fac.id === "fac_000") return false;
-      if (
-        fac.type === "shelter" &&
-        !["6h", "8h", "10h"].includes(currentTimeSlot)
-      )
-        return false;
-      // 既訪問チェック
-      const walkEv = walkIndex[fac.id];
-      if (walkEv && visitedEventIds.includes(walkEv._id)) return false;
-      return true;
-    });
-
-    if (facLoading || walkLoading)
-      return <div style={{ color: "var(--color-base1)" }}>読み込み中...</div>;
-    if (facError)
-      return (
-        <div style={{ color: "tomato" }}>施設の取得に失敗：{facError}</div>
-      );
-    if (walkError)
-      return (
-        <div style={{ color: "tomato" }}>
-          イベント索引の取得に失敗：{walkError}
-        </div>
-      );
-
-    return (
-      <div>
-        {filtered.map((fac) => (
-          <button
-            key={fac.id}
-            onClick={() => onSelect(fac)}
-            style={{ display: "block", margin: "8px 0" }}
-          >
-            {fac.name}
-          </button>
-        ))}
-      </div>
-    );
-  };
-
   useEffect(() => {
     console.log("spotSelected changed:", spotSelected);
   }, [spotSelected]);
