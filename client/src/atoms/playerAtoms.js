@@ -71,3 +71,29 @@ export const criticalReasonList = [
   "getInfo",
 ];
 export const criticalReasonAtom = atom("lowHealth"); // Listから1つ自動でセットされる
+
+// リセット関数
+export const resetAllAtom = atom(null, (get, set) => {
+  set(playerNameAtom, "Default Player");
+  set(playerAgeAtom, "20代");
+  set(playerGenderAtom, "男性");
+  set(playerResidenceAtom, "渋谷区在学");
+
+  set(currentTimeAtom, createStartTime());
+  set(currentLocationAtom, "渋谷駅前");
+
+  set(lifeAtom, 70);
+  set(mentalAtom, 70);
+  set(chargeAtom, 60);
+  set(moneyAtom, 0);
+  set(gaugeHistoryAtom, []);
+
+  set(selectedFacilityAtom, null);
+  set(selectedEventAtom, prologueEvent);
+  set(currentEventStatusAtom, null);
+
+  set(eventHistoryAtom, []);
+  set(visitedFacilitiesAtom, ["fac_000"]);
+  set(survivedAtom, true);
+  set(criticalReasonAtom, "lowHealth");
+});

@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "seed:events": "node ./scripts/import_events.mjs",
+    "seed:users": "node ./scripts/import_users.mjs",
+    "seed:facilities": "node ./scripts/import_facilities.mjs",
+    "seed:sns": "node ./scripts/import_sns.mjs",
+    "seed:all": "npm run seed:facilities && npm run seed:events && npm run seed:sns",
+    "wipe": "node -e \"import('dotenv/config');import('mongodb').then(async m=>{const c=new m.MongoClient(process.env.MONGODB_URI);await c.connect();const d=c.db(process.env.DB_NAME||'tokyo_hackathon_dev');await Promise.all(['users','events','facilities','sns'].map(n=>d.collection(n).deleteMany({})));console.log('🧹 wiped');await c.close();})\""
   },
   "keywords": [],
   "author": "",
@@ -13,6 +19,8 @@
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mongodb": "^6.18.0"
   }
 }

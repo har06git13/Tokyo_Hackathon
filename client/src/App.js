@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Provider } from "./components/chakra/provider";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Flex, Box } from "@chakra-ui/react";
 import "./styleguide.css";
 
 // ページコンポーネント
@@ -38,40 +39,62 @@ function App() {
 
   return (
     <Provider>
-      <div className="outer-wrapper">
-        <Router>
-          <Routes>
-            <Route path="/" element={<SplashPage />} />
-            <Route path="/title">
-              <Route path="gamestart" element={<TitlePage />} />
-              <Route path="profile" element={<ProfilePage />} />
-            </Route>
-            <Route path="/result" element={<ResultPage />} />
-            {/* /game-page内はネストルート */}
-            <Route path="/game">
-              <Route path="monologue" element={<MonologuePage />} />
-              <Route path="action" element={<ActionPage />} />
-              <Route path="log" element={<LogPage />} />
-              <Route path="map" element={<MapPage />} />
-              <Route path="walk" element={<WalkPage />} />
-              <Route path="checkin" element={<CheckInPage />} />
-              <Route path="sns" element={<SnsPage />} />
-              <Route path="setting" element={<SettingPage />} />
-              <Route
-                path="setting/lifegaugeinfo"
-                element={<LifeGaugeInfoPage />}
-              />
-              <Route path="setting/ruleinfo" element={<RuleInfoPage />} />
-              <Route
-                path="setting/spottypeinfo"
-                element={<SpotTypeInfoPage />}
-              />
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-          {/* <h1>this from App.js→「{message}」</h1> */}
-        </Router>
-      </div>
+      <Flex
+        width="100vw"
+        height="100vh"
+        alignItems="center"
+        justifyContent="center"
+        position="relative"
+      >
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          width="100%"
+          height="100%"
+          backgroundImage="url('/assets/image/monologue-back.png')"
+          backgroundSize="cover"
+          backgroundPosition="center"
+          zIndex={-1} // 背景として下に置く
+          filter="brightness(1.2) contrast(0.9) blur(8px) opacity(0.4)"
+        />
+
+        <div
+          className="outer-wrapper"
+          style={{ position: "relative", zIndex: 0 }}
+        >
+          <Router>
+            <Routes>
+              <Route path="/" element={<SplashPage />} />
+              <Route path="/title">
+                <Route path="gamestart" element={<TitlePage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Route>
+              <Route path="/result" element={<ResultPage />} />
+              <Route path="/game">
+                <Route path="monologue/:eventId" element={<MonologuePage />} />
+                <Route path="action" element={<ActionPage />} />
+                <Route path="log" element={<LogPage />} />
+                <Route path="map" element={<MapPage />} />
+                <Route path="walk" element={<WalkPage />} />
+                <Route path="checkin" element={<CheckInPage />} />
+                <Route path="sns" element={<SnsPage />} />
+                <Route path="setting" element={<SettingPage />} />
+                <Route
+                  path="setting/lifegaugeinfo"
+                  element={<LifeGaugeInfoPage />}
+                />
+                <Route path="setting/ruleinfo" element={<RuleInfoPage />} />
+                <Route
+                  path="setting/spottypeinfo"
+                  element={<SpotTypeInfoPage />}
+                />
+              </Route>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Router>
+        </div>
+      </Flex>
     </Provider>
   );
 }

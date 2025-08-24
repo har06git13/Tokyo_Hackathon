@@ -6,8 +6,9 @@ import {
   mentalAtom,
   chargeAtom,
   moneyAtom,
+  resetAllAtom,
 } from "../atoms/playerAtoms";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
 import { useNavigate } from "react-router-dom";
 
@@ -17,8 +18,20 @@ export const ResultPage = () => {
   const [mental] = useAtom(mentalAtom);
   const [charge] = useAtom(chargeAtom);
   const [money] = useAtom(moneyAtom);
+  const setAll = useSetAtom(resetAllAtom);
 
   const navigate = useNavigate();
+
+  // タイトルに戻るボタンの処理
+  const handleReturnToTitle = () => {
+    const ok = window.confirm(
+      "これまでのプレイデータは削除されます。\n本当に最初からやり直しますか？"
+    );
+    if (ok) {
+      setAll(); // ここで全リセット
+      navigate("/");
+    }
+  };
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -201,15 +214,7 @@ export const ResultPage = () => {
           height="3.6vh"
           text="タイトルに戻る"
           isAvailable
-          onClick={() => {
-            if (
-              window.confirm(
-                "これまでのプレイデータは削除されます。\n 本当に最初からやり直しますか？"
-              )
-            ) {
-              navigate("/");
-            }
-          }}
+          onClick={handleReturnToTitle}
         />
       </Flex>
     </Flex>
