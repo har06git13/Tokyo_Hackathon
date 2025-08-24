@@ -16,7 +16,7 @@ if (!uri) {
 }
 
 const client = new MongoClient(uri);
-let db, Users, Events, Facilities, SnsPosts;
+let db, Users, Events, Facilities, SnsPosts, Results;
 
 async function start() {
   // MongoDB 接続
@@ -26,6 +26,7 @@ async function start() {
   Events = db.collection('events');
   Facilities = db.collection('facilities');
   SnsPosts = db.collection('sns');
+  Results = db.collection('results');
 
 
   app.listen(PORT, () =>
@@ -120,22 +121,41 @@ app.get('/api/sns', async (req, res, next) => {
 });
 
 
-
-
-// ゴール時の可視化用まとめ
-app.get('/api/users/:id/summary', async (req, res, next) => {
+// ---- 結果保存 API（モデル無し：ネイティブドライバ）----
+app.post('/api/results', async (req, res, next) => {
   try {
-    const user = await Users.findOne(
-      { _id: new ObjectId(req.params.id) },
-      { projection: { hp_log: 1, visited_list: 1 } }
-    );
-    if (!user) return res.status(404).end();
-    const hp = (user.hp_log || []).sort((a, b) => new Date(a.time) - new Date(b.time));
-    res.json({ hp, visited_list: user.visited_list || [] });
+    const { AgeType, Gender, ResidenceType, EventHistory } = req.body || {};
+
+    // EventHistory の正規化（ISO 文字列/数値/Date を Date へ）
+    const hist = Array.isArray(EventHistory)
+      ? EventHistory.map(h => {
+          const t = h?.time;
+          const d = (t instanceof Date) ? t : new Date(t);
+          return {
+            id: String(h?.id ?? ''),
+            time: isNaN(d.getTime()) ? new Date() : d,
+          };
+        })
+      : [];
+
+    const doc = {
+      AgeType: AgeType ?? null,
+      Gender: Gender ?? null,
+      ResidenceType: ResidenceType ?? null,
+      EventHistory: hist,
+      createdAt: new Date()
+    };
+
+    const r = await Results.insertOne(doc);
+    res.status(201).json({ _id: r.insertedId });
   } catch (e) { next(e); }
 });
 
-
+// エラーハンドラ
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: String(err.message || err) });
+});
 // エラーハンドラ
 app.use((err, _req, res, _next) => {
   console.error(err);
