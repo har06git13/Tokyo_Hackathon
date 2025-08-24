@@ -76,6 +76,7 @@ export const MapPage = () => {
               eventHistory={eventHistory}
               currentLocation={currentLocationFacility}
               visitedFacilities={visitedFacilities}
+              showControls={false}
             />
           </Box>
           {/* マップ凡例 */}

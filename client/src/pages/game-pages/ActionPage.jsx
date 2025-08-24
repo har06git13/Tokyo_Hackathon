@@ -198,6 +198,7 @@ export const ActionPage = () => {
                 currentLocation={currentLocationFacility}
                 visitedFacilities={visitedFacilities}
                 facilityStatusMap={facilityStatusMap}
+                showControls={false}
               />
             </Box>
 

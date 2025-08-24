@@ -67,7 +67,8 @@ export const GoogleMapComponent = ({
   currentLocation = null,
   visitedFacilities = [],
   facilityStatusMap = {},
-  containerStyle
+  containerStyle,
+  showControls = true,
 }) => {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -181,6 +182,14 @@ export const GoogleMapComponent = ({
     typeof deviceLocation.lng === 'number' &&
     !geoError;
 
+  // 最終的に GoogleMap に渡すオプション（showControls に基づいて切り替え）
+  const finalMapOptions = {
+    ...options,
+    disableDefaultUI: !showControls,
+    zoomControl: showControls,
+    fullscreenControl: showControls,
+  };
+
   return (
     <Box width="100%" height="100%" position="relative" style={{ zIndex: 0 }}>
       {(!isApiLoaded) && (
@@ -224,7 +233,7 @@ export const GoogleMapComponent = ({
           zoom={14}
           onLoad={onLoad}
           onUnmount={onUnmount}
-          options={options}
+          options={finalMapOptions}
         >
           {/* 施設マーカー */}
           {isLoaded && facilityList.filter((f) => f.id !== 'fac_000').map((facility) => {
