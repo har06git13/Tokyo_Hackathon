@@ -1,44 +1,164 @@
 # Tokyo_Hackathon
 
-## Google Maps API の設定
+<div id="top"></div>
 
-このプロジェクトは Google Maps JavaScript API を使用して地図を表示します。ローカル開発・本番環境ともに API キーを環境変数で渡す必要があります。
+## 目次
+- [Tokyo\_Hackathon](#tokyo_hackathon)
+  - [目次](#目次)
+  - [プロジェクト名](#プロジェクト名)
+  - [プロジェクトについて](#プロジェクトについて)
+  - [使用技術一覧](#使用技術一覧)
+    - [フロントエンド](#フロントエンド)
+    - [バックエンド](#バックエンド)
+    - [データベース](#データベース)
+  - [環境](#環境)
+  - [ディレクトリ構成](#ディレクトリ構成)
+  - [開発環境構築](#開発環境構築)
+    - [client/.env](#clientenv)
+    - [server/.env](#serverenv)
+    - [依存関係のインストール](#依存関係のインストール)
+    - [動作確認](#動作確認)
+  - [コマンド一覧](#コマンド一覧)
+    - [ルート](#ルート)
+    - [client](#client)
+    - [server](#server)
 
-必須情報
-- 環境変数名: `REACT_APP_GOOGLE_MAPS_API_KEY`
-- マップコンポーネント: `client/src/components/game-page/GoogleMap.jsx` がこの環境変数を参照しています。
+## プロジェクト名
+リアル災害サバイバルゲーム『渋谷歪譚（しぶやわいたん）』
 
-手順（ローカル開発）
-1. Google Cloud コンソールでプロジェクトを作成（または既存プロジェクトを選択）します。
-2. 「API とサービス」→「ライブラリ」で **Maps JavaScript API** を有効にします。
-3. 「認証情報」→「API キーの作成」でキーを作成します。
-	- セキュリティのため、利用制限を設定してください（HTTP リファラ制限: `http://localhost:3000` と `http://127.0.0.1:3000` など）。
-	- 使用 API の制限で `Maps JavaScript API` を許可してください。
-4. プロジェクトの `client` フォルダにある `.env.example` を参考に、`client/.env` を作成して以下を設定します:
+## プロジェクトについて
+本プロジェクトは、[都知事杯オープンデータ・ハッカソン 2025](https://odhackathon.metro.tokyo.lg.jp/) 応募作品です。  
+
+『渋谷歪譚』は、実際の渋谷を舞台にした防災シミュレーションゲームアプリです。  
+災害発生直後からの 6〜12 時間（ゲーム内時間）を生き延びる過程で、防災オープンデータや街の構造を活用した行動選択を体験できます。  
+
+## 使用技術一覧
+
+### フロントエンド
+<p style="display: inline">
+<img src="https://img.shields.io/badge/-React-20232A.svg?logo=react&style=for-the-badge&logoColor=61DAFB">
+</p>
+
+### バックエンド
+<p style="display: inline">
+<img src="https://img.shields.io/badge/-Node.js-339933.svg?logo=node.js&style=for-the-badge&logoColor=white">
+<img src="https://img.shields.io/badge/-Express-000000.svg?logo=express&style=for-the-badge&logoColor=white">
+</p>
+
+### データベース
+<p style="display: inline">
+<img src="https://img.shields.io/badge/-MongoDB-47A248.svg?logo=mongodb&style=for-the-badge&logoColor=white">
+</p>
+
+
+## 環境
+
+| 言語・フレームワーク  | バージョン |
+| --------------------- | ---------- |
+| React                 | 19.1.0     |
+| Node.js               | >=18.x     |
+| MongoDB               | >=6.0      |
+
+その他の依存パッケージは各 `package.json` を参照してください。  
+
+## ディレクトリ構成
 
 ```
-REACT_APP_GOOGLE_MAPS_API_KEY=あなたの_API_KEY
+Tokyo_Hackathon/
+├── client/             # フロントエンド（React）
+│   ├── public/         # 静的アセット
+│   ├── src/
+│   │   ├── components/ # UIコンポーネント
+│   │   ├── pages/      # ページコンポーネント
+│   │   ├── atoms/      # Jotai グローバル状態管理
+│   │   ├── hooks/      # カスタムフック
+│   │   ├── utils/      # ユーティリティ関数
+│   │   └── temporary-database/ # 開発用モックデータ
+│   └── package.json
+├── server/             # バックエンド（Node/Express API）
+│   ├── index.js        # エントリポイント
+│   ├── scripts/        # MongoDB import/seed スクリプト
+│   └── package.json
+├── package.json        # ルート（ワークスペース管理）
+├── .gitignore
+└── README.md
 ```
 
-5. 開発サーバーを再起動します（Create React App は起動時に環境変数を読み込むため、変更後は再起動が必要です）:
+## 開発環境構築
 
+### client/.env
 ```
-cd client
-npm install   # まだ依存が入っていない場合
+# Clientのポート番号
+PORT=3000
+
+# バックエンド API のエンドポイント
+REACT_APP_API_URL=http://localhost:4000
+
+# Google Maps API Key
+REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
+```
+
+### server/.env
+```
+# Serverのポート番号
+PORT=4000
+
+# Google Maps API Key
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
+
+# MongoDB 接続設定
+MONGODB_URI=YOUR_MONGODB_URI
+```
+
+### 依存関係のインストール
+
+**ルートで一括起動**（`concurrently` 使用）  
+```
+npm install
 npm start
 ```
 
-手順（本番デプロイ）
-- 本番ではビルド環境またはホスティングサービスの「環境変数 (Environment Variables)」に `REACT_APP_GOOGLE_MAPS_API_KEY` を設定してください（例: Vercel / Netlify / GitHub Actions の Secrets）。
-- ブラウザから見えるキーになるため、必ず利用制限（リファラや API の制限）を付与してください。
+**個別に起動**  
+```
+# サーバー
+cd server
+npm install
+npm start
 
-注意事項
-- リポジトリに直接 API キー（`client/.env` など）をコミットしないでください。現在、`client/.env` にキーが置かれている可能性があります。もし公開リポジトリにキーが流出している場合は、すぐにキーを無効化して新しいキーを発行してください。
-- `GoogleMap.jsx` は環境変数が無い場合にエラーボックスを表示するようになっています。キー設定に問題があるときは、地図の代わりにエラーメッセージが表示されます。
+# クライアント
+cd ../client
+npm install
+npm start
+```
 
-トラブルシューティング
-- 地図が表示されない場合、ブラウザのコンソールに出るエラーメッセージ（API キーの制限や請求関連のエラー）を確認してください。
-- 開発時に地図の読み込みエラーが出たら、`client/.env` の変数名が `REACT_APP_GOOGLE_MAPS_API_KEY` になっているか、サーバーを再起動したか確認してください。
+### 動作確認
 
-参考: プロジェクト内の `.env.example` にサンプルのキー変数名が記載されています（`client/.env.example`）。
+- フロントエンド  
+  → http://localhost:3000 にアクセスしてトップページが表示されれば成功。  
 
+- バックエンド（API サーバ）  
+  → http://localhost:4000/api/health にアクセスして  
+  ```json
+  {"status":"ok"}
+  ```  
+  が返れば成功。  
+
+
+## コマンド一覧
+
+### ルート
+- `npm start` : client & server 同時起動  
+- `npm run client` : client のみ起動  
+- `npm run server` : server のみ起動  
+
+### client
+- `npm start` : React 開発サーバ起動  
+- `npm run build` : プロダクションビルド  
+- `npm test` : テスト実行  
+
+### server
+- `npm start` : Express サーバ起動  
+- `npm run seed:*` : モックデータ投入  
+- `npm run wipe` : DBリセット（注意）  
+
+<p align="right">(<a href="#top">トップへ</a>)</p>
