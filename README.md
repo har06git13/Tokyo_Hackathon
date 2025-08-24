@@ -8,10 +8,6 @@
   - [プロジェクト名](#プロジェクト名)
   - [プロジェクトについて](#プロジェクトについて)
   - [使用技術一覧](#使用技術一覧)
-    - [バックエンド](#バックエンド)
-    - [フロントエンド](#フロントエンド)
-    - [データベース](#データベース)
-    - [インフラ / デプロイ](#インフラ--デプロイ)
   - [環境](#環境)
   - [ディレクトリ構成](#ディレクトリ構成)
   - [開発環境構築](#開発環境構築)
@@ -23,34 +19,42 @@
     - [server](#server)
 
 ## プロジェクト名
-**リアル災害サバイバルゲーム『渋谷歪譚（しぶやわいたん）』**
+リアル災害サバイバルゲーム『渋谷歪譚（しぶやわいたん）』
 
 ## プロジェクトについて
 本プロジェクトは、[都知事杯オープンデータ・ハッカソン 2025](https://odhackathon.metro.tokyo.lg.jp/) 応募作品です。  
 
-**『渋谷歪譚』**は、実際の渋谷を舞台にした防災シミュレーションゲームアプリです。  
+『渋谷歪譚』は、実際の渋谷を舞台にした防災シミュレーションゲームアプリです。  
 災害発生直後からの 6〜12 時間（ゲーム内時間）を生き延びる過程で、**防災オープンデータや街の構造を活用した行動選択**を体験できます。  
 
 ## 使用技術一覧
 
-### バックエンド
+バックエンド
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-Node.js-339933.svg?logo=node.js&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Express-000000.svg?logo=express&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Django-092E20.svg?logo=django&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-DRF-FF1709.svg?logo=django&style=for-the-badge&logoColor=white">
+</p>
 
-### フロントエンド
+フロントエンド
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-React-20232A.svg?logo=react&style=for-the-badge&logoColor=61DAFB">
 <img src="https://img.shields.io/badge/-Next.js-000000.svg?logo=next.js&style=for-the-badge&logoColor=white">
+</p>
 
-### データベース
+データベース
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-MongoDB-47A248.svg?logo=mongodb&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-MySQL-4479A1.svg?logo=mysql&style=for-the-badge&logoColor=white">
+</p>
 
-### インフラ / デプロイ
+インフラ / デプロイ
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-Docker-2496ED.svg?logo=docker&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Terraform-623CE4.svg?logo=terraform&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Render-46E3B7.svg?logo=render&style=for-the-badge&logoColor=white">
+</p>
 
 ## 環境
 
@@ -72,7 +76,6 @@
 ## ディレクトリ構成
 
 ```
-
 Tokyo\_Hackathon/
 ├── client/             # フロントエンド（React）
 │   ├── public/         # 静的アセット
