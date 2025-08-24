@@ -1,6 +1,6 @@
 import { useAtom } from "jotai";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   selectedEventAtom,
   selectedFacilityAtom,
@@ -15,6 +15,9 @@ import {
   gaugeHistoryAtom,
   survivedAtom,
   playerNameAtom,
+  playerAgeAtom,
+  playerGenderAtom,
+  playerResidenceAtom,
 } from "../atoms/playerAtoms";
 //import { eventList } from "../temporary-database";
 
@@ -36,9 +39,12 @@ export const useMonologueLogic = () => {
   const [mental, setMental] = useAtom(mentalAtom);
   const [charge, setCharge] = useAtom(chargeAtom);
   const [money, setMoney] = useAtom(moneyAtom);
-  const [, setEventHistory] = useAtom(eventHistoryAtom);
+  const [eventHistory, setEventHistory] = useAtom(eventHistoryAtom);
   const [, setVisitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [, setGaugeHistory] = useAtom(gaugeHistoryAtom);
+  const [playerAge] = useAtom(playerAgeAtom);
+  const [playerGender] = useAtom(playerGenderAtom);
+  const [playerResidence] = useAtom(playerResidenceAtom);
 
 
   // selectedEvent が無い場合だけ API から取得（/api/events/:id）
@@ -73,6 +79,30 @@ export const useMonologueLogic = () => {
     })();
     return () => { aborted = true; };
   }, []);
+
+
+  const postResultIfNeeded = useCallback(async (pathAfter) => {
+    if (pathAfter !== "/result") return;
+    const payload = {
+      AgeType: playerAge ?? null,
+      Gender: playerGender ?? null,
+      ResidenceType: playerResidence ?? null,
+      EventHistory: eventHistory?.map(e => ({
+        id: e.id,
+        time: typeof e.time === "string" ? e.time : new Date(e.time).toISOString(),
+      })) ?? [],
+    };
+    try {
+      const res = await fetch("/api/results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) console.warn("Save result failed:", await res.text());
+    } catch (err) {
+      console.warn("Save result error:", err);
+    }
+  }, [playerAge, playerGender, playerResidence, eventHistory]);
 
   // 実際に使うイベント（Jotai優先、無ければAPI）
   const effectiveEvent = selectedEvent ?? fetchedEvent;
@@ -141,7 +171,7 @@ export const useMonologueLogic = () => {
   const clampGauge = (val) => Math.max(0, Math.min(100, val));
 
   // === ボタンクリック処理 ===
-  const handleButtonClick = () => {
+  const handleButtonClick = async() => {
     // ゲージ値計算
     const newLife = clampGauge(life + combinedGaugeChange.life);
     const newMental = clampGauge(mental + combinedGaugeChange.mental);
@@ -203,8 +233,12 @@ export const useMonologueLogic = () => {
     setSelectedFacility(null);
     setCurrentEventStatus(null);
 
-    // 遷移先へ
-    navigate(nextPath);
+    // リザルト遷移時のみ結果を保存（失敗しても遷移は続ける）
+    try {
+      await postResultIfNeeded(nextPath);
+    } finally {
+      navigate(nextPath);
+    }
   };
 
   return {
