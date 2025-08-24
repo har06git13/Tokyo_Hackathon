@@ -40,7 +40,6 @@ export const useMonologueLogic = () => {
   const [, setVisitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [, setGaugeHistory] = useAtom(gaugeHistoryAtom);
 
-
   // selectedEvent が無い場合だけ API から取得（/api/events/:id）
   useEffect(() => {
     let aborted = false;
@@ -48,7 +47,7 @@ export const useMonologueLogic = () => {
       if (selectedEvent || !eventId) return;
       try {
         const res = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
-        if (!res.ok) throw new Error('not found');
+        if (!res.ok) throw new Error("not found");
         const data = await res.json(); // {_id, ...}
         // 既存ロジック互換のため _id → id に正規化
         if (!aborted) setFetchedEvent({ id: data._id, ...data });
@@ -56,7 +55,9 @@ export const useMonologueLogic = () => {
         if (!aborted) setFetchedEvent(null);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [selectedEvent, eventId]);
 
   // 時間イベントはDBから取得（固定ID: event_time_001）
@@ -64,33 +65,42 @@ export const useMonologueLogic = () => {
     let aborted = false;
     (async () => {
       try {
-        const res = await fetch('/api/events/event_time_001');
+        const res = await fetch("/api/events/event_time_001");
         if (!res.ok) return;
         const data = await res.json();
         // こちらも id に正規化
         if (!aborted) setTimeEvent({ id: data._id, ...data });
       } catch {}
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // 実際に使うイベント（Jotai優先、無ければAPI）
   const effectiveEvent = selectedEvent ?? fetchedEvent;
+
+  // 時間経過によるゲージ変動の設定
+  const isTimeEventActive =
+    currentTime.getMinutes() === 0 && currentTime.getHours() !== 14;
+
+  const getSafeValue = (value) => (value ? value : 0);
 
   //if (!selectedEvent) {
   if (!effectiveEvent) {
     return { selectedEvent: null };
   }
 
-  // 死亡フラグ設定
-  const isEvacuationFailure = life + (effectiveEvent.gaugeChange?.life ?? 0) <= 0;
+  // 死亡フラグ設定（時間イベントも併せて判定）
+  const totalLifeChange =
+    getSafeValue(effectiveEvent.gaugeChange?.life) +
+    (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.life) : 0);
+
+  const isEvacuationFailure = life + totalLifeChange <= 0;
+
   if (isEvacuationFailure) {
     setSurvived(false);
   }
-
-  // 時間経過によるゲージ変動の設定
-  const isTimeEventActive =
-    currentTime.getMinutes() === 0 && currentTime.getHours() !== 14;
 
   // 表示テキストの結合
   const combinedTexts =
@@ -109,7 +119,7 @@ export const useMonologueLogic = () => {
       : effectiveEvent.texts;
 
   // ゲージ変動計算関数
-  const getSafeValue = (value) => (value ? value : 0);
+
   const combinedGaugeChange = {
     life:
       getSafeValue(effectiveEvent.gaugeChange?.life) +
@@ -142,6 +152,8 @@ export const useMonologueLogic = () => {
 
   // === ボタンクリック処理 ===
   const handleButtonClick = () => {
+    console.log("survived:", survived);
+    console.log("isEvacuationFailure:", isEvacuationFailure);
     // ゲージ値計算
     const newLife = clampGauge(life + combinedGaugeChange.life);
     const newMental = clampGauge(mental + combinedGaugeChange.mental);
@@ -185,7 +197,9 @@ export const useMonologueLogic = () => {
     // 時間更新
     if (effectiveEvent.requiredDuration) {
       const newTime = new Date(currentTime.getTime());
-      newTime.setMinutes(newTime.getMinutes() + effectiveEvent.requiredDuration);
+      newTime.setMinutes(
+        newTime.getMinutes() + effectiveEvent.requiredDuration
+      );
       setCurrentTime(newTime);
     }
 
