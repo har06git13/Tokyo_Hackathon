@@ -35,14 +35,20 @@
 ## 使用技術一覧
 
 ### フロントエンド
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-React-20232A.svg?logo=react&style=for-the-badge&logoColor=61DAFB">
+</p>
 
 ### バックエンド
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-Node.js-339933.svg?logo=node.js&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Express-000000.svg?logo=express&style=for-the-badge&logoColor=white">
+</p>
 
 ### データベース
+<p style="display: inline">
 <img src="https://img.shields.io/badge/-MongoDB-47A248.svg?logo=mongodb&style=for-the-badge&logoColor=white">
+</p>
 
 
 ## 環境
