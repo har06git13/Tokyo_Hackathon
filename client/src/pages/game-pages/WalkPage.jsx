@@ -63,7 +63,22 @@ export const WalkPage = () => {
         <Text className="text-maintext">
           現地に着いたら、QRコードでチェックイン！
         </Text>
-        <CheckinButton onClick={() => navigate("/game/checkin")} />
+        <CheckinButton onClick={async () => {
+          // Try to pre-warm camera permission so CheckInPage's scanner starts reliably
+          try {
+            if (navigator && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+              const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+              // stop tracks immediately after permission is granted
+              try {
+                stream.getTracks().forEach((t) => t.stop());
+              } catch (e) {}
+            }
+          } catch (e) {
+            // ignore errors (permission denied or not available) and navigate anyway
+            console.debug('[WalkPage] prewarm getUserMedia failed', e);
+          }
+          navigate("/game/checkin");
+        }} />
       </Flex>
       <Footer isWalking />
     </Flex>

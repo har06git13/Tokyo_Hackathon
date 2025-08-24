@@ -20,14 +20,18 @@ export const MapSpotInfo = ({
     <Flex
       className={"map-spot-info"}
       flexDirection={"column"}
-      width={"90%"}
+  width={"100%"}
+  maxWidth={"380px"}
       backgroundColor={"var(--color-base10)"}
       marginBottom={type === "map" ? "2vh" : 0}
       borderRadius={type === "map" ? "1vh" : "3vh 3vh 0 0"}
-      paddingX={"5%"}
-      paddingTop={"2vh"}
-      paddingBottom={"3vh"}
+      paddingX={{ base: "16px", md: "24px" }}
+      paddingTop={{ base: "12px", md: "2vh" }}
+      paddingBottom={{ base: "12px", md: "3vh" }}
       gap={"1vh"}
+      marginLeft="auto"
+      marginRight="auto"
+      boxSizing="border-box"
     >
       <Flex flexDirection={"column"} width={"100%"} gap={"1.6vh"}>
         <Flex flexDirection={"column"}>

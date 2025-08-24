@@ -1,47 +1,44 @@
-import React, { useState } from "react";
+import React from "react";
 import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
-import { Footer } from "../../components/game-page";
-import { MapMarkerLegend, MapSpotInfo } from "../../components/game-page";
+import { Footer, GoogleMapComponent, MapMarkerLegend } from "../../components/game-page";
+import { useAtom } from "jotai";
+import { 
+  eventHistoryAtom, 
+  currentLocationAtom, 
+  selectedFacilityAtom,
+  selectedEventAtom,
+  visitedFacilitiesAtom
+} from "../../atoms/playerAtoms";
 import { facilityList, eventList } from "../../temporary-database";
-import { currentTimeSlotAtom } from "../../atoms/playerAtoms";
 
 export const MapPage = () => {
-  const [selectedFacility, setSelectedFacility] = useState(null);
-  const [currentTimeSlot, setCurrentTimeSlot] = useState(currentTimeSlotAtom);
+  // ActionPage と同じ挙動でグローバル選択のみ使用
+  const [selectedFacility, setSelectedFacility] = useAtom(selectedFacilityAtom);
+  const [, setSelectedEvent] = useAtom(selectedEventAtom);
+  const [eventHistory] = useAtom(eventHistoryAtom);
+  const [currentLocationName] = useAtom(currentLocationAtom);
+  const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
 
-  const FacilityList = ({ currentTimeSlot, onSelect }) => {
-    const filteredFacilities = facilityList.filter((fac) => {
-      if (fac.id === "fac_000") return false;
+  // 現在地の施設オブジェクトを取得
+  const currentLocationFacility = facilityList.find(fac => fac.name === currentLocationName);
 
-      if (fac.type === "shelter") {
-        return ["6h", "8h", "10h"].includes(currentTimeSlot);
-      }
-
-      return true;
-    });
-
-    return (
-      <Box position="absolute" top="0" left="0" p="2" zIndex={2}>
-        {filteredFacilities.map((fac) => (
-          <button
-            key={fac.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(fac.id);
-            }}
-            style={{ display: "block", margin: "8px 0" }}
-          >
-            {fac.name}
-          </button>
-        ))}
-      </Box>
-    );
-  };
-
-  const onSelectFacility = (facilityId) => {
-    const facData = facilityList.find((fac) => fac.id === facilityId);
+  // ActionPage と同一: 選択した施設をグローバルに設定
+  const onSelectFacility = (facilityData) => {
+    let facilityId, facData;
+    if (typeof facilityData === 'string') {
+      facilityId = facilityData;
+      facData = facilityList.find((fac) => fac.id === facilityId);
+    } else {
+      facilityId = facilityData.id;
+      facData = facilityData;
+    }
+    if (facilityId === "fac_000") return;
+    const evData =
+      eventList.find((ev) => ev.locationId === facilityId && ev.type === "walk") ||
+      eventList.find((ev) => ev.type === "epilogue");
     setSelectedFacility(facData);
+    setSelectedEvent(evData);
   };
 
   return (
@@ -50,58 +47,46 @@ export const MapPage = () => {
       backgroundColor={"var(--color-base12)"}
       zIndex={0}
       position={"relative"}
+      direction="column"
+      height="100vh"
     >
       <Header prevPage={false} currentPage="マップ" />
-      <Flex
-        className="page-contents"
-        flex={1}
-        backgroundColor={"var(--color-theme11)"}
-        position="relative"
-        onClick={() => setSelectedFacility(null)}
-      >
+      
+      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
         <Box
-          className="mapUI"
+          className="map"
+          backgroundColor={"var(--color-theme11)"}
+          flex={1}
           width={"100%"}
-          height={"100%"}
-          backgroundColor={"var(--color-accent10)"}
-          zIndex={0}
-          position="absolute"
+          position="relative"
+          height={{ base: "70vh", md: "70vh" }}
         >
-          {/* ここにマップ入れてほしい！ */}
-          {/* ↓仮の施設選択リスト、マップ実装したらロジックだけ移植して消してね */}
-          <FacilityList
-            currentTimeSlot={currentTimeSlot}
-            onSelect={(id) => {
-              onSelectFacility(id);
-            }}
-          />
+          {/* Google Map Component - ActionPage と同じ構造 */}
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            zIndex={1}
+          >
+            <GoogleMapComponent 
+              onSelectFacility={onSelectFacility}
+              selectedSpot={selectedFacility}
+              eventHistory={eventHistory}
+              currentLocation={currentLocationFacility}
+              visitedFacilities={visitedFacilities}
+              showControls={false}
+            />
+          </Box>
+          {/* マップ凡例 */}
+          <Box position="absolute" top="16px" left="16px" zIndex={100}>
+            <MapMarkerLegend />
+          </Box>
+          {/* GPS 情報オーバーレイは非表示（削除） */}
         </Box>
-
-        <Flex
-          className="map-overlay"
-          position="absolute"
-          inset={0}
-          zIndex={1}
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="space-between"
-          pointerEvents="none"
-        >
-          <MapMarkerLegend />
-
-          {selectedFacility && (
-            <Flex pointerEvents="auto" justifyContent="center" width="100%">
-              <MapSpotInfo
-                type="map"
-                spotStatus="default"
-                spotType={selectedFacility.type}
-                spotName={selectedFacility.name}
-              />
-            </Flex>
-          )}
-        </Flex>
       </Flex>
-
+      
       <Footer type="map" />
     </Flex>
   );
