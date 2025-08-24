@@ -8,11 +8,16 @@
   - [プロジェクト名](#プロジェクト名)
   - [プロジェクトについて](#プロジェクトについて)
   - [使用技術一覧](#使用技術一覧)
+    - [フロントエンド](#フロントエンド)
+    - [バックエンド](#バックエンド)
+    - [データベース](#データベース)
   - [環境](#環境)
   - [ディレクトリ構成](#ディレクトリ構成)
   - [開発環境構築](#開発環境構築)
-    - [1. 環境変数テンプレートファイルをコピー](#1-環境変数テンプレートファイルをコピー)
-    - [2. 依存関係のインストール \& 起動](#2-依存関係のインストール--起動)
+    - [client/.env](#clientenv)
+    - [server/.env](#serverenv)
+    - [依存関係のインストール](#依存関係のインストール)
+    - [動作確認](#動作確認)
   - [コマンド一覧](#コマンド一覧)
     - [ルート](#ルート)
     - [client](#client)
@@ -25,58 +30,35 @@
 本プロジェクトは、[都知事杯オープンデータ・ハッカソン 2025](https://odhackathon.metro.tokyo.lg.jp/) 応募作品です。  
 
 『渋谷歪譚』は、実際の渋谷を舞台にした防災シミュレーションゲームアプリです。  
-災害発生直後からの 6〜12 時間（ゲーム内時間）を生き延びる過程で、**防災オープンデータや街の構造を活用した行動選択**を体験できます。  
+災害発生直後からの 6〜12 時間（ゲーム内時間）を生き延びる過程で、防災オープンデータや街の構造を活用した行動選択を体験できます。  
 
 ## 使用技術一覧
 
-バックエンド
-<p style="display: inline">
+### フロントエンド
+<img src="https://img.shields.io/badge/-React-20232A.svg?logo=react&style=for-the-badge&logoColor=61DAFB">
+
+### バックエンド
 <img src="https://img.shields.io/badge/-Node.js-339933.svg?logo=node.js&style=for-the-badge&logoColor=white">
 <img src="https://img.shields.io/badge/-Express-000000.svg?logo=express&style=for-the-badge&logoColor=white">
-<img src="https://img.shields.io/badge/-Django-092E20.svg?logo=django&style=for-the-badge&logoColor=white">
-<img src="https://img.shields.io/badge/-DRF-FF1709.svg?logo=django&style=for-the-badge&logoColor=white">
-</p>
 
-フロントエンド
-<p style="display: inline">
-<img src="https://img.shields.io/badge/-React-20232A.svg?logo=react&style=for-the-badge&logoColor=61DAFB">
-<img src="https://img.shields.io/badge/-Next.js-000000.svg?logo=next.js&style=for-the-badge&logoColor=white">
-</p>
-
-データベース
-<p style="display: inline">
+### データベース
 <img src="https://img.shields.io/badge/-MongoDB-47A248.svg?logo=mongodb&style=for-the-badge&logoColor=white">
-<img src="https://img.shields.io/badge/-MySQL-4479A1.svg?logo=mysql&style=for-the-badge&logoColor=white">
-</p>
 
-インフラ / デプロイ
-<p style="display: inline">
-<img src="https://img.shields.io/badge/-Docker-2496ED.svg?logo=docker&style=for-the-badge&logoColor=white">
-<img src="https://img.shields.io/badge/-Terraform-623CE4.svg?logo=terraform&style=for-the-badge&logoColor=white">
-<img src="https://img.shields.io/badge/-Render-46E3B7.svg?logo=render&style=for-the-badge&logoColor=white">
-</p>
 
 ## 環境
 
 | 言語・フレームワーク  | バージョン |
 | --------------------- | ---------- |
-| Python                | 3.11.4     |
-| Django                | 4.2.1      |
-| Django Rest Framework | 3.14.0     |
-| MySQL                 | 8.0        |
-| Node.js               | 16.17.0    |
-| React                 | 18.2.0     |
-| Next.js               | 13.4.6     |
-| Terraform             | 1.3.6      |
+| React                 | 19.1.0     |
+| Node.js               | >=18.x     |
+| MongoDB               | >=6.0      |
 
-その他のパッケージのバージョンは pyproject.toml と package.json を参照してください
-
-<p align="right">(<a href="#top">トップへ</a>)</p>
+その他の依存パッケージは各 `package.json` を参照してください。  
 
 ## ディレクトリ構成
 
 ```
-Tokyo\_Hackathon/
+Tokyo_Hackathon/
 ├── client/             # フロントエンド（React）
 │   ├── public/         # 静的アセット
 │   ├── src/
@@ -94,30 +76,44 @@ Tokyo\_Hackathon/
 ├── package.json        # ルート（ワークスペース管理）
 ├── .gitignore
 └── README.md
-
 ```
 
 ## 開発環境構築
-### 1. 環境変数テンプレートファイルをコピー
 
-```bash
-cp .env.example .env
-cp server/.env.example server/.env
-cp client/.env.example client/.env
+### client/.env
+```
+# Clientのポート番号
+PORT=3000
+
+# バックエンド API のエンドポイント
+REACT_APP_API_URL=http://localhost:4000
+
+# Google Maps API Key
+REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 ```
 
-### 2. 依存関係のインストール & 起動
+### server/.env
+```
+# Serverのポート番号
+PORT=4000
 
-**ルートで一括で起動**（`concurrently` 使用）
+# Google Maps API Key
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 
-```bash
+# MongoDB 接続設定
+MONGODB_URI=YOUR_MONGODB_URI
+```
+
+### 依存関係のインストール
+
+**ルートで一括起動**（`concurrently` 使用）  
+```
 npm install
 npm start
 ```
 
-**個別に起動**
-
-```bash
+**個別に起動**  
+```
 # サーバー
 cd server
 npm install
@@ -129,23 +125,36 @@ npm install
 npm start
 ```
 
-## コマンド一覧
-### ルート
+### 動作確認
 
-* `npm start` : client & server 同時起動
-* `npm run client` : client のみ起動
-* `npm run server` : server のみ起動
+- フロントエンド  
+  → http://localhost:3000 にアクセスしてトップページが表示されれば成功。  
+
+- バックエンド（API サーバ）  
+  → http://localhost:4000/api/health にアクセスして  
+  ```json
+  {"status":"ok"}
+  ```  
+  が返れば成功。  
+
+
+## コマンド一覧
+
+### ルート
+- `npm start` : client & server 同時起動  
+- `npm run client` : client のみ起動  
+- `npm run server` : server のみ起動  
 
 ### client
-
-* `npm start` : React 開発サーバ起動
-* `npm run build` : プロダクションビルド
-* `npm test` : テスト実行
+- `npm start` : React 開発サーバ起動  
+- `npm run build` : プロダクションビルド  
+- `npm test` : テスト実行  
 
 ### server
+- `npm start` : Express サーバ起動  
+- `npm run seed:*` : モックデータ投入  
+- `npm run wipe` : DBリセット（注意）  
 
-* `npm start` : Express サーバ起動
-* `npm run seed:*` : モックデータ投入
-* `npm run wipe` : DBリセット（注意）
+---
 
 <p align="right">(<a href="#top">トップへ</a>)</p>
