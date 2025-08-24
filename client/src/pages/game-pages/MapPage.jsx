@@ -1,4 +1,5 @@
-import React from "react";
+// src/pages/game-pages/MapPage.jsx
+import React, { useEffect, useState } from "react";
 import { Flex, Box } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import {
@@ -15,38 +16,82 @@ import {
   selectedEventAtom,
   visitedFacilitiesAtom,
 } from "../../atoms/playerAtoms";
-import { facilityList, eventList } from "../../temporary-database";
 
 export const MapPage = () => {
-  // ActionPage と同じ挙動でグローバル選択のみ使用
+  // グローバル state
   const [selectedFacility, setSelectedFacility] = useAtom(selectedFacilityAtom);
   const [, setSelectedEvent] = useAtom(selectedEventAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
   const [currentLocationName] = useAtom(currentLocationAtom);
   const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
 
-  // 現在地の施設オブジェクトを取得
-  const currentLocationFacility = facilityList.find(
-    (fac) => fac.name === currentLocationName
-  );
+  // facilities(API)
+  const [facilities, setFacilities] = useState([]);
+  const [facLoading, setFacLoading] = useState(true);
+  const [facError, setFacError] = useState(null);
 
-  // ActionPage と同一: 選択した施設をグローバルに設定
-  const onSelectFacility = (facilityData) => {
-    let facilityId, facData;
-    if (typeof facilityData === "string") {
-      facilityId = facilityData;
-      facData = facilityList.find((fac) => fac.id === facilityId);
-    } else {
-      facilityId = facilityData.id;
-      facData = facilityData;
-    }
-    if (facilityId === "fac_000") return;
-    const evData =
-      eventList.find(
-        (ev) => ev.locationId === facilityId && ev.type === "walk"
-      ) || eventList.find((ev) => ev.type === "epilogue");
+  // 施設一覧を取得
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      setFacLoading(true);
+      setFacError(null);
+      try {
+        const res = await fetch("/api/facilities");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        // DBの _id を id に寄せて正規化
+        const normalized = Array.isArray(list)
+          ? list.map((d) => ({ ...d, id: d.id ?? d._id }))
+          : [];
+        if (!aborted) setFacilities(normalized);
+      } catch (e) {
+        if (!aborted) setFacError(e.message);
+      } finally {
+        if (!aborted) setFacLoading(false);
+      }
+    })();
+    return () => { aborted = true; };
+  }, []);
+
+  // 現在地の施設オブジェクト（名前一致）
+  const currentLocationFacility =
+    facilities.find((fac) => fac.name === currentLocationName) ?? null;
+
+  // 施設選択（GoogleMapComponent から facility オブジェクト or 文字列IDが来る）
+  const onSelectFacility = async (facilityData) => {
+    const facilityId =
+      typeof facilityData === "string" ? facilityData : facilityData?.id;
+    const facData =
+      typeof facilityData === "string"
+        ? facilities.find((f) => f.id === facilityId)
+        : facilityData;
+
+    if (!facilityId || facilityId === "fac_000" || !facData) return;
+
     setSelectedFacility(facData);
-    setSelectedEvent(evData);
+
+    // イベントをAPIから取得（walk優先 → epilogueフォールバック）
+    try {
+      const walkRes = await fetch(
+        `/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`
+      );
+      if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
+      const walkArr = await walkRes.json();
+
+      let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
+      if (!evData) {
+        const epiRes = await fetch("/api/events?type=epilogue");
+        if (!epiRes.ok) throw new Error(`epilogue fetch HTTP ${epiRes.status}`);
+        const epiArr = await epiRes.json();
+        evData = Array.isArray(epiArr) ? epiArr[0] : null;
+      }
+
+      if (evData) setSelectedEvent(evData);
+    } catch (e) {
+      // 失敗時は何もしない（UI は選択施設の表示のみ）
+      console.warn("イベント取得に失敗:", e);
+    }
   };
 
   return (
@@ -69,29 +114,54 @@ export const MapPage = () => {
           position="relative"
           height={{ base: "70vh", md: "70vh" }}
         >
-          {/* Google Map Component - ActionPage と同じ構造 */}
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            width="100%"
-            height="100%"
-            zIndex={1}
-          >
-            <GoogleMapComponent
-              onSelectFacility={onSelectFacility}
-              selectedSpot={selectedFacility}
-              eventHistory={eventHistory}
-              currentLocation={currentLocationFacility}
-              visitedFacilities={visitedFacilities}
-              showControls={false}
-            />
-          </Box>
+          {/* 読み込み/エラー表示（簡易） */}
+          {facLoading && (
+            <Box
+              position="absolute"
+              inset={0}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              color="var(--color-base1)"
+              zIndex={10}
+            >
+              施設を読み込み中…
+            </Box>
+          )}
+          {facError && (
+            <Box
+              position="absolute"
+              inset={0}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              color="tomato"
+              zIndex={10}
+            >
+              施設取得に失敗：{facError}
+            </Box>
+          )}
+
+          {/* Google Map Component */}
+          {!facLoading && !facError && (
+            <Box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={1}>
+              <GoogleMapComponent
+                onSelectFacility={onSelectFacility}
+                selectedSpot={selectedFacility}
+                eventHistory={eventHistory}
+                currentLocation={currentLocationFacility}
+                visitedFacilities={visitedFacilities}
+                showControls={false}
+              />
+            </Box>
+          )}
+
           {/* マップ凡例 */}
           <Box position="absolute" top="16px" left="16px" zIndex={100}>
             <MapMarkerLegend />
           </Box>
-          {/* GPS 情報オーバーレイは非表示（削除） */}
+
+          {/* 選択中の施設カード */}
           {selectedFacility && (
             <Flex
               position="absolute"
