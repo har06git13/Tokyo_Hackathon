@@ -20,7 +20,6 @@ import {
   eventHistoryAtom,
   currentEventStatusAtom,
 } from "../../atoms/playerAtoms";
-import { facilityList, eventList } from "../../temporary-database";
 
 export const ActionPage = () => {
   const [spotSelected, setSpotSelected] = useState(false);
@@ -35,29 +34,99 @@ export const ActionPage = () => {
   const [eventHistory] = useAtom(eventHistoryAtom);
   const [, setCurrentEventStatus] = useAtom(currentEventStatusAtom);
 
+  // ---- facilities (API) ----
+  const [facilities, setFacilities] = useState([]);
+  const [facLoading, setFacLoading] = useState(true);
+  const [facError, setFacError] = useState(null);
+
+  // ---- walk events index for visited check (API) ----
+  const [walkIndex, setWalkIndex] = useState({}); // locationId -> walkEvent
+  const [walkLoading, setWalkLoading] = useState(true);
+  const [walkError, setWalkError] = useState(null);
+
   useEffect(() => {
     setSpotSelected(false);
     setShowConfirmDialog(false);
   }, [actionType]);
 
-  // --- 仮の施設選択リスト ---
-  const FacilityList = ({ currentTimeSlot, onSelect }) => {
-    const visitedEventIds = eventHistory.map((e) => e.id);
-    const filteredFacilities = facilityList.filter((fac) => {
-      if (fac.id === "fac_000") return false;
-      if (fac.type === "shelter") {
-        return ["6h", "8h", "10h"].includes(currentTimeSlot);
+  // fetch facilities
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      setFacLoading(true);
+      setFacError(null);
+      try {
+        const res = await fetch("/api/facilities");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+        const normalized = Array.isArray(list)
+          ? list.map((d) => ({ ...d, id: d._id ?? d.id }))
+          : [];
+        if (!aborted) setFacilities(normalized);
+      } catch (e) {
+        if (!aborted) setFacError(e.message);
+      } finally {
+        if (!aborted) setFacLoading(false);
       }
-      // その施設で既に発生したイベントに紐づく施設は除外
-      const hasVisited = eventList.some(
-        (ev) => ev.locationId === fac.id && visitedEventIds.includes(ev.id)
-      );
-      return !hasVisited;
+    })();
+    return () => {
+      aborted = true;
+    };
+  }, []);
+
+  // fetch walk events -> build index
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      setWalkLoading(true);
+      setWalkError(null);
+      try {
+        const res = await fetch("/api/events?type=walk");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const arr = await res.json();
+        const idx = {};
+        if (Array.isArray(arr)) {
+          for (const ev of arr) {
+            if (ev.locationId && !idx[ev.locationId]) idx[ev.locationId] = ev;
+          }
+        }
+        if (!aborted) setWalkIndex(idx);
+      } catch (e) {
+        if (!aborted) setWalkError(e.message);
+      } finally {
+        if (!aborted) setWalkLoading(false);
+      }
+    })();
+    return () => {
+      aborted = true;
+    };
+  }, []);
+
+  // --- 仮の施設選択リスト（表示は同じだがデータはAPI由来） ---
+  const FacilityList = ({ currentTimeSlot, onSelect }) => {
+    const visitedEventIds = eventHistory.map((e) => e.id); // DBのevent _id が入っている想定
+
+    const filtered = facilities.filter((fac) => {
+      if (fac.id === "fac_000") return false;
+
+      // 避難所は時間帯で出す/隠す（元仕様踏襲）
+      if (fac.type === "shelter" && !["6h", "8h", "10h"].includes(currentTimeSlot))
+        return false;
+
+      // その施設の walk イベントID をインデックスから取得して既訪問チェック
+      const walkEv = walkIndex[fac.id]; // walkEv?._id が該当施設のwalkイベントID
+      if (walkEv && visitedEventIds.includes(walkEv._id)) return false;
+
+      return true;
     });
+
+    if (facLoading || walkLoading) return <div style={{ color: "var(--color-base1)" }}>読み込み中...</div>;
+    if (facError) return <div style={{ color: "tomato" }}>施設の取得に失敗：{facError}</div>;
+    if (walkError) return <div style={{ color: "tomato" }}>イベント索引の取得に失敗：{walkError}</div>;
 
     return (
       <div>
-        {filteredFacilities.map((fac) => (
+        {filtered.map((fac) => (
           <button
             key={fac.id}
             onClick={() => onSelect(fac.id)}
@@ -70,24 +139,24 @@ export const ActionPage = () => {
     );
   };
 
-  // 施設選択時の処理
+  // 施設選択時：イベントはAPIから取得
   const onSelectFacility = async (facilityId) => {
-    if (facilityId === "fac_000") return;
+    if (!facilityId || facilityId === "fac_000") return;
 
-    const facData = facilityList.find((fac) => fac.id === facilityId);
+    const facData = facilities.find((f) => f.id === facilityId);
     if (!facData) return;
 
     setSelectedFacility(facData);
 
     try {
-      // walk を優先して取得
+      // walk を優先
       const walkRes = await fetch(
         `/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`
       );
       if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
       const walkArr = await walkRes.json();
 
-      // なければ epilogue をフォールバック
+      // なければ epilogue
       let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
       if (!evData) {
         const epiRes = await fetch("/api/events?type=epilogue");
@@ -107,28 +176,32 @@ export const ActionPage = () => {
     }
   };
 
-  // SNS イベント選択
-  const onSelectSnsEvent = () => {
-    const evData = eventList.find(
-      (ev) => ev.type === "sns" && ev.timeSlot === currentTimeSlot
-    );
-    if (evData) {
-      setSelectedEvent(evData);
-    } else {
-      console.warn("該当するSNSイベントが見つからなかったよ");
+  // SNS 選択：API 化
+  const onSelectSnsEvent = async () => {
+    try {
+      const res = await fetch(
+        `/api/events?type=sns&timeSlot=${encodeURIComponent(currentTimeSlot)}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arr = await res.json();
+      const ev = Array.isArray(arr) ? arr[0] : null;
+      if (ev) setSelectedEvent(ev);
+      else console.warn("該当するSNSイベントが見つかりませんでした");
+    } catch (e) {
+      console.warn("SNSイベント取得に失敗:", e);
     }
   };
 
-  // 到着時刻の計算
-  const calcArrivalTime = (now, requiredDuration) => {
+  // 到着時刻
+  const calcArrivalTime = (now, requiredMinutes = 0) => {
     const arrival = new Date(now.getTime());
-    arrival.setMinutes(arrival.getMinutes() + (requiredDuration || 0));
+    arrival.setMinutes(arrival.getMinutes() + (requiredMinutes || 0));
     const hh = String(arrival.getHours()).padStart(2, "0");
     const mm = String(arrival.getMinutes()).padStart(2, "0");
     return `${hh}:${mm}`;
   };
   const requiredDuration =
-    actionType === "sns" ? 30 : selectedEvent?.requiredDuration;
+    actionType === "sns" ? 30 : selectedEvent?.requiredDuration ?? 0;
   const arrivalTime = selectedEvent
     ? calcArrivalTime(currentTime, requiredDuration)
     : null;
@@ -193,7 +266,6 @@ export const ActionPage = () => {
               />
             </Box>
 
-            {/* マップのオーバーレイ（レジェンド／スポット情報） */}
             <Flex
               className="map-overlay"
               position="absolute"
@@ -208,7 +280,6 @@ export const ActionPage = () => {
               }}
             >
               <MapMarkerLegend />
-
               {spotSelected && selectedFacility && (
                 <Flex
                   pointerEvents="auto"

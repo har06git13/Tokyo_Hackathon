@@ -78,11 +78,11 @@ export const LogElement = ({ id, time }) => {
       case "time":
         return "毎時00分に体力・精神力・電源を5%消費します";
       case "walk":
-        return "施設に移動しました。";
+        return "施設に移動した";
       case "sns":
-        return "いくつかの情報を手に入れた。";
+        return "いくつかの情報を手に入れた";
       case "prologue":
-        return `${playerName}は被災した。`;
+        return `${playerName}は被災した`;
     }
   };
 
