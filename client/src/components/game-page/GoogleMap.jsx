@@ -11,6 +11,7 @@ import { useAtom } from "jotai";
 import {
   deviceLocationAtom,
   geolocationErrorAtom,
+  currentTimeSlotAtom,
 } from "../../atoms/playerAtoms";
 import { useGeolocation } from "../../hooks/useGeolocation";
 
@@ -78,6 +79,8 @@ export const GoogleMapComponent = ({
   const [deviceLocation] = useAtom(deviceLocationAtom);
   const [geoError] = useAtom(geolocationErrorAtom);
   useGeolocation(true);
+
+  const [currentTimeSlot] = useAtom(currentTimeSlotAtom);
 
   // === API: facilities ===
   const [facilities, setFacilities] = useState([]);
@@ -272,7 +275,19 @@ export const GoogleMapComponent = ({
             !facLoading &&
             !facError &&
             facilities
-              .filter((f) => f.id !== "fac_000")
+              .filter((f) => {
+                // 元の fac_000 は除外
+                if (f.id === "fac_000") return false;
+
+                // type が "shelter" かつ currentTimeSlot が "2h" または "4h" の場合も除外
+                if (
+                  f.type === "shelter" &&
+                  (currentTimeSlot === "2h" || currentTimeSlot === "4h")
+                )
+                  return false;
+
+                return true; // それ以外は表示
+              })
               .map((facility) => {
                 // ステータスは facilityStatusMap を優先、無ければローカルで推定
                 const status = facilityStatusMap?.[facility.id];
