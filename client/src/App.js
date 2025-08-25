@@ -54,10 +54,10 @@ function App() {
           width="100%"
           height="100%"
           backgroundImage="url('/assets/image/monologue-back.png')"
-          backgroundSize="cover"
+          backgroundSize="contain"
           backgroundPosition="center"
           zIndex={-1} // 背景として下に置く
-          filter="brightness(1.2) contrast(0.9) blur(8px) opacity(0.4)"
+          filter="brightness(1.2) contrast(0.9) blur(0.6vh) opacity(0.4)"
         />
 
         <div

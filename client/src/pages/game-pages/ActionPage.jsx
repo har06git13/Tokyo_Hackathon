@@ -219,7 +219,7 @@ export const ActionPage = () => {
       backgroundColor={"var(--color-base12)"}
       position="relative"
       direction="column"
-      minH="100dvh"
+      minH="100vh"
     >
       <Header prevPage={false} currentPage="アクション" />
 
@@ -228,9 +228,9 @@ export const ActionPage = () => {
         className="page-contents"
         gap={"1.6%"}
         paddingTop={"4%"}
-        // onClick={() => {
-        //   if (spotSelected) setSpotSelected(false);
-        // }}
+        onClick={() => {
+          if (spotSelected) setSpotSelected(false);
+        }}
       >
         <LifeGauge />
         <EventText />
@@ -281,8 +281,7 @@ export const ActionPage = () => {
               className="legend"
               position="absolute"
               top="1vh"
-              left="1vh"
-              width="100%"
+              width="90%"
               zIndex={100}
             >
               <MapMarkerLegend />
@@ -305,7 +304,6 @@ export const ActionPage = () => {
                 transform="translateX(-50%)"
                 zIndex={10}
                 width="90%"
-                maxWidth="400px"
               >
                 <MapSpotInfo
                   spotName={selectedFacility.name}

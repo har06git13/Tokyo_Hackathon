@@ -1,15 +1,23 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleMap, Marker, InfoWindow, useJsApiLoader, Circle } from '@react-google-maps/api';
-import { Box, VStack } from '@chakra-ui/react';
-import { useAtom } from 'jotai';
-import { deviceLocationAtom, geolocationErrorAtom } from '../../atoms/playerAtoms';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import {
+  GoogleMap,
+  Marker,
+  InfoWindow,
+  useJsApiLoader,
+  Circle,
+} from "@react-google-maps/api";
+import { Box, VStack } from "@chakra-ui/react";
+import { useAtom } from "jotai";
+import {
+  deviceLocationAtom,
+  geolocationErrorAtom,
+} from "../../atoms/playerAtoms";
+import { useGeolocation } from "../../hooks/useGeolocation";
 
 // マップのスタイル設定（デフォルト）
 const defaultMapContainerStyle = {
   width: "100%",
   height: "100%",
-  borderRadius: "8px",
 };
 
 // 渋谷駅周辺の初期座標
@@ -58,7 +66,7 @@ export const GoogleMapComponent = ({
   eventHistory = [],
   currentLocation = null,
   visitedFacilities = [],
-  facilityStatusMap = {},   // { [facilityId]: { isVisited, isCurrentLocation, isCheckedIn } }
+  facilityStatusMap = {}, // { [facilityId]: { isVisited, isCurrentLocation, isCheckedIn } }
   containerStyle,
   showControls = true,
 }) => {
@@ -82,11 +90,11 @@ export const GoogleMapComponent = ({
       setFacLoading(true);
       setFacError(null);
       try {
-        const res = await fetch('/api/facilities');
+        const res = await fetch("/api/facilities");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         const normalized = Array.isArray(list)
-          ? list.map(d => ({ ...d, id: d.id ?? d._id }))
+          ? list.map((d) => ({ ...d, id: d.id ?? d._id }))
           : [];
         if (!aborted) setFacilities(normalized);
       } catch (e) {
@@ -95,7 +103,9 @@ export const GoogleMapComponent = ({
         if (!aborted) setFacLoading(false);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // === API: walk events index (locationId -> event) for visited inference fallback ===
@@ -109,7 +119,7 @@ export const GoogleMapComponent = ({
       setWalkLoading(true);
       setWalkError(null);
       try {
-        const res = await fetch('/api/events?type=walk');
+        const res = await fetch("/api/events?type=walk");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const arr = await res.json();
         const idx = {};
@@ -125,14 +135,16 @@ export const GoogleMapComponent = ({
         if (!aborted) setWalkLoading(false);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // Google Maps JS API Loader
   const { isLoaded: isApiLoaded, loadError: apiLoadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
+    id: "google-map-script",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "",
+    libraries: ["places"],
   });
 
   const onLoad = useCallback((map) => {
@@ -144,10 +156,13 @@ export const GoogleMapComponent = ({
     setIsLoaded(false);
   }, []);
 
-  const handleMarkerClick = useCallback((spot) => {
-    if (onSpotSelect) onSpotSelect(spot);
-    if (onSelectFacility) onSelectFacility(spot);
-  }, [onSpotSelect, onSelectFacility]);
+  const handleMarkerClick = useCallback(
+    (spot) => {
+      if (onSpotSelect) onSpotSelect(spot);
+      if (onSelectFacility) onSelectFacility(spot);
+    },
+    [onSpotSelect, onSelectFacility]
+  );
 
   const handleInfoWindowClose = useCallback(() => {
     setSelectedMarker(null);
@@ -168,10 +183,22 @@ export const GoogleMapComponent = ({
   // APIキー未設定表示
   if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
     return (
-      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" bg="red.100" border="2px solid red">
+      <Box
+        width="100%"
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="red.100"
+        border="2px solid red"
+      >
         <VStack spacing={4}>
-          <Box fontSize="xl" color="red.600">API Key が設定されていません</Box>
-          <Box fontSize="sm" color="red.500">.env に REACT_APP_GOOGLE_MAPS_API_KEY を設定してください</Box>
+          <Box fontSize="xl" color="red.600">
+            API Key が設定されていません
+          </Box>
+          <Box fontSize="sm" color="red.500">
+            .env に REACT_APP_GOOGLE_MAPS_API_KEY を設定してください
+          </Box>
         </VStack>
       </Box>
     );
@@ -180,8 +207,8 @@ export const GoogleMapComponent = ({
   const effectiveLoadError = apiLoadError;
   const hasDeviceGps =
     deviceLocation &&
-    typeof deviceLocation.lat === 'number' &&
-    typeof deviceLocation.lng === 'number' &&
+    typeof deviceLocation.lat === "number" &&
+    typeof deviceLocation.lng === "number" &&
     !geoError;
 
   const finalMapOptions = {
@@ -194,16 +221,37 @@ export const GoogleMapComponent = ({
   return (
     <Box width="100%" height="100%" position="relative" style={{ zIndex: 0 }}>
       {!isApiLoaded && (
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" backgroundColor="var(--color-theme11)" fontSize="18px">
+        <Box
+          width="100%"
+          height="100%"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          backgroundColor="var(--color-theme11)"
+          fontSize="18px"
+        >
           🗺️ Loading Google Maps...
         </Box>
       )}
 
       {effectiveLoadError && (
-        <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center" bg="red.50" border="1px solid" borderColor="red.200">
+        <Box
+          width="100%"
+          height="100%"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          bg="red.50"
+          border="1px solid"
+          borderColor="red.200"
+        >
           <VStack spacing={4}>
-            <Box fontSize="xl" color="red.600">マップの読み込みに失敗しました</Box>
-            <Box fontSize="sm" color="red.500">Error: {effectiveLoadError?.message || 'Unknown error'}</Box>
+            <Box fontSize="xl" color="red.600">
+              マップの読み込みに失敗しました
+            </Box>
+            <Box fontSize="sm" color="red.500">
+              Error: {effectiveLoadError?.message || "Unknown error"}
+            </Box>
           </VStack>
         </Box>
       )}
@@ -218,57 +266,78 @@ export const GoogleMapComponent = ({
           options={finalMapOptions}
         >
           {/* 施設マーカー（facilities取得済みのときだけ） */}
-          {isLoaded && !facLoading && !facError && facilities
-            .filter((f) => f.id !== 'fac_000')
-            .map((facility) => {
-              // ステータスは facilityStatusMap を優先、無ければローカルで推定
-              const status = facilityStatusMap?.[facility.id];
-              const isVisited = status?.isVisited ?? (
-                visitedFacilities.includes(facility.id) ||
-                visitedLocationIdsFromHistory.has(facility.id)
-              );
-              const isSelected = selectedSpot?.id === facility.id;
+          {isLoaded &&
+            !facLoading &&
+            !facError &&
+            facilities
+              .filter((f) => f.id !== "fac_000")
+              .map((facility) => {
+                // ステータスは facilityStatusMap を優先、無ければローカルで推定
+                const status = facilityStatusMap?.[facility.id];
+                const isVisited =
+                  status?.isVisited ??
+                  (visitedFacilities.includes(facility.id) ||
+                    visitedLocationIdsFromHistory.has(facility.id));
+                const isSelected = selectedSpot?.id === facility.id;
 
-              const isCurrentLocation = status?.isCurrentLocation ??
-                (currentLocation?.id
-                  ? currentLocation.id === facility.id
-                  : currentLocation?.name === facility.name);
+                const isCurrentLocation =
+                  status?.isCurrentLocation ??
+                  (currentLocation?.id
+                    ? currentLocation.id === facility.id
+                    : currentLocation?.name === facility.name);
 
-              const pos = facility.coordinates
-                ? { lat: Number(facility.coordinates.lat), lng: Number(facility.coordinates.lng) }
-                : undefined;
+                const pos = facility.coordinates
+                  ? {
+                      lat: Number(facility.coordinates.lat),
+                      lng: Number(facility.coordinates.lng),
+                    }
+                  : undefined;
 
-              if (!pos || !Number.isFinite(pos.lat) || !Number.isFinite(pos.lng)) return null;
+                if (
+                  !pos ||
+                  !Number.isFinite(pos.lat) ||
+                  !Number.isFinite(pos.lng)
+                )
+                  return null;
 
-              return (
-                <Marker
-                  key={facility.id}
-                  position={pos}
-                  title={facility.name}
-                  icon={getMarkerIcon(facility, isSelected, isVisited, isCurrentLocation)}
-                  onClick={() => handleMarkerClick(facility)}
-                />
-              );
-            })}
+                return (
+                  <Marker
+                    key={facility.id}
+                    position={pos}
+                    title={facility.name}
+                    icon={getMarkerIcon(
+                      facility,
+                      isSelected,
+                      isVisited,
+                      isCurrentLocation
+                    )}
+                    onClick={() => handleMarkerClick(facility)}
+                  />
+                );
+              })}
 
           {/* 端末GPS（青ドット + 精度円） */}
           {isLoaded && hasDeviceGps && (
             <>
-              {Number.isFinite(deviceLocation.accuracy) && deviceLocation.accuracy > 0 && (
-                <Circle
-                  center={{ lat: deviceLocation.lat, lng: deviceLocation.lng }}
-                  radius={deviceLocation.accuracy}
-                  options={{
-                    fillColor: '#393994',
-                    fillOpacity: 0.15,
-                    strokeColor: '#393994',
-                    strokeOpacity: 0.4,
-                    strokeWeight: 1,
-                    clickable: false,
-                    zIndex: 5,
-                  }}
-                />
-              )}
+              {Number.isFinite(deviceLocation.accuracy) &&
+                deviceLocation.accuracy > 0 && (
+                  <Circle
+                    center={{
+                      lat: deviceLocation.lat,
+                      lng: deviceLocation.lng,
+                    }}
+                    radius={deviceLocation.accuracy}
+                    options={{
+                      fillColor: "#393994",
+                      fillOpacity: 0.15,
+                      strokeColor: "#393994",
+                      strokeOpacity: 0.4,
+                      strokeWeight: 1,
+                      clickable: false,
+                      zIndex: 5,
+                    }}
+                  />
+                )}
               <Marker
                 key="device-location"
                 position={{ lat: deviceLocation.lat, lng: deviceLocation.lng }}
@@ -276,9 +345,9 @@ export const GoogleMapComponent = ({
                 icon={{
                   path: window.google.maps.SymbolPath.CIRCLE,
                   scale: 8,
-                  fillColor: '#393994',
+                  fillColor: "#393994",
                   fillOpacity: 1,
-                  strokeColor: '#FFFFFF',
+                  strokeColor: "#FFFFFF",
                   strokeWeight: 2,
                 }}
                 zIndex={10}
@@ -303,17 +372,47 @@ export const GoogleMapComponent = ({
 
       {/* 施設読み込みの軽いステータス（必要ならUI調整） */}
       {facLoading && isApiLoaded && (
-        <Box position="absolute" top="8px" right="8px" px={2} py={1} bg="rgba(0,0,0,0.5)" color="#fff" borderRadius="6px" fontSize="12px">
+        <Box
+          position="absolute"
+          top="8px"
+          right="8px"
+          px={2}
+          py={1}
+          bg="rgba(0,0,0,0.5)"
+          color="#fff"
+          borderRadius="6px"
+          fontSize="12px"
+        >
           施設読み込み中…
         </Box>
       )}
       {facError && (
-        <Box position="absolute" top="8px" right="8px" px={2} py={1} bg="rgba(255,0,0,0.6)" color="#fff" borderRadius="6px" fontSize="12px">
+        <Box
+          position="absolute"
+          top="8px"
+          right="8px"
+          px={2}
+          py={1}
+          bg="rgba(255,0,0,0.6)"
+          color="#fff"
+          borderRadius="6px"
+          fontSize="12px"
+        >
           施設取得失敗：{facError}
         </Box>
       )}
       {walkError && (
-        <Box position="absolute" top="32px" right="8px" px={2} py={1} bg="rgba(255,140,0,0.7)" color="#fff" borderRadius="6px" fontSize="12px">
+        <Box
+          position="absolute"
+          top="32px"
+          right="8px"
+          px={2}
+          py={1}
+          bg="rgba(255,140,0,0.7)"
+          color="#fff"
+          borderRadius="6px"
+          fontSize="12px"
+        >
           イベント索引取得失敗：{walkError}
         </Box>
       )}

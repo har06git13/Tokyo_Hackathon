@@ -15,10 +15,8 @@ const MarkerItem = ({ icon, label, disabled = false, onClick }) => (
     alignItems={"center"}
     gap={"6%"}
     height={"100%"}
-    paddingX={"4%"}
-    paddingY={"1.4%"}
     width={"100%"}
-    minWidth={"fit-content"}
+    justifyContent={"center"}
     opacity={disabled ? 0.4 : 1}
     cursor={disabled && onClick ? "pointer" : "default"}
     onClick={disabled ? onClick : undefined}
@@ -33,7 +31,7 @@ const MarkerItem = ({ icon, label, disabled = false, onClick }) => (
     }}
   >
     <div style={{ height: "60%", flexShrink: 0 }}>{icon}</div>
-    <Text className="text-subtext" whiteSpace={"nowrap"} fontSize={"12px"}>
+    <Text className="text-maintext" whiteSpace={"nowrap"}>
       {label}
     </Text>
   </Flex>
@@ -79,12 +77,10 @@ export const MapMarkerLegend = () => {
   return (
     <Flex
       className="map-marker-legend"
-      width={"90%"}
-      height={"5vh"}
+      width={"100%"}
+      height={"3.4vh"}
       gap={"2%"}
       alignItems={"center"}
-      paddingRight={"10%"}
-      marginY={"2%"}
     >
       <MarkerItem
         icon={

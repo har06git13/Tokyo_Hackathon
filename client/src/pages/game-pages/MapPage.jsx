@@ -51,7 +51,9 @@ export const MapPage = () => {
         if (!aborted) setFacLoading(false);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // 現在地の施設オブジェクト（名前一致）
@@ -106,13 +108,15 @@ export const MapPage = () => {
       <Header prevPage={false} currentPage="マップ" />
 
       <Flex className="page-contents" gap={"1.6%"}>
-        <Box
+        <Flex
           className="map"
           backgroundColor={"var(--color-theme11)"}
           flex={1}
           width={"100%"}
           position="relative"
-          height={{ base: "70vh", md: "70vh" }}
+          height={"70vh"}
+          alignItems={"center"}
+          justifyContent={"center"}
         >
           {/* 読み込み/エラー表示（簡易） */}
           {facLoading && (
@@ -144,7 +148,14 @@ export const MapPage = () => {
 
           {/* Google Map Component */}
           {!facLoading && !facError && (
-            <Box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={1}>
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              zIndex={1}
+            >
               <GoogleMapComponent
                 onSelectFacility={onSelectFacility}
                 selectedSpot={selectedFacility}
@@ -157,7 +168,13 @@ export const MapPage = () => {
           )}
 
           {/* マップ凡例 */}
-          <Box position="absolute" top="16px" left="16px" zIndex={100}>
+          <Box
+            className="legend"
+            position="absolute"
+            top="1vh"
+            width="90%"
+            zIndex={100}
+          >
             <MapMarkerLegend />
           </Box>
 
@@ -180,7 +197,7 @@ export const MapPage = () => {
               />
             </Flex>
           )}
-        </Box>
+        </Flex>
       </Flex>
 
       <Footer type="map" />
