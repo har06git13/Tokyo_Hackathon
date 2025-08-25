@@ -84,13 +84,15 @@ export const GoogleMapComponent = ({
   const [facLoading, setFacLoading] = useState(true);
   const [facError, setFacError] = useState(null);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     let aborted = false;
     (async () => {
       setFacLoading(true);
       setFacError(null);
       try {
-        const res = await fetch("/api/facilities");
+        const res = await fetch(`${BASE_URL}/api/facilities`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         const normalized = Array.isArray(list)
@@ -119,7 +121,7 @@ export const GoogleMapComponent = ({
       setWalkLoading(true);
       setWalkError(null);
       try {
-        const res = await fetch("/api/events?type=walk");
+        const res = await fetch(`${BASE_URL}/api/events?type=walk`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const arr = await res.json();
         const idx = {};
