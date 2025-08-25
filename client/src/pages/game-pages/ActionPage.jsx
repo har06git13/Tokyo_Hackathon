@@ -218,20 +218,11 @@ export const ActionPage = () => {
       className="page-container"
       backgroundColor={"var(--color-base12)"}
       position="relative"
-      direction="column"
-      minH="100vh"
     >
       <Header prevPage={false} currentPage="アクション" />
 
       {/* -------- ページ本体 -------- */}
-      <Flex
-        className="page-contents"
-        gap={"1.6%"}
-        paddingTop={"4%"}
-        onClick={() => {
-          if (spotSelected) setSpotSelected(false);
-        }}
-      >
+      <Flex className="page-contents" gap={"1.6%"} paddingTop={"4%"}>
         <LifeGauge />
         <EventText />
 
@@ -258,12 +249,10 @@ export const ActionPage = () => {
           >
             {/* Google Map（相手ブランチを採用） */}
             <Box
+              className="mapUI"
               position="absolute"
-              top={0}
-              left={0}
               width="100%"
               height="100%"
-              zIndex={1}
             >
               <GoogleMapComponent
                 onSelectFacility={onSelectFacility}
@@ -276,50 +265,56 @@ export const ActionPage = () => {
               />
             </Box>
 
-            {/* マップ凡例 */}
-            <Box
-              className="legend"
+            <Flex
+              className="map-overlay"
               position="absolute"
-              top="1vh"
-              width="90%"
-              zIndex={100}
+              inset={0}
+              zIndex={1}
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="space-between"
+              pointerEvents={spotSelected ? "auto" : "none"}
+              onClick={() => {
+                setSpotSelected(false);
+              }}
             >
+              {/* マップ凡例 */}
               <MapMarkerLegend />
-            </Box>
 
-            {/* （開発用）仮のリストUIを見たいときは true に */}
-            {process.env.NODE_ENV === "development" && false && (
-              <FacilityList
-                currentTimeSlot={currentTimeSlot}
-                onSelect={onSelectFacility}
-              />
-            )}
-
-            {/* 選択カード */}
-            {spotSelected && (
-              <Box
-                position="absolute"
-                bottom="0"
-                left="50%"
-                transform="translateX(-50%)"
-                zIndex={10}
-                width="90%"
-              >
-                <MapSpotInfo
-                  spotName={selectedFacility.name}
-                  spotType={selectedFacility.type}
-                  life={selectedEvent?.gaugeChange?.life}
-                  mental={selectedEvent?.gaugeChange?.mental}
-                  charge={selectedEvent?.gaugeChange?.battery}
-                  money={selectedEvent?.gaugeChange?.money}
-                  arrivalTime={arrivalTime}
-                  onClick={() => setShowConfirmDialog(true)}
+              {/* （開発用）仮のリストUIを見たいときは true に */}
+              {process.env.NODE_ENV === "development" && false && (
+                <FacilityList
+                  currentTimeSlot={currentTimeSlot}
+                  onSelect={onSelectFacility}
                 />
-              </Box>
-            )}
+              )}
+
+              {/* 選択カード */}
+              {spotSelected && (
+                <Flex
+                  pointerEvents="auto"
+                  width={"100%"}
+                  justifyContent="center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <MapSpotInfo
+                    spotName={selectedFacility.name}
+                    spotType={selectedFacility.type}
+                    life={selectedEvent?.gaugeChange?.life}
+                    mental={selectedEvent?.gaugeChange?.mental}
+                    charge={selectedEvent?.gaugeChange?.battery}
+                    money={selectedEvent?.gaugeChange?.money}
+                    arrivalTime={arrivalTime}
+                    onClick={() => setShowConfirmDialog(true)}
+                  />
+                </Flex>
+              )}
+            </Flex>
 
             {/* 確認ダイアログ */}
-            {showConfirmDialog && selectedFacility && (
+            {showConfirmDialog && (
               <>
                 <Box
                   position="absolute"
@@ -328,14 +323,14 @@ export const ActionPage = () => {
                   w="100%"
                   h="100%"
                   bg="rgba(0,0,0,0.5)"
-                  zIndex={20}
+                  zIndex={1}
                 />
                 <Flex
                   position="absolute"
                   top="50%"
                   left="50%"
                   transform="translate(-50%, -50%)"
-                  zIndex={21}
+                  zIndex={2}
                   w="100%"
                   h="100%"
                   alignItems={"center"}

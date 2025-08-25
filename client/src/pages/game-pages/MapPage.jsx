@@ -19,6 +19,7 @@ import {
 
 export const MapPage = () => {
   // グローバル state
+  const [spotSelected, setSpotSelected] = useState(false);
   const [selectedFacility, setSelectedFacility] = useAtom(selectedFacilityAtom);
   const [, setSelectedEvent] = useAtom(selectedEventAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
@@ -72,6 +73,7 @@ export const MapPage = () => {
     if (!facilityId || facilityId === "fac_000" || !facData) return;
 
     setSelectedFacility(facData);
+    setSpotSelected(true);
 
     // イベントをAPIから取得（walk優先 → epilogueフォールバック）
     try {
@@ -167,36 +169,50 @@ export const MapPage = () => {
             </Box>
           )}
 
-          {/* マップ凡例 */}
-          <Box
-            className="legend"
+          <Flex
+            className="map-overlay"
             position="absolute"
-            top="1vh"
-            width="90%"
-            zIndex={100}
+            inset={0}
+            zIndex={1}
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="space-between"
+            pointerEvents={spotSelected ? "auto" : "none"}
+            onClick={() => {
+              setSpotSelected(false);
+            }}
           >
-            <MapMarkerLegend />
-          </Box>
-
-          {/* 選択中の施設カード */}
-          {selectedFacility && (
-            <Flex
+            {/* マップ凡例 */}
+            <Box
+              className="legend"
               position="absolute"
-              pointerEvents="auto"
-              justifyContent="center"
-              width="100%"
-              px={"4%"}
-              zIndex={200}
-              bottom={0}
+              top="1vh"
+              width="90%"
+              zIndex={100}
             >
-              <MapSpotInfo
-                type="map"
-                spotStatus="default"
-                spotType={selectedFacility.type}
-                spotName={selectedFacility.name}
-              />
-            </Flex>
-          )}
+              <MapMarkerLegend />
+            </Box>
+
+            {/* 選択中の施設カード */}
+            {spotSelected && (
+              <Flex
+                position="absolute"
+                pointerEvents="auto"
+                justifyContent="center"
+                width="100%"
+                px={"4%"}
+                zIndex={200}
+                bottom={0}
+              >
+                <MapSpotInfo
+                  type="map"
+                  spotStatus="default"
+                  spotType={selectedFacility.type}
+                  spotName={selectedFacility.name}
+                />
+              </Flex>
+            )}
+          </Flex>
         </Flex>
       </Flex>
 
