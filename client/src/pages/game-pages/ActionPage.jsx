@@ -132,10 +132,6 @@ export const ActionPage = () => {
     return acc;
   }, {});
 
-  useEffect(() => {
-    console.log("spotSelected changed:", spotSelected);
-  }, [spotSelected]);
-
   // 施設選択（GoogleMapComponentからは facility オブジェクトが来る想定。ID文字列でもOK）
   const onSelectFacility = async (facilityData) => {
     const facilityId =
@@ -277,6 +273,7 @@ export const ActionPage = () => {
               onClick={() => {
                 setSpotSelected(false);
               }}
+              paddingTop={"0.6vh"}
             >
               {/* マップ凡例 */}
               <MapMarkerLegend />

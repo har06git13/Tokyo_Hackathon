@@ -5,7 +5,10 @@ import { Flex, Box, Text } from "@chakra-ui/react";
 import { Header } from "../../components/common";
 import { Footer } from "../../components/game-page";
 import { useNavigate } from "react-router-dom";
-import { selectedFacilityAtom, selectedEventAtom } from "../../atoms/playerAtoms";
+import {
+  selectedFacilityAtom,
+  selectedEventAtom,
+} from "../../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 
 // 仮コードリーダーからIDを取得するフック（UI表示用）
@@ -40,8 +43,14 @@ export const CheckInPage = () => {
   // 最新の選択中施設・施設一覧をコールバックから参照できるように ref へ
   const selectedFacilityRef = useRef(selectedFacility);
   const facilitiesRef = useRef([]);
-  useEffect(() => { selectedFacilityRef.current = selectedFacility; }, [selectedFacility]);
-  useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
+  useEffect(() => {
+    selectedFacilityRef.current = selectedFacility;
+  }, [selectedFacility]);
+  useEffect(() => {
+    facilitiesRef.current = facilities;
+  }, [facilities]);
+
+  const BASE_URL = process.env.REACT_APP_API_URL;
 
   // 施設一覧を取得
   useEffect(() => {
@@ -50,7 +59,7 @@ export const CheckInPage = () => {
       setFacLoading(true);
       setFacError(null);
       try {
-        const res = await fetch("/api/facilities");
+        const res = await fetch(`${BASE_URL}/api/facilities`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         const normalized = Array.isArray(list)
@@ -67,7 +76,9 @@ export const CheckInPage = () => {
         if (!aborted) setFacLoading(false);
       }
     })();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // スキャナ開始（施設一覧が取れてから起動）
@@ -85,24 +96,44 @@ export const CheckInPage = () => {
         });
 
         if (!mounted) {
-          try { stream.getTracks().forEach((t) => t.stop()); } catch {}
+          try {
+            stream.getTracks().forEach((t) => t.stop());
+          } catch {}
           return;
         }
 
         if (videoRef.current) {
-          try { videoRef.current.srcObject = stream; } catch {}
+          try {
+            videoRef.current.srcObject = stream;
+          } catch {}
           await new Promise((res) => {
             const onLoaded = () => {
-              try { videoRef.current.removeEventListener("loadedmetadata", onLoaded); } catch {}
+              try {
+                videoRef.current.removeEventListener(
+                  "loadedmetadata",
+                  onLoaded
+                );
+              } catch {}
               res();
             };
-            try { videoRef.current.addEventListener("loadedmetadata", onLoaded); } catch { res(); }
+            try {
+              videoRef.current.addEventListener("loadedmetadata", onLoaded);
+            } catch {
+              res();
+            }
             if (videoRef.current?.readyState >= 1) {
-              try { videoRef.current.removeEventListener("loadedmetadata", onLoaded); } catch {}
+              try {
+                videoRef.current.removeEventListener(
+                  "loadedmetadata",
+                  onLoaded
+                );
+              } catch {}
               res();
             }
           });
-          try { await videoRef.current.play(); } catch {}
+          try {
+            await videoRef.current.play();
+          } catch {}
 
           // QR コールバック
           const onScan = async (result) => {
@@ -115,7 +146,9 @@ export const CheckInPage = () => {
             const sel = selectedFacilityRef.current;
             if (!sel) {
               setScanError("先にマップで移動先を選択してください");
-              try { navigator?.vibrate?.(200); } catch {}
+              try {
+                navigator?.vibrate?.(200);
+              } catch {}
               setTimeout(() => setScanError(""), 1500);
               return;
             }
@@ -125,7 +158,9 @@ export const CheckInPage = () => {
             const scannedFac = list.find((f) => f.id === data);
             if (!scannedFac) {
               setScanError("このQRは施設のものではありません");
-              try { navigator?.vibrate?.(200); } catch {}
+              try {
+                navigator?.vibrate?.(200);
+              } catch {}
               setTimeout(() => setScanError(""), 1500);
               return;
             }
@@ -133,23 +168,33 @@ export const CheckInPage = () => {
             // 仕様：選択中の施設IDと一致したときだけ遷移許可
             if (sel.id !== scannedFac.id) {
               setScanError("選択中の施設と異なるQRです");
-              try { navigator?.vibrate?.(200); } catch {}
+              try {
+                navigator?.vibrate?.(200);
+              } catch {}
               setTimeout(() => setScanError(""), 1500);
               return;
             }
 
             // グローバルへ反映（施設）
-            try { setSelectedFacilityAtom(scannedFac); } catch {}
+            try {
+              setSelectedFacilityAtom(scannedFac);
+            } catch {}
 
             // イベントをAPIから取得（walk優先→epilogueフォールバック）
             try {
-              const wRes = await fetch(`/api/events?type=walk&locationId=${encodeURIComponent(scannedFac.id)}`);
+              const wRes = await fetch(
+                `${BASE_URL}/api/events?type=walk&locationId=${encodeURIComponent(
+                  scannedFac.id
+                )}`
+              );
               if (!wRes.ok) throw new Error(`HTTP ${wRes.status}`);
               const wArr = await wRes.json();
               let ev = Array.isArray(wArr) && wArr[0] ? wArr[0] : null;
 
               if (!ev) {
-                const eRes = await fetch("/api/events?type=epilogue");
+                const eRes = await fetch(
+                  `${BASE_URL}/api/events?type=epilogue`
+                );
                 if (eRes.ok) {
                   const eArr = await eRes.json();
                   ev = Array.isArray(eArr) ? eArr[0] : null;
@@ -158,20 +203,28 @@ export const CheckInPage = () => {
 
               if (!ev) {
                 setScanError("イベントが見つかりませんでした");
-                try { navigator?.vibrate?.(200); } catch {}
+                try {
+                  navigator?.vibrate?.(200);
+                } catch {}
                 setTimeout(() => setScanError(""), 1500);
                 return;
               }
 
               // グローバルへ反映（イベント）
-              try { setSelectedEventAtom(ev); } catch {}
+              try {
+                setSelectedEventAtom(ev);
+              } catch {}
 
               // モノローグへ（/game/monologue/:id を推奨）
               const nextId = ev._id || ev.id;
-              navigate(nextId ? `/game/monologue/${nextId}` : "/game/monologue");
+              navigate(
+                nextId ? `/game/monologue/${nextId}` : "/game/monologue"
+              );
             } catch (e) {
               setScanError("イベント取得に失敗しました");
-              try { navigator?.vibrate?.(200); } catch {}
+              try {
+                navigator?.vibrate?.(200);
+              } catch {}
               setTimeout(() => setScanError(""), 1500);
             }
           };
@@ -200,16 +253,28 @@ export const CheckInPage = () => {
     return () => {
       mounted = false;
       setIsScanning(false);
-      try { qrScannerRef.current && qrScannerRef.current.stop(); } catch {}
+      try {
+        qrScannerRef.current && qrScannerRef.current.stop();
+      } catch {}
       try {
         if (videoRef.current?.srcObject) {
           const s = videoRef.current.srcObject;
-          try { s.getTracks().forEach((t) => t.stop()); } catch {}
-          try { videoRef.current.srcObject = null; } catch {}
+          try {
+            s.getTracks().forEach((t) => t.stop());
+          } catch {}
+          try {
+            videoRef.current.srcObject = null;
+          } catch {}
         }
       } catch {}
     };
-  }, [facLoading, facError, setSelectedFacilityAtom, setSelectedEventAtom, navigate]);
+  }, [
+    facLoading,
+    facError,
+    setSelectedFacilityAtom,
+    setSelectedEventAtom,
+    navigate,
+  ]);
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
@@ -230,9 +295,7 @@ export const CheckInPage = () => {
             {facLoading && (
               <Box color="var(--color-base1)">施設リストを読み込み中...</Box>
             )}
-            {facError && (
-              <Box color="tomato">施設の取得に失敗：{facError}</Box>
-            )}
+            {facError && <Box color="tomato">施設の取得に失敗：{facError}</Box>}
 
             {/* カメラプレビュー */}
             {!facLoading && !facError && (
@@ -241,26 +304,28 @@ export const CheckInPage = () => {
                 playsInline
                 autoPlay
                 muted
-                style={{ width: "100%", height: "100%", objectFit: "cover", background: "#222" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  background: "#222",
+                }}
               />
             )}
 
             {/* ガイド枠 */}
             {!facLoading && !facError && (
-              <Box
+              <Flex
                 className="checkin-guide"
                 position="absolute"
-                top={0}
-                left={0}
                 width="100%"
                 height="100%"
-                display="flex"
                 alignItems="center"
                 justifyContent="center"
                 pointerEvents="none"
               >
                 <Box as="style">{`
-                  .checkin-guide .guide-frame { border: 3px solid rgba(255,255,255,0.95) !important; border-radius: 8px !important; }
+                  .checkin-guide .guide-frame 
                   @keyframes scanScale {
                     0% { transform: scale(1); }
                     50% { transform: scale(1.06); }
@@ -274,12 +339,14 @@ export const CheckInPage = () => {
                     aspectRatio: "1/1",
                     boxSizing: "border-box",
                     transformOrigin: "center",
-                    animation: isScanning ? "scanScale 1s ease-in-out infinite" : "none",
+                    animation: isScanning
+                      ? "scanScale 1s ease-in-out infinite"
+                      : "none",
                     zIndex: 50,
                     pointerEvents: "none",
                   }}
                 />
-              </Box>
+              </Flex>
             )}
           </Box>
 
@@ -300,7 +367,9 @@ export const CheckInPage = () => {
                 if (eventId) {
                   navigate(`/game/monologue/${eventId}`);
                 } else {
-                  alert("モノローグ用のイベントが見つかりませんでした。アクション画面に戻ります。");
+                  alert(
+                    "モノローグ用のイベントが見つかりませんでした。アクション画面に戻ります。"
+                  );
                   navigate("/game/action");
                 }
               }}
@@ -318,14 +387,23 @@ export const CheckInPage = () => {
               <br />
               ※移動中以外はチェックインを行うことができません。
             </Text>
-          </Flex>
-
-          <Box mt="2vh" display="flex" flexDirection="column" alignItems="center">
-            <Box fontSize="sm" color="gray.200">
-              Last scanned: <Box as="span" color="white">{scannedId || "-"}</Box>
+            <Box
+              mt="2vh"
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+            >
+              <Box fontSize="sm" color="gray.200">
+                Last scanned:{" "}
+                <Box as="span" color="white">
+                  {scannedId || "-"}
+                </Box>
+              </Box>
+              <Box fontSize="sm" color="orange.200" mt="1">
+                {scanError}
+              </Box>
             </Box>
-            <Box fontSize="sm" color="orange.200" mt="1">{scanError}</Box>
-          </Box>
+          </Flex>
         </Flex>
       </Flex>
       <Footer isWalking />

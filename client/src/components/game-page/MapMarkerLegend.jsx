@@ -77,7 +77,7 @@ export const MapMarkerLegend = () => {
   return (
     <Flex
       className="map-marker-legend"
-      width={"100%"}
+      width={"90%"}
       height={"3.4vh"}
       gap={"2%"}
       alignItems={"center"}

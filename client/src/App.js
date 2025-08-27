@@ -38,8 +38,6 @@ function App() {
       .then((data) => setMessage(data.message));
   }, []);
 
-  console.log("API URL:", process.env.REACT_APP_API_URL);
-
   return (
     <Provider>
       <Flex

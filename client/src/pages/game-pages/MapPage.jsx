@@ -31,6 +31,8 @@ export const MapPage = () => {
   const [facLoading, setFacLoading] = useState(true);
   const [facError, setFacError] = useState(null);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   // 施設一覧を取得
   useEffect(() => {
     let aborted = false;
@@ -38,7 +40,7 @@ export const MapPage = () => {
       setFacLoading(true);
       setFacError(null);
       try {
-        const res = await fetch("/api/facilities");
+        const res = await fetch(`${BASE_URL}/api/facilities`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
         // DBの _id を id に寄せて正規化
@@ -78,14 +80,16 @@ export const MapPage = () => {
     // イベントをAPIから取得（walk優先 → epilogueフォールバック）
     try {
       const walkRes = await fetch(
-        `/api/events?type=walk&locationId=${encodeURIComponent(facilityId)}`
+        `${BASE_URL}/api/events?type=walk&locationId=${encodeURIComponent(
+          facilityId
+        )}`
       );
       if (!walkRes.ok) throw new Error(`walk fetch HTTP ${walkRes.status}`);
       const walkArr = await walkRes.json();
 
       let evData = Array.isArray(walkArr) && walkArr[0] ? walkArr[0] : null;
       if (!evData) {
-        const epiRes = await fetch("/api/events?type=epilogue");
+        const epiRes = await fetch(`${BASE_URL}/api/events?type=epilogue`);
         if (!epiRes.ok) throw new Error(`epilogue fetch HTTP ${epiRes.status}`);
         const epiArr = await epiRes.json();
         evData = Array.isArray(epiArr) ? epiArr[0] : null;
@@ -181,17 +185,10 @@ export const MapPage = () => {
             onClick={() => {
               setSpotSelected(false);
             }}
+            paddingTop={"0.6vh"}
           >
             {/* マップ凡例 */}
-            <Box
-              className="legend"
-              position="absolute"
-              top="1vh"
-              width="90%"
-              zIndex={100}
-            >
-              <MapMarkerLegend />
-            </Box>
+            <MapMarkerLegend />
 
             {/* 選択中の施設カード */}
             {spotSelected && (
