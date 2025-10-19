@@ -53,7 +53,7 @@ export const ResultPage = () => {
         >
           <Text
             fontFamily={"Dela Gothic One"}
-            fontSize={"360%"}
+            fontSize={"8vh"}
             color={"var(--color-base10)"}
             letterSpacing={"0.6vh"}
             lineHeight={"8vh"}
@@ -145,10 +145,11 @@ export const ResultPage = () => {
         <Image src="/assets/image/dummy-result.png" />
 
         <Flex
-          className="expected-earthquake"
+          className="about-apps"
           width={"90%"}
           flexDirection={"column"}
           mb={"2vh"}
+          mt={"2vh"}
         >
           <Flex
             paddingY={"1vh"}
