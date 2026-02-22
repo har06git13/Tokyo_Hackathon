@@ -10,11 +10,12 @@ import {
   currentTimeAtom,
   visitedFacilitiesAtom,
   eventHistoryAtom,
+  gaugeHistoryAtom,
   resetAllAtom,
 } from "../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
-import { StatsSummary } from "../components/game-page";
+import { StatsSummary, GaugeChart } from "../components/game-page";
 import { useNavigate } from "react-router-dom";
 
 // criticalReason → フレーバーテキスト対応表
@@ -42,6 +43,7 @@ export const ResultPage = () => {
   const [currentTime] = useAtom(currentTimeAtom);
   const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
   const [eventHistory] = useAtom(eventHistoryAtom);
+  const [gaugeHistory] = useAtom(gaugeHistoryAtom);
   const setAll = useSetAtom(resetAllAtom);
 
   const navigate = useNavigate();
@@ -132,6 +134,14 @@ export const ResultPage = () => {
           elapsedTime={{ hours: elapsedHours, minutes: elapsedMinutes }}
           moneyValue={money}
           snsCount={snsCount}
+        />
+
+        <GaugeChart
+          gaugeHistory={gaugeHistory}
+          life={life}
+          mental={mental}
+          charge={charge}
+          money={money}
         />
 
         <Flex
