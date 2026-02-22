@@ -15,7 +15,8 @@ import {
 } from "../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
-import { StatsSummary, GaugeChart } from "../components/game-page";
+import { StatsSummary, GaugeChart, ResultTimelineItem } from "../components/game-page";
+import { facilityList, spotTypeList } from "../temporary-database";
 import { useNavigate } from "react-router-dom";
 
 // criticalReason → フレーバーテキスト対応表
@@ -31,6 +32,15 @@ const defaultFailureText = "避難に失敗してしまった…";
 const getFlavorText = (survived, criticalReason) => {
   if (survived) return defaultSuccessText;
   return flavorTextMap[criticalReason] || defaultFailureText;
+};
+
+// 施設ごとの生存上の意義テキスト定義
+const facilitySignificanceText = {
+  fac_001: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
+  fac_002: "壁の矢印が示す避難方向を確認。土地勘がなくても正しい方角を把握できた。",
+  fac_003: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
+  fac_004: "受け入れ施設の情報を取得し、行動範囲が広がった。",
+  fac_005: "施設が満員になる寸前に滑り込み、夜の安全を確保。",
 };
 
 export const ResultPage = () => {
@@ -68,6 +78,61 @@ export const ResultPage = () => {
 
   const visitedCount = visitedFacilities.length;
   const snsCount = eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
+
+  // 「生死を分けた選択」セクション用 - walk イベントをフィルタして時系列データを組み立て
+  const buildTimelineData = () => {
+    const walkEvents = eventHistory.filter(e => e.type === "walk");
+    
+    return walkEvents.map(event => {
+      const facility = facilityList.find(f => f.id === event.locationId);
+      if (!facility) return null;
+      
+      const facilityType = facility.type;
+      const facilityTypeName = spotTypeList[facilityType]?.name || "不明";
+      
+      const formatTime = (date) => {
+        if (!date) return "";
+        const d = new Date(date);
+        const hours = String(d.getHours()).padStart(2, "0");
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}`;
+      };
+      
+      return {
+        time: formatTime(event.time),
+        facilityTypeName,
+        facilityName: facility.name,
+        significanceText: facilitySignificanceText[facility.id] || "行動の詳細が記録されていません。",
+      };
+    }).filter(Boolean); // null を除外
+  };
+
+  const timelineData = buildTimelineData();
+
+  // UI確認用ダミータイムラインデータ
+  const dummyTimelineData = [
+    {
+      time: "15:00",
+      facilityTypeName: "モバイルバッテリースタンド",
+      facilityName: "CHARGESPOT HUB 渋谷センター街店",
+      significanceText: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
+    },
+    {
+      time: "17:30",
+      facilityTypeName: "飲食店・コンビニなど",
+      facilityName: "ファミリーマート 渋谷公園通り店",
+      significanceText: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
+    },
+    {
+      time: "19:15",
+      facilityTypeName: "一時避難場所",
+      facilityName: "代々木公園",
+      significanceText: "受け入れ施設の情報を取得し、行動範囲が広がった。",
+    },
+  ];
+
+  // eventHistory が空の場合はダミータイムラインを使用、そうでない場合は実データを使用
+  const displayTimelineData = timelineData.length > 0 ? timelineData : dummyTimelineData;
 
   // UI確認用ダミーゲージ推移データ（本番ではgaugeHistoryを使用）
   const dummyGaugeHistory = [
@@ -148,6 +213,53 @@ export const ResultPage = () => {
         />
 
         <GaugeChart gaugeHistory={displayGaugeHistory} />
+
+        {/* セクション 4: 生死を分けた選択 */}
+        <Flex
+          className="result-timeline"
+          width={"90%"}
+          flexDirection={"column"}
+          mt={"2vh"}
+        >
+          {/* ヘッダー行 */}
+          <Flex
+            paddingY={"1vh"}
+            paddingX={"4%"}
+            borderBottom="0.1vh solid var(--color-base131)"
+            borderRadius={"2vh 2vh 0 0 "}
+            backgroundColor={"var(--color-base10)"}
+          >
+            <Text className="text-maintext">生死を分けた選択</Text>
+          </Flex>
+
+          {/* ボディ行 */}
+          <Flex
+            paddingTop={"1vh"}
+            paddingBottom={"2vh"}
+            paddingX={"4%"}
+            flexDirection="column"
+            backgroundColor={"var(--color-base10)"}
+            borderRadius={"0 0 2vh 2vh"}
+            gap="0.5vh"
+          >
+            {displayTimelineData.length > 0 ? (
+              displayTimelineData.map((item, index) => (
+                <ResultTimelineItem
+                  key={index}
+                  time={item.time}
+                  facilityTypeName={item.facilityTypeName}
+                  facilityName={item.facilityName}
+                  significanceText={item.significanceText}
+                  isLast={index === displayTimelineData.length - 1}
+                />
+              ))
+            ) : (
+              <Text className="text-maintext" color="var(--color-base13)">
+                行動履歴がありません
+              </Text>
+            )}
+          </Flex>
+        </Flex>
 
         <Flex
           className="expected-earthquake"

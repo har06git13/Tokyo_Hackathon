@@ -15,3 +15,4 @@ export { TweetCard } from "./TweetCard";
 export { GpsOverlay } from "./GpsOverlay";
 export { StatsSummary } from "./StatsSummary";
 export { default as GaugeChart } from "./GaugeChart";
+export { ResultTimelineItem } from "./ResultTimelineItem";

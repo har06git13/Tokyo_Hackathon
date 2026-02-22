@@ -236,36 +236,61 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 
 ---
 
-### セクション 4: 行動タイムライン
+### セクション 4: 生死を分けた選択
 
-`eventHistoryAtom` のイベントID・時刻をもとに、施設一覧とイベント詳細を取得し時系列表示。
+`eventHistoryAtom` から `type === "walk"` のイベントのみ抽出し、プレイヤーの重大な移動選択を時系列で振り返る。
 
-#### API呼び出し方針（N+1 問題の回避）
+#### デザイン
 
-- 施設: `/api/facilities` で一括取得 → IDでインデックス化
-- イベント: `/api/events/:id` を `Promise.all` で並列取得（ResultPage マウント時に1回だけ）
-- 取得済みデータをコンポーネントに props で渡す（子コンポーネントから個別APIを呼ばない）
+- 他セクションと同じカード形式（ヘッダー + ボディ）
+- ヘッダーテキスト: `"生死を分けた選択"`
+- 各エントリは `borderBottom` で区切り（最後のエントリは区切りなし）
 
-#### データ構造（eventHistoryAtom）
+#### データソース
 
-```js
-[
-  { id: "event_xxx", time: Date },
-  ...
-]
+- `eventHistoryAtom`（Jotai）から `walk` イベントのみフィルタ
+- イベントの `locationId` → `facilityList` でローカル参照（APIコール不要）
+- 施設の `type` → `spotTypeList` で日本語名を取得
+- 施設ごとの意義テキスト → `facilitySignificanceText`（後述）で取得
+
+#### 表示内容（1エントリあたり）
+
+```
+15:00                          ← 時刻（text-subtext）
+モバイルバッテリースタンドへ移動  ← 施設タイプ名 + "へ移動"（赤太字, text-maintext）
+地点：CHARGESPOT HUB 渋谷センター街店  ← "地点：" + 施設名（text-subtext）
+                               ← 空行
+電源を確保。精神を回復し、...    ← 意義テキスト（text-subtext）
 ```
 
-#### 表示内容（1行あたり）
+| 表示項目       | データソース                                              | スタイル                              |
+| -------------- | --------------------------------------------------------- | ------------------------------------- |
+| 時刻           | `eventHistory[i].time` を `HH:mm` フォーマット            | `text-subtext`                        |
+| アクション名   | `spotTypeList[facility.type].name` + `"へ移動"`           | `text-maintext`, `color: red`, `bold` |
+| 地点           | `"地点：" + facility.name`                                | `text-subtext`                        |
+| 意義テキスト   | `facilitySignificanceText[facility.id]`                   | `text-subtext`                        |
 
-| 表示項目       | データソース                                  |
-| -------------- | --------------------------------------------- |
-| 時刻           | `eventHistory[i].time`                        |
-| イベント種別   | `event.type` → `eventTypeList` で日本語変換   |
-| 移動先施設名   | `event.locationId` → `/api/facilities/:id`    |
-| 施設タイプ     | `facility.type` → `spotTypeList` で日本語変換 |
-| ゲージ変動     | `gaugeHistoryAtom` の該当時刻エントリ         |
+#### 施設ごとの意義テキスト定義（`facilitySignificanceText`）
 
-> ※ 既存の `LogElement` コンポーネントの簡易版として新規作成（ResultTimelineItem）
+ResultPage 内、または `temporary-database` 内に以下のマッピングを定義する。
+
+```js
+const facilitySignificanceText = {
+  fac_001: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
+  fac_002: "壁の矢印が示す避難方向を確認。土地勘がなくても正しい方角を把握できた。",
+  fac_003: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
+  fac_004: "受け入れ施設の情報を取得し、行動範囲が広がった。",
+  fac_005: "施設が満員になる寸前に滑り込み、夜の安全を確保。",
+};
+```
+
+> ※ `fac_000`（渋谷駅前）はゲーム開始地点のため、タイムラインには表示しない。
+
+#### コンポーネント構成
+
+- 新規: `ResultTimelineItem.jsx`（1エントリ分の表示）
+- props: `{ time, facilityTypeName, facilityName, significanceText }`
+- ResultPage 側でデータを組み立てて props で渡す
 
 ---
 
@@ -340,10 +365,6 @@ ResultPage の **初回レンダリング時** に `POST /api/results` を呼び
 | `eventHistoryAtom`      | イベント履歴           |
 | `gaugeHistoryAtom`      | ゲージ推移履歴         |
 | `visitedFacilitiesAtom` | 訪問済み施設ID一覧     |
-| `playerAgeAtom`         | プレイヤー年代         |
-| `playerGenderAtom`      | プレイヤー性別         |
-| `playerResidenceAtom`   | プレイヤー生活拠点     |
-| `playerNameAtom`        | プレイヤー名           |
 | `resetAllAtom`          | 全リセット             |
 
 ---
@@ -354,7 +375,6 @@ ResultPage の **初回レンダリング時** に `POST /api/results` を呼び
 | -------- | -------------------- | -------------------- |
 | GET      | `/api/events/:id`    | イベント詳細取得     |
 | GET      | `/api/facilities`    | 施設一覧取得         |
-| POST     | `/api/results`       | 結果保存             |
 
 ---
 
