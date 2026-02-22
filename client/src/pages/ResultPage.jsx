@@ -69,6 +69,17 @@ export const ResultPage = () => {
   const visitedCount = visitedFacilities.length;
   const snsCount = eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
 
+  // UI確認用ダミーゲージ推移データ（本番ではgaugeHistoryを使用）
+  const dummyGaugeHistory = [
+    { time: new Date(createStartTime().getTime() + 0 * 60000), life: 70, mental: 70, charge: 60, money: 0 },
+    { time: new Date(createStartTime().getTime() + 30 * 60000), life: 65, mental: 68, charge: 55, money: 5 },
+    { time: new Date(createStartTime().getTime() + 60 * 60000), life: 60, mental: 65, charge: 50, money: 10 },
+    { time: new Date(createStartTime().getTime() + 90 * 60000), life: 50, mental: 60, charge: 40, money: 15 },
+    { time: new Date(createStartTime().getTime() + 120 * 60000), life: 45, mental: 55, charge: 30, money: 20 },
+  ];
+  
+  const displayGaugeHistory = gaugeHistory && gaugeHistory.length > 0 ? gaugeHistory : dummyGaugeHistory;
+
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
     const ok = window.confirm(
@@ -136,13 +147,7 @@ export const ResultPage = () => {
           snsCount={snsCount}
         />
 
-        <GaugeChart
-          gaugeHistory={gaugeHistory}
-          life={life}
-          mental={mental}
-          charge={charge}
-          money={money}
-        />
+        <GaugeChart gaugeHistory={displayGaugeHistory} />
 
         <Flex
           className="expected-earthquake"
