@@ -335,8 +335,6 @@ export const ResultPage = () => {
                 <Text
                   key={index}
                   className="text-maintext"
-                  color={"var(--color-theme10)"}
-                  fontWeight="bold"
                 >
                   {hint}
                 </Text>

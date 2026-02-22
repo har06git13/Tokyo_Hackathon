@@ -337,7 +337,7 @@ const facilitySignificanceText = {
 - 幅 `90%`、背景 `var(--color-base10)`、角丸 `2vh`
 - ヘッダー行：`text-maintext`、`paddingX: 4%`, `paddingY: 1vh`, `borderBottom: 0.1vh solid var(--color-base131)`
 - ボディ行：`paddingX: 4%`, `paddingTop: 1vh`, `paddingBottom: 2vh`、`flexDirection: column`, `gap: 1vh`
-- 各ヒントテキスト：`text-maintext`, `color: var(--color-theme10)` (赤太字)
+- 各ヒントテキスト：`text-maintext`、黒字（デフォルトのテキスト色）
 
 #### コンポーネント構成
 
