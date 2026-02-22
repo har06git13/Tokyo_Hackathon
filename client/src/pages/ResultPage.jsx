@@ -134,7 +134,48 @@ export const ResultPage = () => {
   // eventHistory が空の場合はダミータイムラインを使用、そうでない場合は実データを使用
   const displayTimelineData = timelineData.length > 0 ? timelineData : dummyTimelineData;
 
-  // UI確認用ダミーゲージ推移データ（本番ではgaugeHistoryを使用）
+  // 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
+  const buildHints = () => {
+    const hints = [];
+
+    // 条件1：コンビニ（fac_003）未訪問
+    if (!visitedFacilities.includes("fac_003")) {
+      hints.push("現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。");
+    }
+
+    // 条件2：モバイルバッテリー（fac_001）未訪問
+    if (!visitedFacilities.includes("fac_001")) {
+      hints.push("モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。");
+    }
+
+    // 条件3：最終所持金が 0
+    if (money === 0) {
+      hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
+    }
+
+    // 条件4：最終充電が 0
+    if (charge === 0) {
+      hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
+    }
+
+    // 条件5：最終精神力が 30 未満
+    if (mental < 30) {
+      hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
+    }
+
+    return hints;
+  };
+
+  const hintsData = buildHints();
+
+  // UI確認用ダミーヒントデータ
+  const dummyHints = [
+    "現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。",
+    "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
+  ];
+
+  // hintsData が空の場合はダミーヒントを使用、そうでない場合は実データを使用
+  const displayHints = hintsData.length > 0 ? hintsData : dummyHints;
   const dummyGaugeHistory = [
     { time: new Date(createStartTime().getTime() + 0 * 60000), life: 70, mental: 70, charge: 60, money: 0 },
     { time: new Date(createStartTime().getTime() + 30 * 60000), life: 65, mental: 68, charge: 55, money: 5 },
@@ -256,6 +297,53 @@ export const ResultPage = () => {
             ) : (
               <Text className="text-maintext" color="var(--color-base13)">
                 行動履歴がありません
+              </Text>
+            )}
+          </Flex>
+        </Flex>
+
+        {/* セクション 5: 防災に向けてのヒント */}
+        <Flex
+          className="disaster-hints"
+          width={"90%"}
+          flexDirection={"column"}
+          mt={"2vh"}
+        >
+          {/* ヘッダー行 */}
+          <Flex
+            paddingY={"1vh"}
+            paddingX={"4%"}
+            borderBottom="0.1vh solid var(--color-base131)"
+            borderRadius={"2vh 2vh 0 0 "}
+            backgroundColor={"var(--color-base10)"}
+          >
+            <Text className="text-maintext">防災に向けて～生存のヒント～</Text>
+          </Flex>
+
+          {/* ボディ行 */}
+          <Flex
+            paddingTop={"1vh"}
+            paddingBottom={"2vh"}
+            paddingX={"4%"}
+            flexDirection="column"
+            backgroundColor={"var(--color-base10)"}
+            borderRadius={"0 0 2vh 2vh"}
+            gap="1vh"
+          >
+            {displayHints.length > 0 ? (
+              displayHints.map((hint, index) => (
+                <Text
+                  key={index}
+                  className="text-maintext"
+                  color={"var(--color-theme10)"}
+                  fontWeight="bold"
+                >
+                  {hint}
+                </Text>
+              ))
+            ) : (
+              <Text className="text-maintext" color="var(--color-base13)">
+                防災へのヒントがこのプレイには含まれていません
               </Text>
             )}
           </Flex>
