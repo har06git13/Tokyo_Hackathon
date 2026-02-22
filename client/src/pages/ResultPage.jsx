@@ -140,7 +140,7 @@ export const ResultPage = () => {
 
     // 条件1：コンビニ（fac_003）未訪問
     if (!visitedFacilities.includes("fac_003")) {
-      hints.push("現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。");
+      hints.push("現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。");
     }
 
     // 条件2：モバイルバッテリー（fac_001）未訪問
@@ -170,7 +170,7 @@ export const ResultPage = () => {
 
   // UI確認用ダミーヒントデータ
   const dummyHints = [
-    "現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。",
+    "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
     "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
   ];
 
@@ -243,110 +243,7 @@ export const ResultPage = () => {
           </Text>
         </Flex>
 
-        <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
-
-        <StatsSummary
-          totalDistance={null}
-          visitedCount={visitedCount}
-          elapsedTime={{ hours: elapsedHours, minutes: elapsedMinutes }}
-          moneyValue={money}
-          snsCount={snsCount}
-        />
-
-        <GaugeChart gaugeHistory={displayGaugeHistory} />
-
-        {/* セクション 4: 生死を分けた選択 */}
-        <Flex
-          className="result-timeline"
-          width={"90%"}
-          flexDirection={"column"}
-          mt={"2vh"}
-        >
-          {/* ヘッダー行 */}
-          <Flex
-            paddingY={"1vh"}
-            paddingX={"4%"}
-            borderBottom="0.1vh solid var(--color-base131)"
-            borderRadius={"2vh 2vh 0 0 "}
-            backgroundColor={"var(--color-base10)"}
-          >
-            <Text className="text-maintext">生死を分けた選択</Text>
-          </Flex>
-
-          {/* ボディ行 */}
-          <Flex
-            paddingTop={"1vh"}
-            paddingBottom={"2vh"}
-            paddingX={"4%"}
-            flexDirection="column"
-            backgroundColor={"var(--color-base10)"}
-            borderRadius={"0 0 2vh 2vh"}
-            gap="0.5vh"
-          >
-            {displayTimelineData.length > 0 ? (
-              displayTimelineData.map((item, index) => (
-                <ResultTimelineItem
-                  key={index}
-                  time={item.time}
-                  facilityTypeName={item.facilityTypeName}
-                  facilityName={item.facilityName}
-                  significanceText={item.significanceText}
-                  isLast={index === displayTimelineData.length - 1}
-                />
-              ))
-            ) : (
-              <Text className="text-maintext" color="var(--color-base13)">
-                行動履歴がありません
-              </Text>
-            )}
-          </Flex>
-        </Flex>
-
-        {/* セクション 5: 防災に向けてのヒント */}
-        <Flex
-          className="disaster-hints"
-          width={"90%"}
-          flexDirection={"column"}
-          mt={"2vh"}
-        >
-          {/* ヘッダー行 */}
-          <Flex
-            paddingY={"1vh"}
-            paddingX={"4%"}
-            borderBottom="0.1vh solid var(--color-base131)"
-            borderRadius={"2vh 2vh 0 0 "}
-            backgroundColor={"var(--color-base10)"}
-          >
-            <Text className="text-maintext">防災に向けて～生存のヒント～</Text>
-          </Flex>
-
-          {/* ボディ行 */}
-          <Flex
-            paddingTop={"1vh"}
-            paddingBottom={"2vh"}
-            paddingX={"4%"}
-            flexDirection="column"
-            backgroundColor={"var(--color-base10)"}
-            borderRadius={"0 0 2vh 2vh"}
-            gap="1vh"
-          >
-            {displayHints.length > 0 ? (
-              displayHints.map((hint, index) => (
-                <Text
-                  key={index}
-                  className="text-maintext"
-                >
-                  {hint}
-                </Text>
-              ))
-            ) : (
-              <Text className="text-maintext" color="var(--color-base13)">
-                防災へのヒントがこのプレイには含まれていません
-              </Text>
-            )}
-          </Flex>
-        </Flex>
-
+        {/* セクション 2: 想定地震情報 */}
         <Flex
           className="expected-earthquake"
           width={"90%"}
@@ -410,11 +307,116 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
+        {/* セクション 3: 統計サマリー */}
+        <StatsSummary
+          totalDistance={null}
+          visitedCount={visitedCount}
+          elapsedTime={{ hours: elapsedHours, minutes: elapsedMinutes }}
+          moneyValue={money}
+          snsCount={snsCount}
+        />
+
+        {/* セクション 4: ゲージ推移 */}
+        <GaugeChart gaugeHistory={displayGaugeHistory} />
+
+        {/* セクション 5: 生死を分けた選択 */}
         <Flex
-          className="expected-earthquake"
+          className="result-timeline"
           width={"90%"}
           flexDirection={"column"}
-          mb={"2vh"}
+          mt={"2vh"}
+        >
+          {/* ヘッダー行 */}
+          <Flex
+            paddingY={"1vh"}
+            paddingX={"4%"}
+            borderBottom="0.1vh solid var(--color-base131)"
+            borderRadius={"2vh 2vh 0 0 "}
+            backgroundColor={"var(--color-base10)"}
+          >
+            <Text className="text-maintext">生死を分けた選択</Text>
+          </Flex>
+
+          {/* ボディ行 */}
+          <Flex
+            paddingTop={"1vh"}
+            paddingBottom={"2vh"}
+            paddingX={"4%"}
+            flexDirection="column"
+            backgroundColor={"var(--color-base10)"}
+            borderRadius={"0 0 2vh 2vh"}
+            gap="0.5vh"
+          >
+            {displayTimelineData.length > 0 ? (
+              displayTimelineData.map((item, index) => (
+                <ResultTimelineItem
+                  key={index}
+                  time={item.time}
+                  facilityTypeName={item.facilityTypeName}
+                  facilityName={item.facilityName}
+                  significanceText={item.significanceText}
+                  isLast={index === displayTimelineData.length - 1}
+                />
+              ))
+            ) : (
+              <Text className="text-maintext" color="var(--color-base13)">
+                行動履歴がありません
+              </Text>
+            )}
+          </Flex>
+        </Flex>
+
+        {/* セクション 6: 防災に向けてのヒント */}
+        <Flex
+          className="disaster-hints"
+          width={"90%"}
+          flexDirection={"column"}
+          mt={"2vh"}
+        >
+          {/* ヘッダー行 */}
+          <Flex
+            paddingY={"1vh"}
+            paddingX={"4%"}
+            borderBottom="0.1vh solid var(--color-base131)"
+            borderRadius={"2vh 2vh 0 0 "}
+            backgroundColor={"var(--color-base10)"}
+          >
+            <Text className="text-maintext">防災に向けて～生存のヒント～</Text>
+          </Flex>
+
+          {/* ボディ行 */}
+          <Flex
+            paddingTop={"1vh"}
+            paddingBottom={"2vh"}
+            paddingX={"4%"}
+            flexDirection="column"
+            backgroundColor={"var(--color-base10)"}
+            borderRadius={"0 0 2vh 2vh"}
+            gap="1vh"
+          >
+            {displayHints.length > 0 ? (
+              displayHints.map((hint, index) => (
+                <Text
+                  key={index}
+                  className="text-maintext"
+                >
+                  {hint}
+                </Text>
+              ))
+            ) : (
+              <Text className="text-maintext" color="var(--color-base13)">
+                防災へのヒントがこのプレイには含まれていません
+              </Text>
+            )}
+          </Flex>
+        </Flex>
+
+        {/* セクション 7: アプリ紹介 */}
+        <Flex
+          className="app-introduction"
+          width={"90%"}
+          flexDirection={"column"}
+          mt={"2vh"}
         >
           <Flex
             paddingY={"1vh"}
@@ -432,7 +434,7 @@ export const ResultPage = () => {
             flexDirection="column"
             backgroundColor={"var(--color-base10)"}
             borderRadius={"0 0 2vh 2vh"}
-            gap="1vh" // Text同士の隙間
+            gap="1vh"
           >
             <Text className="text-maintext">
               『渋谷歪譚』は、東京都や渋谷区が公開しているオープンデータをもとに作られています。
@@ -475,13 +477,19 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        <Button
-          width="90%"
-          height="3.6vh"
-          text="タイトルに戻る"
-          isAvailable
-          onClick={handleReturnToTitle}
-        />
+        {/* セクション 8: タイトルに戻るボタン */}
+        <Flex width="90%" mt={"2vh"}>
+          <Button
+            width="100%"
+            height="3.6vh"
+            text="タイトルに戻る"
+            isAvailable
+            onClick={handleReturnToTitle}
+          />
+        </Flex>
+
+        {/* ダミー画像（開発用・最終削除予定） */}
+        <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
       </Flex>
     </Flex>
   );

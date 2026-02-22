@@ -18,7 +18,7 @@ const GaugeChart = ({ gaugeHistory }) => {
   // フォールバック: gaugeHistory が空の場合
   if (!gaugeHistory || gaugeHistory.length === 0) {
     return (
-      <Flex width="90%" margin="0 auto" marginTop="3vh" flexDirection="column">
+      <Flex width="90%" margin="0 auto" marginTop="2vh" flexDirection="column">
         {/* ヘッダー行 */}
         <Flex
           paddingY="1vh"
@@ -125,7 +125,7 @@ const GaugeChart = ({ gaugeHistory }) => {
   const yTicks = [100, 75, 50, 25, 0];
 
   return (
-    <Flex width="90%" margin="0 auto" marginTop="3vh" flexDirection="column">
+    <Flex width="90%" margin="0 auto" marginTop="2vh" flexDirection="column">
       {/* ヘッダー行 */}
       <Flex
         paddingY="1vh"
