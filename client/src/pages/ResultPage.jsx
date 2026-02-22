@@ -1,7 +1,8 @@
 import React from "react";
-import { Flex, Text, Image, Link } from "@chakra-ui/react";
+import { Flex, Text, Link } from "@chakra-ui/react";
 import {
   survivedAtom,
+  criticalReasonAtom,
   lifeAtom,
   mentalAtom,
   chargeAtom,
@@ -12,8 +13,24 @@ import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
 import { useNavigate } from "react-router-dom";
 
+// criticalReason → フレーバーテキスト対応表
+const flavorTextMap = {
+  // survived === false
+  lowLife: "体力が限界に達し、倒れてしまった…",
+  timeup: "時間切れ。避難場所に辿り着くことができなかった…",
+};
+const defaultSuccessText =
+  "ギリギリの判断を重ね、無事に一時避難場所に辿り着くことができた。電源確保・現金取得・人とのつながり、どれもが生存に直結する選択だった。";
+const defaultFailureText = "避難に失敗してしまった…";
+
+const getFlavorText = (survived, criticalReason) => {
+  if (survived) return defaultSuccessText;
+  return flavorTextMap[criticalReason] || defaultFailureText;
+};
+
 export const ResultPage = () => {
   const [survived] = useAtom(survivedAtom);
+  const [criticalReason] = useAtom(criticalReasonAtom);
   const [life] = useAtom(lifeAtom);
   const [mental] = useAtom(mentalAtom);
   const [charge] = useAtom(chargeAtom);
@@ -35,7 +52,7 @@ export const ResultPage = () => {
 
   return (
     <Flex className="page-container" backgroundColor={"var(--color-base12)"}>
-      <Header prevPage={false} currentPage="リザルト" />
+      <Header prevPage={false} currentPage="結果発表" />
       <Flex
         className="page-contents"
         overflowY={"auto"}
@@ -75,9 +92,11 @@ export const ResultPage = () => {
             color={"var(--color-base10)"}
             width={"90%"}
           >
-            ギリギリの判断を重ね、無事に一時避難場所に辿り着くことができた。電源確保・現金取得・人とのつながり、どれもが生存に直結する選択だった。
+            {getFlavorText(survived, criticalReason)}
           </Text>
         </Flex>
+
+        <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
 
         <Flex
           className="expected-earthquake"
@@ -141,8 +160,6 @@ export const ResultPage = () => {
             </Text>
           </Flex>
         </Flex>
-
-        <Image src="/assets/image/dummy-result.png" />
 
         <Flex
           className="expected-earthquake"
