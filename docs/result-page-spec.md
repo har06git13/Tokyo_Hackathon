@@ -49,17 +49,85 @@
 
 ### セクション 2: 統計サマリー
 
-プレイ内容を数値で振り返るカード形式のセクション。
+プレイ内容を数値で振り返るカード形式のセクション。セクション1の `LifeGauge` と重複するゲージ値は含めない。
 
-| 表示項目     | データソース                                         |
-| ------------ | ---------------------------------------------------- |
-| 経過時間     | `currentTimeAtom` − 開始時刻（14:00）                |
-| 訪問施設数   | `visitedFacilitiesAtom.length`                       |
-| イベント数   | `eventHistoryAtom.length`                            |
-| 最終体力     | `lifeAtom`                                           |
-| 最終精神力   | `mentalAtom`                                         |
-| 最終充電     | `chargeAtom`                                         |
-| 最終所持金   | `moneyAtom`                                          |
+#### 画面構成（ASCII図）
+
+```
+┌─────────────────────────────────────────────┐
+│ プレイ統計                                  │ ← ヘッダー（text-maintext）
+├─────────────────────────────────────────────┤
+│                                             │
+│  総移動距離       経過時間       訪問施設数  │ ← ラベル（text-maintext）
+│  — km           0時間0分        1 箇所    │ ← 数値（text-sectiontitle）
+│                                             │
+│  使用したお金   SNS利用回数              │
+│  0              0 回                      │
+│                                             │
+└─────────────────────────────────────────────┘
+
+※ 5項目を上記の順番で表示（総移動距離 → 経過時間 → 訪問施設数 → 使用したお金 → SNS利用回数）
+※ flexWrap で2行に配置（1行目3項目、2行目2項目）
+※ 数値とラベルは縦組み（Flex column）、ラベルが上、数値が下
+※ ラベルは `text-maintext` （ヘッダーと同じサイズ・色）
+※ 説明文・補足テキストは現時点では含めない（将来拡張可能）
+```
+
+| 表示項目       | データソース                                           | 表示例           |
+| -------------- | ------------------------------------------------------ | ---------------- |
+| 総移動距離     | `visitedFacilitiesAtom` の施設座標から算出              | 「約 2.3 km」    |
+| 訪問施設数     | `visitedFacilitiesAtom.length`                         | 「5 箇所」       |
+| 経過時間       | `currentTimeAtom` − 開始時刻（14:00）                  | 「3時間30分」    |
+| 使用したお金   | `gaugeHistoryAtom` の `money` 差分（減少分の合計）      | 「2,000 円」     |
+| SNS利用回数    | `eventHistoryAtom` で `id.startsWith("event_sns_")` のカウント | 「3 回」  |
+
+#### 各項目の算出ロジック
+
+**経過時間:**
+```js
+const elapsedMs = currentTime.getTime() - createStartTime().getTime();
+const hours = Math.floor(elapsedMs / (1000 * 60 * 60));
+const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+// → "3時間30分" / "0時間0分"（ゲーム未進行時）
+```
+
+> ※ 開始時刻は `playerAtoms.js` の `createStartTime()`（当日14:00）と同じロジックで算出する。
+
+**総移動距離:**
+- 🟡 **暫定**: ダミー値（`"— km"`）を表示。座標データ取得・Haversine 計算は将来タスクで対応
+- 将来: `visitedFacilitiesAtom` の施設IDリストを `/api/facilities` の座標と突合 → 訪問順に距離合算
+
+**使用したお金:**
+- 🟡 **暫定**: `moneyAtom`（現在の所持金ゲージ値）をそのまま表示
+- 将来: `gaugeHistoryAtom` の差分から使用総額を算出する場合は別タスクで対応
+
+**SNS利用回数:**
+- `eventHistoryAtom` 内のイベントIDが `"event_sns_"` で始まるエントリをカウント
+- 0回の場合は「0 回」と表示
+
+#### UIパターン
+
+- 既存の `expected-earthquake` セクションのカードスタイルに準拠
+- ヘッダー（`text-maintext`）＋ ボディの2段構成
+- ボディ内は項目を `flexWrap="wrap"` で配置、各項目は以下の構成:
+  - ラベル：`text-maintext` （ヘッダーと同じサイズ・色）
+  - 数値：`text-sectiontitle` + `color="var(--color-theme10)"` + `fontWeight="bold"`
+- 幅 `90%`、背景 `var(--color-base10)`、角丸 `2vh`
+
+#### コンポーネント設計
+
+- `StatsSummary` は **Atom を直接読み取らない**（純粋な表示コンポーネント）
+- 親の `ResultPage` から props で値を渡す
+
+```jsx
+<StatsSummary
+  totalDistance={null}              // 🟡 暫定null（将来API連携で算出）
+  visitedCount={visitedCount}       // number
+  elapsedTime={elapsedTime}         // { hours: number, minutes: number }
+  moneyValue={money}                // 🟡 暫定: moneyAtomの現在値をそのまま表示
+  snsCount={snsCount}               // number
+/>
+```
 
 ---
 

@@ -13,3 +13,4 @@ export { MapSpotInfo } from "./MapSpotInfo";
 export { MonologueLine } from "./MonologueLine";
 export { TweetCard } from "./TweetCard";
 export { GpsOverlay } from "./GpsOverlay";
+export { StatsSummary } from "./StatsSummary";

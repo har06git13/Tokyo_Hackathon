@@ -7,10 +7,14 @@ import {
   mentalAtom,
   chargeAtom,
   moneyAtom,
+  currentTimeAtom,
+  visitedFacilitiesAtom,
+  eventHistoryAtom,
   resetAllAtom,
 } from "../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
+import { StatsSummary } from "../components/game-page";
 import { useNavigate } from "react-router-dom";
 
 // criticalReason → フレーバーテキスト対応表
@@ -35,9 +39,33 @@ export const ResultPage = () => {
   const [mental] = useAtom(mentalAtom);
   const [charge] = useAtom(chargeAtom);
   const [money] = useAtom(moneyAtom);
+  const [currentTime] = useAtom(currentTimeAtom);
+  const [visitedFacilities] = useAtom(visitedFacilitiesAtom);
+  const [eventHistory] = useAtom(eventHistoryAtom);
   const setAll = useSetAtom(resetAllAtom);
 
   const navigate = useNavigate();
+
+  // 統計サマリーの算出
+  const createStartTime = () => {
+    const now = new Date();
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      14,
+      0,
+      0,
+      0
+    );
+  };
+
+  const elapsedMs = currentTime.getTime() - createStartTime().getTime();
+  const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
+  const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  const visitedCount = visitedFacilities.length;
+  const snsCount = eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
 
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
@@ -97,6 +125,14 @@ export const ResultPage = () => {
         </Flex>
 
         <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
+
+        <StatsSummary
+          totalDistance={null}
+          visitedCount={visitedCount}
+          elapsedTime={{ hours: elapsedHours, minutes: elapsedMinutes }}
+          moneyValue={money}
+          snsCount={snsCount}
+        />
 
         <Flex
           className="expected-earthquake"
