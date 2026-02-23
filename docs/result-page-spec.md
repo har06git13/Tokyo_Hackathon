@@ -212,6 +212,10 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
   2. メッセージ: 「ゲージ推移データがありません」（text-maintext）
   3. 凡例: グラフの代わりに凡例のみを表示
 
+> ※ ダミーデータによるフォールバックは行わない。`gaugeHistoryAtom` の実データをそのまま `GaugeChart` に渡す。
+> ゲームプレイ中に `useMonologueLogic.js` がイベント処理毎に `gaugeHistoryAtom` に `{ time, life, mental, charge, money }` を追加するため、
+> ゲーム終了時には必ずデータが存在する。
+
 #### 実装方針
 
 - 外部ライブラリ不使用：SVG の `<polyline>` で描画
@@ -248,7 +252,7 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 
 ### セクション 5: 生死を分けた選択
 
-`eventHistoryAtom` から `type === "walk"` のイベントのみ抽出し、プレイヤーの重大な移動選択を時系列で振り返る。
+`eventHistoryAtom` と `eventList`（ローカルデータ）を突合し、`type === "walk"` のイベントのみ抽出してプレイヤーの重大な移動選択を時系列で振り返る。
 
 #### デザイン
 
@@ -258,10 +262,33 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 
 #### データソース
 
-- `eventHistoryAtom`（Jotai）から `walk` イベントのみフィルタ
-- イベントの `locationId` → `facilityList` でローカル参照（APIコール不要）
-- 施設の `type` → `spotTypeList` で日本語名を取得
-- 施設ごとの意義テキスト → `facilitySignificanceText`（後述）で取得
+> ❗ `eventHistoryAtom` のデータ構造は `{ id, time }` のみ。`type` や `locationId` フィールドは含まれない。
+> そのため、walk イベントの判別には `eventList`（ローカルデータ）との突合が必要。
+
+1. `eventHistoryAtom` からイベント履歴を取得（`[{ id, time }]`）
+2. 各エントリの `id` を `eventList`（`temporary-database`）で検索し、`type === "walk"` のものだけフィルタ
+3. ヒットしたイベントの `locationId` → `facilityList` で施設情報を取得
+4. 施設の `type` → `spotTypeList` で日本語名を取得
+5. 施設ごとの意義テキスト → `facilitySignificanceText` で取得
+
+> ※ ダミーデータによるフォールバックは行わない。データが空の場合はフォールバックメッセージを表示する。
+
+#### 📘 将来設計：MongoDB 連携時の注意点
+
+> MongoDB の `events` コレクションには `type` フィールドが含まれているため、
+> 将来的にバックエンドからイベントデータを取得する際は以下の設計変更が望ましい：
+>
+> **推奨設計：**
+> 1. `eventHistoryAtom` の構造を `{ id, time }` から `{ id, time, type, locationId }` に拡張
+> 2. `useMonologueLogic.js` でイベント追加時に `type` と `locationId` も保存
+> 3. `buildTimelineData()` では `eventList` との突合が不要になり、`e.type === "walk"` で直接フィルタ可能
+>
+> これにより：
+> - MongoDB から取得したイベントデータをそのまま Atom に格納可能
+> - ローカルデータとの突合ロジックが不要になり、コードがシンプルに
+> - フィルタ処理のパフォーマンスが向上
+>
+> **現在の実装は暂定的な回避策であり、将来のリファクタリングを前提としている。**
 
 #### 表示内容（1エントリあたり）
 

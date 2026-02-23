@@ -16,7 +16,7 @@ import {
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
 import { StatsSummary, GaugeChart, ResultTimelineItem } from "../components/game-page";
-import { facilityList, spotTypeList } from "../temporary-database";
+import { eventList, facilityList, spotTypeList } from "../temporary-database";
 import { useNavigate } from "react-router-dom";
 
 // criticalReason → フレーバーテキスト対応表
@@ -81,10 +81,16 @@ export const ResultPage = () => {
 
   // 「生死を分けた選択」セクション用 - walk イベントをフィルタして時系列データを組み立て
   const buildTimelineData = () => {
-    const walkEvents = eventHistory.filter(e => e.type === "walk");
+    const walkEvents = eventHistory.filter(e => {
+      const eventDef = eventList.find(ev => ev.id === e.id);
+      return eventDef && eventDef.type === "walk";
+    });
     
     return walkEvents.map(event => {
-      const facility = facilityList.find(f => f.id === event.locationId);
+      const eventDef = eventList.find(ev => ev.id === event.id);
+      if (!eventDef) return null;
+      
+      const facility = facilityList.find(f => f.id === eventDef.locationId);
       if (!facility) return null;
       
       const facilityType = facility.type;
@@ -108,31 +114,6 @@ export const ResultPage = () => {
   };
 
   const timelineData = buildTimelineData();
-
-  // UI確認用ダミータイムラインデータ
-  const dummyTimelineData = [
-    {
-      time: "15:00",
-      facilityTypeName: "モバイルバッテリースタンド",
-      facilityName: "CHARGESPOT HUB 渋谷センター街店",
-      significanceText: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
-    },
-    {
-      time: "17:30",
-      facilityTypeName: "飲食店・コンビニなど",
-      facilityName: "ファミリーマート 渋谷公園通り店",
-      significanceText: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
-    },
-    {
-      time: "19:15",
-      facilityTypeName: "一時避難場所",
-      facilityName: "代々木公園",
-      significanceText: "受け入れ施設の情報を取得し、行動範囲が広がった。",
-    },
-  ];
-
-  // eventHistory が空の場合はダミータイムラインを使用、そうでない場合は実データを使用
-  const displayTimelineData = timelineData.length > 0 ? timelineData : dummyTimelineData;
 
   // 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
   const buildHints = () => {
@@ -167,24 +148,6 @@ export const ResultPage = () => {
   };
 
   const hintsData = buildHints();
-
-  // UI確認用ダミーヒントデータ
-  const dummyHints = [
-    "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
-    "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
-  ];
-
-  // hintsData が空の場合はダミーヒントを使用、そうでない場合は実データを使用
-  const displayHints = hintsData.length > 0 ? hintsData : dummyHints;
-  const dummyGaugeHistory = [
-    { time: new Date(createStartTime().getTime() + 0 * 60000), life: 70, mental: 70, charge: 60, money: 0 },
-    { time: new Date(createStartTime().getTime() + 30 * 60000), life: 65, mental: 68, charge: 55, money: 5 },
-    { time: new Date(createStartTime().getTime() + 60 * 60000), life: 60, mental: 65, charge: 50, money: 10 },
-    { time: new Date(createStartTime().getTime() + 90 * 60000), life: 50, mental: 60, charge: 40, money: 15 },
-    { time: new Date(createStartTime().getTime() + 120 * 60000), life: 45, mental: 55, charge: 30, money: 20 },
-  ];
-  
-  const displayGaugeHistory = gaugeHistory && gaugeHistory.length > 0 ? gaugeHistory : dummyGaugeHistory;
 
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
@@ -317,7 +280,7 @@ export const ResultPage = () => {
         />
 
         {/* セクション 4: ゲージ推移 */}
-        <GaugeChart gaugeHistory={displayGaugeHistory} />
+        <GaugeChart gaugeHistory={gaugeHistory} />
 
         {/* セクション 5: 生死を分けた選択 */}
         <Flex
@@ -347,15 +310,15 @@ export const ResultPage = () => {
             borderRadius={"0 0 2vh 2vh"}
             gap="0.5vh"
           >
-            {displayTimelineData.length > 0 ? (
-              displayTimelineData.map((item, index) => (
+            {timelineData.length > 0 ? (
+              timelineData.map((item, index) => (
                 <ResultTimelineItem
                   key={index}
                   time={item.time}
                   facilityTypeName={item.facilityTypeName}
                   facilityName={item.facilityName}
                   significanceText={item.significanceText}
-                  isLast={index === displayTimelineData.length - 1}
+                  isLast={index === timelineData.length - 1}
                 />
               ))
             ) : (
@@ -394,8 +357,8 @@ export const ResultPage = () => {
             borderRadius={"0 0 2vh 2vh"}
             gap="1vh"
           >
-            {displayHints.length > 0 ? (
-              displayHints.map((hint, index) => (
+            {hintsData.length > 0 ? (
+              hintsData.map((hint, index) => (
                 <Text
                   key={index}
                   className="text-maintext"
