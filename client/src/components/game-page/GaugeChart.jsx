@@ -11,7 +11,7 @@ const GaugeChart = ({ gaugeHistory }) => {
     { label: "体力", Icon: LifeIcon },
     { label: "精神力", Icon: MentalIcon },
     { label: "充電", Icon: ChargeIcon },
-    { label: "お金", Icon: MoneyIcon },
+    { label: "お金 (百円)", Icon: MoneyIcon },
   ];
   const legendIconSize = "2.2vh";
 
@@ -95,31 +95,11 @@ const GaugeChart = ({ gaugeHistory }) => {
       .join(" ");
   };
 
-  // 0になった点を検出
-  const findZeroPoints = (data, gaugeKey) => {
-    return data
-      .map((point, index) => {
-        if (point[gaugeKey] === 0) {
-          const x = padding.left + (index / Math.max(1, dataPoints - 1)) * chartWidth;
-          const y = padding.top + chartHeight;
-          return { x, y };
-        }
-        return null;
-      })
-      .filter(Boolean);
-  };
-
   // 各ゲージの折れ線座標
   const lifePoints = mapToCoordinates(gaugeHistory, "life");
   const mentalPoints = mapToCoordinates(gaugeHistory, "mental");
   const chargePoints = mapToCoordinates(gaugeHistory, "charge");
   const moneyPoints = mapToCoordinates(gaugeHistory, "money");
-
-  // 0になった点
-  const lifeZeros = findZeroPoints(gaugeHistory, "life");
-  const mentalZeros = findZeroPoints(gaugeHistory, "mental");
-  const chargeZeros = findZeroPoints(gaugeHistory, "charge");
-  const moneyZeros = findZeroPoints(gaugeHistory, "money");
 
   // 縦軸の目盛り（0, 25, 50, 75, 100）
   const yTicks = [100, 75, 50, 25, 0];
@@ -231,19 +211,6 @@ const GaugeChart = ({ gaugeHistory }) => {
           stroke="var(--color-money10)"
           strokeWidth="4"
         />
-
-        {/* 0値の赤マーカー */}
-        {[...lifeZeros, ...mentalZeros, ...chargeZeros, ...moneyZeros].map(
-          (point, idx) => (
-            <circle
-              key={idx}
-              cx={point.x}
-              cy={point.y}
-              r="4"
-              fill="var(--color-theme10)"
-            />
-          )
-        )}
             </svg>
           </Box>
         </Flex>
