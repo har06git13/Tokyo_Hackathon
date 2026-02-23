@@ -205,7 +205,18 @@ export const useMonologueLogic = () => {
     setMoney(newMoney);
 
     // ゲージ変動履歴に記録
-    if (effectiveEvent.type !== "prologue") {
+    if (effectiveEvent.type === "prologue") {
+      // 初期データポイント: ゲーム開始時のゲージ状態を記録（変動前の値）
+      setGaugeHistory([
+        {
+          time: currentTime,
+          life,
+          mental,
+          charge,
+          money,
+        },
+      ]);
+    } else {
       setGaugeHistory((prev) => [
         ...prev,
         {
