@@ -88,7 +88,7 @@
 | 総移動距離     | `visitedFacilitiesAtom` の施設座標から算出              | 「約 2.3 km」    |
 | 訪問施設数     | `visitedFacilitiesAtom.length`                         | 「5 箇所」       |
 | 経過時間       | `currentTimeAtom` − 開始時刻（14:00）                  | 「3時間30分」    |
-| 使用したお金   | `gaugeHistoryAtom` の `money` 差分（減少分の合計）      | 「2,000 円」     |
+| 所持金         | `moneyAtom * 100` + "円"（百円単位→円変換）            | 「4,000 円」     |
 | SNS利用回数    | `eventHistoryAtom` で `id.startsWith("event_sns_")` のカウント | 「3 回」  |
 
 #### 各項目の算出ロジック
@@ -107,20 +107,28 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 - 🟡 **暫定**: ダミー値（`"— km"`）を表示。座標データ取得・Haversine 計算は将来タスクで対応
 - 将来: `visitedFacilitiesAtom` の施設IDリストを `/api/facilities` の座標と突合 → 訪問順に距離合算
 
-**使用したお金:**
-- 🟡 **暫定**: `moneyAtom`（現在の所持金ゲージ値）をそのまま表示
-- 将来: `gaugeHistoryAtom` の差分から使用総額を算出する場合は別タスクで対応
+**所持金:**
+- `moneyAtom` の現在値を **百円単位** で管理し、表示時に円変換する
+- money ゲージの値は 0-100（百円単位 = 0〜10,000円）
+- 表示: `moneyValue * 100` + "円"（例: money=40 → 「4,000円」）
 
-> ⚠ **TDD検証で発見された不整合（task-0223-03 で対応予定）:**
+> **money ゲージの単位系仕様:**
 >
-> 1. **money ゲージの単位不整合**: `eventList` の `gaugeChange.money` が円単位（例: `+4000`）で設定されているが、
->    ゲージシステムは 0-100 スケール。`clampGauge(0 + 4000) = 100` で即座にMAXになり、実際の金額情報が失われる。
->    他のゲージ（life/mental/battery）は全て -5〜+50 の範囲で一貫しているため、money だけ不整合。
-> 2. **ラベルと値の不一致**: ラベルは「使用したお金」だが、表示値は現在の所持金ゲージ値（0-100）。
->    使用総額でも円表示でもなく、ユーザーに何を伝えるか不明確。
-> 3. **visitedCount の初期地点含み**: `visitedFacilitiesAtom` の初期値に `"fac_000"`（渋谷駅前＝開始地点）が
->    含まれており、`visitedCount` が常に +1 される。エピローグ地点 `"fac_005"` も walk ではなく epilogue
->    イベントで追加されるため、プレイヤーが意図して訪問した施設数より多くなる。
+> money は他のゲージ（life/mental/charge）と同じ **0-100 スケール** で管理する。
+> ただし単位は「百円」として扱い、表示時に 100 倍して「円」で表示する。
+>
+> - **ゲージ内部値**: 0-100（百円単位）
+> - **イベント gaugeChange**: 百円単位で定義（例: `money: +40` = 4,000円増加）
+> - **表示**: `value * 100` + "円"（LifeGaugeElement, StatsSummary）
+> - **GaugeChart 凡例**: 「お金 (百円)」
+>
+> この仕様により `clampGauge(0-100)` の制約と整合が取れ、他のゲージと同じデータ構造で扱える。
+
+> ⚠ **Issue D: visitedCount の初期地点含み（未対応）**
+>
+> `visitedFacilitiesAtom` の初期値に `"fac_000"`（渋谷駅前＝開始地点）が含まれており、
+> `visitedCount` が常に +1 される。エピローグ地点 `"fac_005"` も walk ではなく epilogue
+> イベントで追加されるため、プレイヤーが意図して訪問した施設数より多くなる。
 
 **SNS利用回数:**
 - `eventHistoryAtom` 内のイベントIDが `"event_sns_"` で始まるエントリをカウント
@@ -145,7 +153,7 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
   totalDistance={null}              // 🟡 暫定null（将来API連携で算出）
   visitedCount={visitedCount}       // number
   elapsedTime={elapsedTime}         // { hours: number, minutes: number }
-  moneyValue={money}                // 🟡 暫定: moneyAtomの現在値をそのまま表示
+  moneyValue={money}                // number: 百円単位（表示時に *100 して円変換）
   snsCount={snsCount}               // number
 />
 ```

@@ -483,7 +483,7 @@ export const eventList = [
     requiredDuration: 30,
     timeSlot: null,
     locationId: "fac_003", // ファミリーマート 渋谷公園通り店
-    gaugeChange: { life: +5, mental: +15, battery: 0, money: +4000 },
+    gaugeChange: { life: +5, mental: +15, battery: 0, money: +40 },
     texts: [
       {
         type: "system",

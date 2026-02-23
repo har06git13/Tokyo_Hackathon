@@ -8,7 +8,7 @@ import PropTypes from "prop-types";
  * @param {number|null} totalDistance - 総移動距離（km）、nullの場合は「— km」と表示
  * @param {number} visitedCount - 訪問施設数
  * @param {Object} elapsedTime - 経過時間 { hours: number, minutes: number }
- * @param {number} moneyValue - 使用した（所有）お金（ゲージ値 0-100）
+ * @param {number} moneyValue - 所持金（百円単位 0-100、表示時に円変換）
  * @param {number} snsCount - SNS利用回数
  */
 export const StatsSummary = ({
@@ -33,8 +33,8 @@ export const StatsSummary = ({
       value: `${visitedCount} 箇所`,
     },
     {
-      label: "使用したお金",
-      value: `${moneyValue}`,
+      label: "所持金",
+      value: `${(moneyValue * 100).toLocaleString()} 円`,
     },
     {
       label: "SNS利用回数",

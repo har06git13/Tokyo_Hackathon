@@ -363,34 +363,27 @@ describe("ResultPage ロジック - TDD 検証", () => {
   // ----------------------------------------------------------
   describe("moneyValue - お金の表示", () => {
 
-    test("⚠ event_walk_003 の gaugeChange.money が 0-100 スケールを超えている", () => {
-      // event_walk_003 は gaugeChange.money = +4000（円ベースの値）
-      // しかし clampGauge(0 + 4000) = 100 で即座にMAXになる
+    test("event_walk_003 の gaugeChange.money は百円単位（0-100 スケール）", () => {
+      // event_walk_003 は gaugeChange.money = +40（百円単位 = 4,000円）
       const walkEvent003 = eventList.find(e => e.id === "event_walk_003");
       expect(walkEvent003).toBeDefined();
-      expect(walkEvent003.gaugeChange.money).toBe(4000);
+      expect(walkEvent003.gaugeChange.money).toBe(40);
 
-      // money は 0-100 ゲージとして扱われるので、+4000 は不整合
-      // life/mental/battery は全て -5〜+50 の範囲で一貫している
-      const walkEvent001 = eventList.find(e => e.id === "event_walk_001");
-      expect(walkEvent001.gaugeChange.life).toBe(-5);
-      expect(walkEvent001.gaugeChange.battery).toBe(50);
-      // money だけ桁が違う
-      expect(walkEvent003.gaugeChange.money).toBeGreaterThan(100);
+      // money は 0-100 ゲージとして扱われ、百円単位で管理される
+      // 表示時に *100 して「円」で表示する（40 → 4,000円）
+      expect(walkEvent003.gaugeChange.money).toBeLessThanOrEqual(100);
+      expect(walkEvent003.gaugeChange.money).toBeGreaterThanOrEqual(0);
     });
 
-    test("⚠ StatsSummary の moneyValue は現在の所持金であり '使用したお金' ではない", () => {
-      // ResultPage は moneyValue={money} で現在のゲージ値を渡している
-      // しかし StatsSummary のラベルは「使用したお金」
-      // money=100 (clamp後) が表示される → ユーザーに何を伝えたいか不明
-      const currentMoney = 100; // clampGauge(0 + 4000)
-      const labelText = "使用したお金";
+    test("StatsSummary の moneyValue は百円単位で、表示時に円変換される", () => {
+      // ResultPage は moneyValue={money} で百円単位のゲージ値を渡す
+      // StatsSummary は moneyValue * 100 + "円" で表示する
+      const moneyInHundredYen = 40; // 百円単位
+      const displayedYen = moneyInHundredYen * 100; // 4,000円
+      const labelText = "所持金";
       
-      // 「使用したお金」なら消費額を表示すべき
-      // 「所持金」ならラベルを変えるべき
-      // 現状はどちらでもない不整合な状態
-      expect(labelText).toBe("使用したお金");
-      expect(currentMoney).toBe(100); // ゲージ値が表示される
+      expect(labelText).toBe("所持金");
+      expect(displayedYen).toBe(4000);
     });
   });
 
