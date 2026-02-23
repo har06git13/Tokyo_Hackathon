@@ -193,6 +193,32 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 ]
 ```
 
+#### イベント内段階的ゲージ変動（gaugeSteps）
+
+一部のイベント（例: event_walk_003）は、複数のゲージ変動ステップを含む。
+各ステップは独立した `gaugeHistory` エントリとして記録され、GaugeChart で推移が可視化される。
+
+**例: event_walk_003（5000円受け取り → 1000円消費）**
+
+```js
+// eventList での定義
+gaugeSteps: [
+  { life: -5, mental: 0, battery: 0, money: 0 },     // Step 1: 移動で体力消費
+  { life: 0, mental: +15, battery: 0, money: +50 },  // Step 2: ATM (+5000円)
+  { life: +10, mental: 0, battery: 0, money: -10 },  // Step 3: 食事 (-1000円)
+]
+
+// gaugeHistory に記録される（同一時刻14:30）
+time: 14:30, life: 65, mental: 70, charge: 60, money: 0    // Step 0
+time: 14:30, life: 60, mental: 70, charge: 60, money: 0    // Step 1: -5体力
+time: 14:30, life: 60, mental: 85, charge: 60, money: 50   // Step 2: +15精神, +50百円
+time: 14:30, life: 70, mental: 85, charge: 60, money: 40   // Step 3: +10体力, -10百円
+```
+
+**GaugeChart での表示:**
+- money 折れ線が「0 → 50 → 40」と段階的に変化
+- life 折れ線が「-5 → 0 → +10」と変動
+
 #### 表示方式
 
 - **折れ線グラフ形式**（ライブラリ不要・SVG で実装）
@@ -200,6 +226,7 @@ const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 - **横軸**: ゲーム内時刻（14:00〜ゲーム終了時刻）
 - 4ゲージ（life・mental・charge・money）をそれぞれ異なる色で1つのグラフに重ねて表示
 - 凡例（legend）を表示：各ゲージ名＋**ヘッダーと同じアイコン表示**（money の凡例ラベルは「お金 (百円)」）
+- **同一時刻の複数データポイント**: gaugeSteps がある場合、複数のポイントが同一時刻にプロット（垂直方向に変化）
 
 #### 色定義
 

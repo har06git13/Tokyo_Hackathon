@@ -15,6 +15,7 @@ import {
 } from "../../components/game-page";
 import { SnsLogoIcon } from "../../components/icons";
 import { useAtom } from "jotai";
+import { eventList } from "../../temporary-database";
 import {
   currentTimeAtom,
   currentTimeSlotAtom,
@@ -175,7 +176,7 @@ export const ActionPage = () => {
         console.warn("該当イベントが見つかりませんでした");
         return;
       }
-      setSelectedEvent(evData);
+      setSelectedEvent(normalizeApiEvent({ id: evData._id ?? evData.id, ...evData }));
     } catch (e) {
       console.warn("イベント取得に失敗:", e);
     }
@@ -192,11 +193,26 @@ export const ActionPage = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const arr = await res.json();
       const ev = Array.isArray(arr) ? arr[0] : null;
-      if (ev) setSelectedEvent(ev);
+      if (ev) setSelectedEvent(normalizeApiEvent({ id: ev._id ?? ev.id, ...ev }));
       else console.warn("該当するSNSイベントが見つかりませんでした");
     } catch (e) {
       console.warn("SNSイベント取得に失敗:", e);
     }
+  };
+
+  // DB の money 値（円単位）を百円単位に正規化し、ローカル eventList の gaugeSteps をマージするヘルパー
+  // DB には gaugeSteps を持たせない方針のため、クライアント側でマージする
+  const normalizeApiEvent = (ev) => {
+    if (!ev) return ev;
+    const localEvent = eventList.find((e) => e.id === ev.id);
+    return {
+      ...ev,
+      gaugeChange: ev.gaugeChange
+        ? { ...ev.gaugeChange, money: Math.round((ev.gaugeChange.money || 0) / 100) }
+        : ev.gaugeChange,
+      // gaugeSteps はローカル定義を使用（DB には保持しない）
+      ...(localEvent?.gaugeSteps ? { gaugeSteps: localEvent.gaugeSteps } : {}),
+    };
   };
 
   // 到着時刻

@@ -145,6 +145,7 @@ const playerVisitedCount = visitedFacilities
 | A     | 🔴 高  | ✅ 完了 | `task-0223-04-gauge-initial-point.md` |
 | B     | 🔴 高  | ✅ 完了 | `task-0223-05-money-unit-fix.md` |
 | C     | 🟡 中  | ✅ 完了 | `task-0223-05-money-unit-fix.md`（B と統合） |
+| F     | 🔴 高  | ✅ 完了 | `task-0223-06-gauge-steps.md` |
 | D     | 🟡 中  | 🔲 未着手 | （未分割） |
 | E     | 🟢 低  | 🔲 未着手 | （未分割） |
 
@@ -168,7 +169,8 @@ const playerVisitedCount = visitedFacilities
 - [x] Issue A: `useMonologueLogic.js` でプロローグ時に初期ゲージ状態を記録 → **task-0223-04 で完了**
 - [x] Issue B: money ゲージを百円単位に正規化 → **task-0223-05 で完了**
 - [x] Issue C: StatsSummary のラベル/値を修正 → **task-0223-05 で完了**
+- [x] **Issue F (新規): イベント内段階的ゲージ変動（gaugeSteps）** → **task-0223-06 で完了**
 - [ ] Issue D: ResultPage で visitedCount の除外フィルタ適用
 - [ ] Issue E: `facilityList.js` の fac_004.type を "temporary" に修正
-- [x] 全テスト通過を確認（39/39 tests PASS）
+- [x] 全テスト通過を確認（43/43 tests PASS）
 - [x] 仕様書 (`docs/result-page-spec.md`) の該当箇所を更新

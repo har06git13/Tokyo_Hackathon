@@ -388,6 +388,133 @@ describe("ResultPage ロジック - TDD 検証", () => {
   });
 
   // ----------------------------------------------------------
+  // セクション 4: gaugeSteps - イベント内段階的ゲージ変動
+  // ----------------------------------------------------------
+  describe("gaugeSteps - イベント内段階的ゲージ変動", () => {
+
+    test("event_walk_003 に gaugeSteps が定義されている", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      expect(event.gaugeSteps).toBeDefined();
+      expect(event.gaugeSteps).toHaveLength(3);
+    });
+
+    test("gaugeSteps の合計が正しい net 値になる", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      const totalLife = event.gaugeSteps.reduce((sum, step) => sum + (step.life || 0), 0);
+      const totalMental = event.gaugeSteps.reduce((sum, step) => sum + (step.mental || 0), 0);
+      const totalMoney = event.gaugeSteps.reduce((sum, step) => sum + (step.money || 0), 0);
+      
+      expect(totalLife).toBe(5);    // -5 + 0 + 10 = +5
+      expect(totalMental).toBe(15);  // 0 + 15 + 0 = +15
+      expect(totalMoney).toBe(40);   // 0 + 50 - 10 = +40
+    });
+
+    test("gaugeSteps がない他のイベントは従来通り動作する", () => {
+      const event = eventList.find(e => e.id === "event_walk_001");
+      expect(event.gaugeSteps).toBeUndefined();
+      expect(event.gaugeChange).toBeDefined();
+    });
+
+    test("event_walk_003 の各ステップが期待通りの値を持つ", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      
+      // Step 1: 移動で体力消費
+      expect(event.gaugeSteps[0]).toEqual({ life: -5, mental: 0, battery: 0, money: 0 });
+      
+      // Step 2: ATM で 5000円 + 精神回復
+      expect(event.gaugeSteps[1]).toEqual({ life: 0, mental: 15, battery: 0, money: 50 });
+      
+      // Step 3: 食事で体力回復 + 1000円消費
+      expect(event.gaugeSteps[2]).toEqual({ life: 10, mental: 0, battery: 0, money: -10 });
+    });
+  });
+
+  // ----------------------------------------------------------
+  // セクション 4b: gaugeSteps ループ処理ロジック（Issue D）
+  // useMonologueLogic の handleButtonClick 内ループを純粋関数で再現してテスト
+  // ----------------------------------------------------------
+  describe("gaugeSteps ループ処理ロジック", () => {
+    // handleButtonClick 内のループ処理を純粋関数として再現
+    const clampGauge = (val) => Math.max(0, Math.min(100, val));
+
+    const applyGaugeSteps = (initialGauges, steps) => {
+      let { life, mental, charge, money } = initialGauges;
+      const history = [];
+      for (const step of steps) {
+        life   = clampGauge(life   + (step.life    || 0));
+        mental = clampGauge(mental + (step.mental  || 0));
+        charge = clampGauge(charge + (step.battery || 0));
+        money  = clampGauge(money  + (step.money   || 0));
+        history.push({ life, mental, charge, money });
+      }
+      return { history, final: { life, mental, charge, money } };
+    };
+
+    test("event_walk_003: money が 0 → 50 → 50 → 40 と3ステップで推移する", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      const initial = { life: 70, mental: 70, charge: 60, money: 0 };
+      const { history } = applyGaugeSteps(initial, event.gaugeSteps);
+
+      expect(history).toHaveLength(3);
+      expect(history[0].money).toBe(0);  // Step 1: 移動（money 変化なし）
+      expect(history[1].money).toBe(50); // Step 2: ATM +5000円
+      expect(history[2].money).toBe(40); // Step 3: 購入 -1000円
+    });
+
+    test("event_walk_003: life が 70 → 65 → 65 → 75 と3ステップで推移する", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      const initial = { life: 70, mental: 70, charge: 60, money: 0 };
+      const { history } = applyGaugeSteps(initial, event.gaugeSteps);
+
+      expect(history[0].life).toBe(65); // Step 1: -5
+      expect(history[1].life).toBe(65); // Step 2: 変化なし
+      expect(history[2].life).toBe(75); // Step 3: +10
+    });
+
+    test("event_walk_003: 最終ゲージ値が gaugeChange の net 値と一致する", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      const initial = { life: 70, mental: 70, charge: 60, money: 0 };
+      const { final } = applyGaugeSteps(initial, event.gaugeSteps);
+
+      // gaugeChange: { life: +5, mental: +15, battery: 0, money: +40 }
+      expect(final.life).toBe(75);    // 70 + 5
+      expect(final.mental).toBe(85);  // 70 + 15
+      expect(final.charge).toBe(60);  // 60 + 0
+      expect(final.money).toBe(40);   // 0 + 40
+    });
+
+    test("100 を超える値は 100 にクランプされる", () => {
+      const steps = [{ life: 0, mental: 0, battery: 90, money: 0 }];
+      const initial = { life: 50, mental: 50, charge: 60, money: 0 };
+      const { history } = applyGaugeSteps(initial, steps);
+
+      expect(history[0].charge).toBe(100); // 60 + 90 = 150 → 100
+    });
+
+    test("0 を下回る値は 0 にクランプされる", () => {
+      const steps = [{ life: -80, mental: 0, battery: 0, money: 0 }];
+      const initial = { life: 30, mental: 50, charge: 60, money: 0 };
+      const { history } = applyGaugeSteps(initial, steps);
+
+      expect(history[0].life).toBe(0); // 30 - 80 = -50 → 0
+    });
+
+    test("timeEvent ステップを先頭に加えた場合も正しく処理される（Issue B 対応確認）", () => {
+      const event = eventList.find(e => e.id === "event_walk_003");
+      const timeEventStep = { life: 0, mental: 0, battery: -5, money: 0 }; // 時間経過 -5%
+      const stepsWithTime = [timeEventStep, ...event.gaugeSteps];
+      const initial = { life: 70, mental: 70, charge: 60, money: 0 };
+      const { history, final } = applyGaugeSteps(initial, stepsWithTime);
+
+      expect(history).toHaveLength(4); // timeEvent + gaugeSteps 3件
+      expect(history[0].charge).toBe(55);  // timeEvent: 60 - 5
+      expect(history[2].money).toBe(50);   // Step 2 (ATM)
+      expect(history[3].money).toBe(40);   // Step 3 (購入)
+      expect(final.charge).toBe(55);       // battery は gaugeSteps で変化なし
+    });
+  });
+
+  // ----------------------------------------------------------
   // セクション 1: フレーバーテキスト
   // ----------------------------------------------------------
   describe("getFlavorText - フレーバーテキスト", () => {

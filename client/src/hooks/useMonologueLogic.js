@@ -19,7 +19,7 @@ import {
   playerGenderAtom,
   playerResidenceAtom,
 } from "../atoms/playerAtoms";
-//import { eventList } from "../temporary-database";
+import { eventList } from "../temporary-database";
 
 export const useMonologueLogic = () => {
   const navigate = useNavigate();
@@ -48,6 +48,21 @@ export const useMonologueLogic = () => {
 
   const BASE_URL = process.env.REACT_APP_API_URL;
 
+  // DB の money 値（円単位）を百円単位に正規化し、ローカル eventList の gaugeSteps をマージするヘルパー
+  // DB には gaugeSteps を持たせない方針のため、クライアント側でマージする
+  const normalizeApiEvent = (ev) => {
+    if (!ev) return ev;
+    const localEvent = eventList.find((e) => e.id === ev.id);
+    return {
+      ...ev,
+      gaugeChange: ev.gaugeChange
+        ? { ...ev.gaugeChange, money: Math.round((ev.gaugeChange.money || 0) / 100) }
+        : ev.gaugeChange,
+      // gaugeSteps はローカル定義を使用（DB には保持しない）
+      ...(localEvent?.gaugeSteps ? { gaugeSteps: localEvent.gaugeSteps } : {}),
+    };
+  };
+
   // selectedEvent が無い場合だけ API から取得（/api/events/:id）
   useEffect(() => {
     let aborted = false;
@@ -59,8 +74,8 @@ export const useMonologueLogic = () => {
         );
         if (!res.ok) throw new Error("not found");
         const data = await res.json(); // {_id, ...}
-        // 既存ロジック互換のため _id → id に正規化
-        if (!aborted) setFetchedEvent({ id: data._id, ...data });
+        // 既存ロジック互換のため _id → id に正規化 / money を百円単位に変換
+        if (!aborted) setFetchedEvent(normalizeApiEvent({ id: data._id, ...data }));
       } catch {
         if (!aborted) setFetchedEvent(null);
       }
@@ -132,8 +147,12 @@ export const useMonologueLogic = () => {
   }
 
   // 死亡フラグ設定（時間イベントも併せて判定）
+  // gaugeSteps がある場合は life の合計を使う（gaugeChange は後方互換用のため信頼しない）
+  const eventLifeChange = effectiveEvent.gaugeSteps
+    ? effectiveEvent.gaugeSteps.reduce((sum, s) => sum + (s.life || 0), 0)
+    : getSafeValue(effectiveEvent.gaugeChange?.life);
   const totalLifeChange =
-    getSafeValue(effectiveEvent.gaugeChange?.life) +
+    eventLifeChange +
     (isTimeEventActive ? getSafeValue(timeEvent?.gaugeChange?.life) : 0);
 
   const isEvacuationFailure = life + totalLifeChange <= 0;
@@ -192,21 +211,24 @@ export const useMonologueLogic = () => {
 
   // === ボタンクリック処理 ===
   const handleButtonClick = async () => {
-    // ゲージ値計算
-    const newLife = clampGauge(life + combinedGaugeChange.life);
-    const newMental = clampGauge(mental + combinedGaugeChange.mental);
-    const newCharge = clampGauge(charge + combinedGaugeChange.battery);
-    const newMoney = clampGauge(money + combinedGaugeChange.money);
+    // gaugeSteps がある場合はそれを使用、timeEvent が発火中なら先頭に追加
+    // gaugeSteps がない場合は combinedGaugeChange（timeEvent 込み）を1ステップとして扱う
+    let steps;
+    if (effectiveEvent.gaugeSteps) {
+      steps = isTimeEventActive && timeEvent?.gaugeChange
+        ? [timeEvent.gaugeChange, ...effectiveEvent.gaugeSteps]
+        : [...effectiveEvent.gaugeSteps];
+    } else {
+      steps = [combinedGaugeChange];
+    }
 
-    // ゲージ更新
-    setLife(newLife);
-    setMental(newMental);
-    setCharge(newCharge);
-    setMoney(newMoney);
+    let currentLife = life;
+    let currentMental = mental;
+    let currentCharge = charge;
+    let currentMoney = money;
 
-    // ゲージ変動履歴に記録
+    // プロローグの初期データポイント記録
     if (effectiveEvent.type === "prologue") {
-      // 初期データポイント: ゲーム開始時のゲージ状態を記録（変動前の値）
       setGaugeHistory([
         {
           time: currentTime,
@@ -217,17 +239,36 @@ export const useMonologueLogic = () => {
         },
       ]);
     } else {
-      setGaugeHistory((prev) => [
-        ...prev,
-        {
-          time: currentTime,
-          life: newLife,
-          mental: newMental,
-          charge: newCharge,
-          money: newMoney,
-        },
-      ]);
+      // 各ステップを順次処理して gaugeHistory に記録
+      for (const step of steps) {
+        currentLife = clampGauge(currentLife + (step.life || 0));
+        currentMental = clampGauge(currentMental + (step.mental || 0));
+        currentCharge = clampGauge(currentCharge + (step.battery || 0));
+        currentMoney = clampGauge(currentMoney + (step.money || 0));
+
+        // スナップショット const に退避して no-loop-func を回避
+        const snapLife = currentLife;
+        const snapMental = currentMental;
+        const snapCharge = currentCharge;
+        const snapMoney = currentMoney;
+        setGaugeHistory((prev) => [
+          ...prev,
+          {
+            time: currentTime,
+            life: snapLife,
+            mental: snapMental,
+            charge: snapCharge,
+            money: snapMoney,
+          },
+        ]);
+      }
     }
+
+    // 最終的なゲージ値を Atom に反映
+    setLife(currentLife);
+    setMental(currentMental);
+    setCharge(currentCharge);
+    setMoney(currentMoney);
 
     // イベント履歴追加
     if (isTimeEventActive && timeEvent) {

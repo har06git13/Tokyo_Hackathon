@@ -483,7 +483,15 @@ export const eventList = [
     requiredDuration: 30,
     timeSlot: null,
     locationId: "fac_003", // ファミリーマート 渋谷公園通り店
-    gaugeChange: { life: +5, mental: +15, battery: 0, money: +40 },
+    gaugeChange: { life: +5, mental: +15, battery: 0, money: +40 }, // 後方互換用（gaugeSteps がある場合は無視される）
+    
+    // 段階的ゲージ変動: 5000円受け取り → 1000円消費の推移を記録
+    gaugeSteps: [
+      { life: -5, mental: 0, battery: 0, money: 0 },     // Step 1: 移動で体力消費
+      { life: 0, mental: +15, battery: 0, money: +50 },  // Step 2: ATM で 5000円 (+50百円) + 精神回復
+      { life: +10, mental: 0, battery: 0, money: -10 },  // Step 3: 食事で体力回復 + 1000円消費 (-10百円)
+    ],
+    
     texts: [
       {
         type: "system",
@@ -540,7 +548,7 @@ export const eventList = [
       {
         type: "system",
         isCritical: true,
-        text: "精神が10%回復した。",
+        text: "精神が15%回復した。",
       },
     ],
   },
