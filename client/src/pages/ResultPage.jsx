@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Flex, Text, Link } from "@chakra-ui/react";
 import {
   survivedAtom,
@@ -15,9 +15,10 @@ import {
 } from "../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
-import { StatsSummary, GaugeChart, ResultTimelineItem } from "../components/game-page";
+import { StatsSummary, GaugeChart, ResultTimelineItem, ShareModal } from "../components/game-page";
 import { eventList, facilityList, spotTypeList } from "../temporary-database";
 import { useNavigate } from "react-router-dom";
+import { buildTimelineData, calcTotalDistance, calcVisitedCount } from "../utils/resultPageLogic";
 
 // criticalReason → フレーバーテキスト対応表
 const flavorTextMap = {
@@ -34,14 +35,30 @@ const getFlavorText = (survived, criticalReason) => {
   return flavorTextMap[criticalReason] || defaultFailureText;
 };
 
-// 施設ごとの生存上の意義テキスト定義
-const facilitySignificanceText = {
-  fac_001: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
-  fac_002: "壁の矢印が示す避難方向を確認。土地勘がなくても正しい方角を把握できた。",
-  fac_003: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
-  fac_004: "受け入れ施設の情報を取得し、行動範囲が広がった。",
-  fac_005: "施設が満員になる寸前に滑り込み、夜の安全を確保。",
+// 施設ベースのヒント（訪問有無で内容が変わる）
+const facilityHintMap = {
+  fac_001: {
+    visited: "充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。",
+    notVisited: "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
+  },
+  fac_002: {
+    visited: "避難方向の目印を確認しました。日頃から地域のハザードマップや避難誘導サインを意識しておくと、緊急時も迷わず行動できます。",
+    notVisited: "避難誘導サインは見えても見落としやすい。平時から街中の避難経路を意識して歩く習慣をつけておきましょう。",
+  },
+  fac_003: {
+    visited: "食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。",
+    notVisited: "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
+  },
+  fac_004: {
+    visited: "受け入れ施設の情報を取得しました。平時から地域の一時避難場所の場所を確認しておけば、緊急時も素早く行動できます。",
+    notVisited: "避難先の情報を事前に調べておけば、混乱した状況でも迷わず行動できたかもしれない。",
+  },
+  fac_005: {
+    visited: "一時避難場所に辿り着きました！地域の避難訓練への参加や、家族との避難場所の事前共有が、いざという時に命を救います。",
+    // notVisited なし: ゲームの目的地のため未訪問時はヒントを表示しない
+  },
 };
+
 
 export const ResultPage = () => {
   const [survived] = useAtom(survivedAtom);
@@ -57,6 +74,7 @@ export const ResultPage = () => {
   const setAll = useSetAtom(resetAllAtom);
 
   const navigate = useNavigate();
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   // 統計サマリーの算出
   const createStartTime = () => {
@@ -76,74 +94,47 @@ export const ResultPage = () => {
   const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
   const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
 
-  const visitedCount = visitedFacilities.length;
+  const visitedCount = calcVisitedCount(visitedFacilities);
   const snsCount = eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
+  const totalDistance = calcTotalDistance(visitedFacilities, facilityList);
 
-  // 「生死を分けた選択」セクション用 - walk イベントをフィルタして時系列データを組み立て
-  const buildTimelineData = () => {
-    const walkEvents = eventHistory.filter(e => {
-      const eventDef = eventList.find(ev => ev.id === e.id);
-      return eventDef && eventDef.type === "walk";
-    });
-    
-    return walkEvents.map(event => {
-      const eventDef = eventList.find(ev => ev.id === event.id);
-      if (!eventDef) return null;
-      
-      const facility = facilityList.find(f => f.id === eventDef.locationId);
-      if (!facility) return null;
-      
-      const facilityType = facility.type;
-      const facilityTypeName = spotTypeList[facilityType]?.name || "不明";
-      
-      const formatTime = (date) => {
-        if (!date) return "";
-        const d = new Date(date);
-        const hours = String(d.getHours()).padStart(2, "0");
-        const minutes = String(d.getMinutes()).padStart(2, "0");
-        return `${hours}:${minutes}`;
-      };
-      
-      return {
-        time: formatTime(event.time),
-        facilityTypeName,
-        facilityName: facility.name,
-        significanceText: facilitySignificanceText[facility.id] || "行動の詳細が記録されていません。",
-      };
-    }).filter(Boolean); // null を除外
-  };
-
-  const timelineData = buildTimelineData();
+  // 「生死を分けた選択」セクション用 - walk / epilogue / sns イベントをフィルタして時系列データを組み立て
+  // resultPageLogic.js の buildTimelineData を使用（SNS対応済み）
+  const timelineData = buildTimelineData(eventHistory, eventList, facilityList, spotTypeList);
 
   // 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
   const buildHints = () => {
+    // 行動履歴がない場合はヒントを生成しない（visitedFacilities が初期値のみで全未訪問扱いになるため）
+    if (timelineData.length === 0) return [];
+
     const hints = [];
 
-    // 条件1：コンビニ（fac_003）未訪問
-    if (!visitedFacilities.includes("fac_003")) {
-      hints.push("現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。");
+    // ① 施設ベースのヒント（訪問有無で内容が変わる）
+    for (const [facilityId, hintDef] of Object.entries(facilityHintMap)) {
+      const isVisited = visitedFacilities.includes(facilityId);
+      if (isVisited && hintDef.visited) {
+        hints.push(hintDef.visited);
+      } else if (!isVisited && hintDef.notVisited) {
+        hints.push(hintDef.notVisited);
+      }
+      // notVisited が未定義の場合（fac_005 など）はヒントをスキップ
     }
 
-    // 条件2：モバイルバッテリー（fac_001）未訪問
-    if (!visitedFacilities.includes("fac_001")) {
-      hints.push("モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。");
-    }
+    // ② ゲージ条件ヒント
+    // money=0 は fac_003 訪問済みの場合のみ（未訪問時は① の notVisited と重複するため）
+    if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
+    if (charge === 0) hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
+    if (mental < 30) hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
 
-    // 条件3：最終所持金が 0
-    if (money === 0) {
-      hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
+    // ③ ランダムに2件を選択して返す（2件以下の場合はそのまま）
+    if (hints.length > 2) {
+      for (let i = hints.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [hints[i], hints[j]] = [hints[j], hints[i]];
+      }
+      return hints.slice(0, 2);
     }
-
-    // 条件4：最終充電が 0
-    if (charge === 0) {
-      hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
-    }
-
-    // 条件5：最終精神力が 30 未満
-    if (mental < 30) {
-      hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
-    }
-
+    // ヒントが 0 件の場合は空配列のまま返す（JSX 側で「生存のヒントがありません」を表示）
     return hints;
   };
 
@@ -270,19 +261,22 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        {/* セクション 3: 統計サマリー */}
+
+        {/* セクション 3: 統計サマリー＋経路地図 */}
         <StatsSummary
-          totalDistance={null}
+          totalDistance={totalDistance}
           visitedCount={visitedCount}
           elapsedTime={{ hours: elapsedHours, minutes: elapsedMinutes }}
           moneyValue={money}
           snsCount={snsCount}
+          visitedFacilities={visitedFacilities}
+          facilityList={facilityList}
         />
 
-        {/* セクション 4: ゲージ推移 */}
+        {/* セクション 5: ゲージ推移 */}
         <GaugeChart gaugeHistory={gaugeHistory} />
 
-        {/* セクション 5: 生死を分けた選択 */}
+        {/* セクション 6: 生死を分けた選択 */}
         <Flex
           className="result-timeline"
           width={"90%"}
@@ -315,6 +309,7 @@ export const ResultPage = () => {
                 <ResultTimelineItem
                   key={index}
                   time={item.time}
+                  isSns={item.isSns}
                   facilityTypeName={item.facilityTypeName}
                   facilityName={item.facilityName}
                   significanceText={item.significanceText}
@@ -359,16 +354,13 @@ export const ResultPage = () => {
           >
             {hintsData.length > 0 ? (
               hintsData.map((hint, index) => (
-                <Text
-                  key={index}
-                  className="text-maintext"
-                >
+                <Text key={index} className="text-maintext">
                   {hint}
                 </Text>
               ))
             ) : (
               <Text className="text-maintext" color="var(--color-base13)">
-                防災へのヒントがこのプレイには含まれていません
+                生存のヒントがありません
               </Text>
             )}
           </Flex>
@@ -440,12 +432,25 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        {/* セクション 8: タイトルに戻るボタン */}
+        {/* セクション 8: ボタン群（SNS共有・タイトル遷移） */}
+        {/* ① SNS 共有ボタン */}
+        <Flex width="90%" mt={"2vh"}>
+          <Button
+            width="100%"
+            height="3.6vh"
+            text="避難の記録をSNSに投稿する"
+            isAvailable
+            onClick={() => setIsShareOpen(true)}
+          />
+        </Flex>
+
+        {/* ② タイトルに戻るボタン（色: インディゴ） */}
         <Flex width="90%" mt={"2vh"}>
           <Button
             width="100%"
             height="3.6vh"
             text="タイトルに戻る"
+            color="var(--color-accent10)"
             isAvailable
             onClick={handleReturnToTitle}
           />
@@ -454,6 +459,9 @@ export const ResultPage = () => {
         {/* ダミー画像（開発用・最終削除予定） */}
         <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
       </Flex>
+
+      {/* SNS シェアモーダル（page-container 直下でオーバーレイ） */}
+      <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
     </Flex>
   );
 };

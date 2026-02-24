@@ -1,473 +1,265 @@
-# リザルトページ仕様書
+# リザルトページ仕様書（確定仕様）
 
-## 概要
+- 文書ID: `result-page-spec`
+- バージョン: `2.0`
+- 最終更新: `2026-02-24`
+- 対象画面: `Route /result`
 
-ゲーム終了後に表示されるリザルト画面。プレイヤーの行動履歴・ゲージ推移・結果を動的にレンダリングし、プレイ内容を振り返ることができる。また、結果をサーバーに保存し、統計データとして活用する。
+## 0. この文書の位置づけ
 
----
+本書は、リザルトページの**現時点での確定仕様（What）**のみを定義する。
 
-## 画面遷移
+- 本書に含める: 画面要件、データソース、ルーティング、API契約、責務分担、受け入れ条件
+- 本書に含めない: 実装コード例、Issue修正履歴、将来構想、テスト詳細
 
-```
+履歴（Issue対応・作業ログ）は `docs/tasks/` 配下のタスクファイルで管理する。
+本書は「確定仕様（What）」と「設計（How）」を1ファイルで扱う。
+
+## 1. スコープ
+
+### 1.1 今回リリースの対象
+
+1. `ResultPage` の表示（結果ヘッダー、想定地震情報、統計サマリー、ゲージ推移、行動タイムライン、防災ヒント、アプリ紹介、ボタン群）
+2. `ShareModal` の表示と画像保存
+3. 結果保存API `POST /api/results` の送信
+
+### 1.2 今回リリースの非対象
+
+1. `SharePage` の新規作成
+2. `/result/share` ルート
+3. リザルト画面での `GET /api/events/:id` / `GET /api/facilities` 呼び出し
+4. Share画像への地図埋め込み（Static Maps連携）
+
+## 2. ソースオブトゥルース（SoT）
+
+### 2.1 機能別の正式データソース
+
+| 機能 | 正式データソース | 補助データ | 備考 |
+| --- | --- | --- | --- |
+| 成功/失敗表示 | `survivedAtom`, `criticalReasonAtom` | - | 画面表示用 |
+| 統計サマリー | `visitedFacilitiesAtom`, `currentTimeAtom`, `moneyAtom`, `eventHistoryAtom` | `facilityList`（ローカル） | 距離はローカル座標で算出 |
+| ゲージ推移 | `gaugeHistoryAtom` | - | 表示キーは `life/mental/charge/money` |
+| 生死を分けた選択 | `eventHistoryAtom` | `eventList` + `facilityList` + `spotTypeList`（ローカル） | `walk/epilogue/sns` を抽出 |
+| 防災ヒント | `visitedFacilitiesAtom`, `moneyAtom`, `chargeAtom`, `mentalAtom` | 施設ヒント定義 | 最大2件表示 |
+| ShareModal表示内容 | ResultPageで計算した値（props） | - | ShareModalはAtomを直接読まない |
+| 結果保存 | `POST /api/results` | - | 送信仕様は第6章 |
+
+### 2.2 命名の正規化ルール
+
+1. 表示・記録用ゲージキーは `life`, `mental`, `charge`, `money` を正とする。
+2. イベント定義の `gaugeChange` / `gaugeSteps` で使う `battery` は、ゲームロジックで `charge` に反映する入力キーとして扱う。
+3. ResultPage配下で `battery` を直接参照しない。
+
+### 2.3 確定仕様と将来対応の扱い
+
+1. 本書本文に記載のある値・挙動は**すべて今回リリースの必須仕様**とする。
+2. 将来対応は第11章に記載し、本書の要件判断に使わない。
+3. 暫定値（例: `totalDistance={null}`）は本書に記載しない。
+
+## 3. 画面遷移・ルーティング
+
+### 3.1 画面遷移
+
+```text
 ゲーム終了イベント（epilogue / life===0 / timeup）
-  → /result（ResultPage）
-      → /（タイトル画面）※全データリセット
+  -> /result（ResultPage）
+  -> /（タイトル、全データリセット時）
 ```
 
----
+### 3.2 ルーティング要件
 
-## 画面構成（上から順）
+1. リザルト関連のルートは `/result` のみ。
+2. `/result/share` は存在しない。
+3. SNS共有は遷移ではなく `ShareModal`（オーバーレイ）で実行する。
 
-### セクション 1: 結果ヘッダー
+## 4. 画面仕様
 
-| 項目             | 内容                                                     |
-| ---------------- | -------------------------------------------------------- |
-| ヘッダー中央     | 「結果発表」                                             |
-| 成功/失敗        | `survivedAtom` の値で表示を切り替え                      |
-| フレーバー文     | `criticalReasonAtom` に応じた動的テキスト（下表参照）    |
-| 最終ゲージ       | `LifeGauge` コンポーネント（`life`, `mental`, `charge`, `money`） |
+### 4.1 セクション順序（上から）
 
-#### criticalReason → テキスト対応表
+1. 結果ヘッダー
+2. 想定地震情報
+3. 統計サマリー
+4. ゲージ推移
+5. 生死を分けた選択
+6. 防災に向けてのヒント
+7. アプリ紹介
+8. ボタン群（SNS共有、タイトルに戻る）
+9. ダミー画像（開発用のみ）
 
-**survived === true（成功時）:**
+### 4.2 結果ヘッダー
 
-一律で以下のテキストを表示:
+- ヘッダー中央: `結果発表`
+- 成功失敗文言: `survivedAtom` で切替（成功: `避難成功!` / 失敗: `避難失敗…`）
+- フレーバー文: `criticalReasonAtom` 対応
+- 最終ゲージ表示: `LifeGauge`（`life`, `mental`, `charge`, `money`）
 
-> ギリギリの判断を重ね、無事に一時避難場所に辿り着くことができた。電源確保・現金取得・人とのつながり、どれもが生存に直結する選択だった。
+`criticalReasonAtom` 対応:
 
-**survived === false（失敗時）:**
+- `lowLife`: `体力が限界に達し、倒れてしまった…`
+- `timeup`: `時間切れ。避難場所に辿り着くことができなかった…`
+- その他失敗時: `避難に失敗してしまった…`
+- 成功時は固定文
 
-| criticalReason | 表示テキスト                                         |
-| -------------- | ---------------------------------------------------- |
-| lowLife        | 体力が限界に達し、倒れてしまった…                    |
-| timeup         | 時間切れ。避難場所に辿り着くことができなかった…       |
-| （フォールバック） | 避難に失敗してしまった…                          |
+### 4.3 想定地震情報
 
-> ※ テキストは今後調整可能。`criticalReasonList`（playerAtoms.js）と対応させる。
+- 既存の地震情報カードを維持する。
+- セクション間隔は `mt=2vh`。
 
----
+### 4.4 統計サマリー
 
-### セクション 2: 想定地震情報
+#### 4.4.1 表示項目
 
-今回のゲームで想定した地震の情報を表示するカード形式のセクション。
-セクション1（結果ヘッダー）の直後に配置し、プレイヤーにゲームの前提となる災害規模を認識させる。
+| 項目 | 算出 | 表示例 |
+| --- | --- | --- |
+| 総移動距離 | `visitedFacilitiesAtom` を訪問順で走査し、`facilityList.coordinates` を使って Haversine 合算 | `2.3 km` |
+| 経過時間 | `currentTimeAtom - createStartTime(当日14:00)` | `3時間30分` |
+| 訪問施設数 | `visitedFacilitiesAtom` から `fac_000` を除外して件数化 | `5 箇所` |
+| 使用したお金 | `moneyAtom * 100`（百円 -> 円） | `4,000 円` |
+| SNS利用回数 | `eventHistoryAtom` の `id.startsWith("event_sns_")` 件数 | `3 回` |
 
-変更なし。現在のハードコードされた地震情報をそのまま表示。
-セクション間隔: `mt="2vh"`
+#### 4.4.2 必須ルール
 
----
+1. 総移動距離は必ずローカル算出し、`null` を許容しない。
+2. 距離算出で施設IDが不明なセグメントはスキップする。
+3. `money` はゲージ内部値 0-100（百円単位）を維持し、表示時のみ円換算する。
+4. RouteMapはPolylineのみ表示し、ピンは表示しない。
 
-### セクション 3: 統計サマリー
+#### 4.4.3 RouteMapフォールバック
 
-プレイ内容を数値で振り返るカード形式のセクション。セクション1の `LifeGauge` と重複するゲージ値は含めない。
+- `visitedFacilities` が1件以下（実質移動なし）の場合は地図の代わりにフォールバック文言を表示する。
 
-#### 画面構成（ASCII図）
+### 4.5 ゲージ推移
 
-```
-┌─────────────────────────────────────────────┐
-│ プレイ統計                                  │ ← ヘッダー（text-maintext）
-├─────────────────────────────────────────────┤
-│                                             │
-│  総移動距離       経過時間       訪問施設数  │ ← ラベル（text-maintext）
-│  — km           0時間0分        1 箇所    │ ← 数値（text-sectiontitle）
-│                                             │
-│  使用したお金   SNS利用回数              │
-│  0              0 回                      │
-│                                             │
-└─────────────────────────────────────────────┘
+#### 4.5.1 入力データ
 
-※ 5項目を上記の順番で表示（総移動距離 → 経過時間 → 訪問施設数 → 使用したお金 → SNS利用回数）
-※ flexWrap で2行に配置（1行目3項目、2行目2項目）
-※ 数値とラベルは縦組み（Flex column）、ラベルが上、数値が下
-※ ラベルは `text-maintext` （ヘッダーと同じサイズ・色）
-※ 説明文・補足テキストは現時点では含めない（将来拡張可能）
-```
+`gaugeHistoryAtom` は以下の配列。
 
-| 表示項目       | データソース                                           | 表示例           |
-| -------------- | ------------------------------------------------------ | ---------------- |
-| 総移動距離     | `visitedFacilitiesAtom` の施設座標から算出              | 「約 2.3 km」    |
-| 訪問施設数     | `visitedFacilitiesAtom.length`                         | 「5 箇所」       |
-| 経過時間       | `currentTimeAtom` − 開始時刻（14:00）                  | 「3時間30分」    |
-| 所持金         | `moneyAtom * 100` + "円"（百円単位→円変換）            | 「4,000 円」     |
-| SNS利用回数    | `eventHistoryAtom` で `id.startsWith("event_sns_")` のカウント | 「3 回」  |
-
-#### 各項目の算出ロジック
-
-**経過時間:**
-```js
-const elapsedMs = currentTime.getTime() - createStartTime().getTime();
-const hours = Math.floor(elapsedMs / (1000 * 60 * 60));
-const minutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
-// → "3時間30分" / "0時間0分"（ゲーム未進行時）
+```text
+[{ time: Date, life: number, mental: number, charge: number, money: number }, ...]
 ```
 
-> ※ 開始時刻は `playerAtoms.js` の `createStartTime()`（当日14:00）と同じロジックで算出する。
-
-**総移動距離:**
-- 🟡 **暫定**: ダミー値（`"— km"`）を表示。座標データ取得・Haversine 計算は将来タスクで対応
-- 将来: `visitedFacilitiesAtom` の施設IDリストを `/api/facilities` の座標と突合 → 訪問順に距離合算
-
-**所持金:**
-- `moneyAtom` の現在値を **百円単位** で管理し、表示時に円変換する
-- money ゲージの値は 0-100（百円単位 = 0〜10,000円）
-- 表示: `moneyValue * 100` + "円"（例: money=40 → 「4,000円」）
-
-> **money ゲージの単位系仕様:**
->
-> money は他のゲージ（life/mental/charge）と同じ **0-100 スケール** で管理する。
-> ただし単位は「百円」として扱い、表示時に 100 倍して「円」で表示する。
->
-> - **ゲージ内部値**: 0-100（百円単位）
-> - **イベント gaugeChange**: 百円単位で定義（例: `money: +40` = 4,000円増加）
-> - **表示**: `value * 100` + "円"（LifeGaugeElement, StatsSummary）
-> - **GaugeChart 凡例**: 「お金 (百円)」
->
-> この仕様により `clampGauge(0-100)` の制約と整合が取れ、他のゲージと同じデータ構造で扱える。
-
-> ⚠ **Issue D: visitedCount の初期地点含み（未対応）**
->
-> `visitedFacilitiesAtom` の初期値に `"fac_000"`（渋谷駅前＝開始地点）が含まれており、
-> `visitedCount` が常に +1 される。エピローグ地点 `"fac_005"` も walk ではなく epilogue
-> イベントで追加されるため、プレイヤーが意図して訪問した施設数より多くなる。
-
-**SNS利用回数:**
-- `eventHistoryAtom` 内のイベントIDが `"event_sns_"` で始まるエントリをカウント
-- 0回の場合は「0 回」と表示
-
-#### UIパターン
-
-- 既存の `expected-earthquake` セクションのカードスタイルに準拠
-- ヘッダー（`text-maintext`）＋ ボディの2段構成
-- ボディ内は項目を `flexWrap="wrap"` で配置、各項目は以下の構成:
-  - ラベル：`text-maintext` （ヘッダーと同じサイズ・色）
-  - 数値：`text-sectiontitle` + `color="var(--color-theme10)"` + `fontWeight="bold"`
-- 幅 `90%`、背景 `var(--color-base10)`、角丸 `2vh`
-
-#### コンポーネント設計
-
-- `StatsSummary` は **Atom を直接読み取らない**（純粋な表示コンポーネント）
-- 親の `ResultPage` から props で値を渡す
-
-```jsx
-<StatsSummary
-  totalDistance={null}              // 🟡 暫定null（将来API連携で算出）
-  visitedCount={visitedCount}       // number
-  elapsedTime={elapsedTime}         // { hours: number, minutes: number }
-  moneyValue={money}                // number: 百円単位（表示時に *100 して円変換）
-  snsCount={snsCount}               // number
-/>
-```
-
----
-
-### セクション 4: ゲージ推移
-
-`gaugeHistoryAtom` のデータをもとに、ゲージの時系列変化をカード形式で可視化する。セクション3（統計サマリー）と同じUIパターンを使用。
-
-#### 画面構成（ASCII図）
-
-```
-┌─────────────────────────────────────────────┐
-│ ゲージ推移                                  │ ← ヘッダー（text-maintext）
-├─────────────────────────────────────────────┤
-│                                             │
-│  100│ ┌──────────────────────────┐          │
-│   75│ │        折れ線グラフ       │          │
-│   50│ └──────────────────────────┘          │
-│    0│  14:00                16:00           │
-│                                             │
-│  ■ 体力  ■ 精神力  ■ 充電  ■ お金 (百円)   │
-│                                             │
-└─────────────────────────────────────────────┘
-
-※ グラフ領域の下に凡例を配置
-※ フォールバック: gaugeHistoryAtom が空配列の場合、「ゲージ推移データがありません」＋凡例のみ表示
-```
-
-#### データ構造（gaugeHistoryAtom）
-
-```js
-[
-  { time: Date, life: number, mental: number, charge: number, money: number },
-  ...
-]
-```
-
-#### イベント内段階的ゲージ変動（gaugeSteps）
-
-一部のイベント（例: event_walk_003）は、複数のゲージ変動ステップを含む。
-各ステップは独立した `gaugeHistory` エントリとして記録され、GaugeChart で推移が可視化される。
-
-**例: event_walk_003（5000円受け取り → 1000円消費）**
-
-```js
-// eventList での定義
-gaugeSteps: [
-  { life: -5, mental: 0, battery: 0, money: 0 },     // Step 1: 移動で体力消費
-  { life: 0, mental: +15, battery: 0, money: +50 },  // Step 2: ATM (+5000円)
-  { life: +10, mental: 0, battery: 0, money: -10 },  // Step 3: 食事 (-1000円)
-]
-
-// gaugeHistory に記録される（同一時刻14:30）
-time: 14:30, life: 65, mental: 70, charge: 60, money: 0    // Step 0
-time: 14:30, life: 60, mental: 70, charge: 60, money: 0    // Step 1: -5体力
-time: 14:30, life: 60, mental: 85, charge: 60, money: 50   // Step 2: +15精神, +50百円
-time: 14:30, life: 70, mental: 85, charge: 60, money: 40   // Step 3: +10体力, -10百円
-```
-
-**GaugeChart での表示:**
-- money 折れ線が「0 → 50 → 40」と段階的に変化
-- life 折れ線が「-5 → 0 → +10」と変動
-
-#### 表示方式
-
-- **折れ線グラフ形式**（ライブラリ不要・SVG で実装）
-- **縦軸**: ゲージ値（0〜100%）、目盛り: 0, 25, 50, 75, 100
-- **横軸**: ゲーム内時刻（14:00〜ゲーム終了時刻）
-- 4ゲージ（life・mental・charge・money）をそれぞれ異なる色で1つのグラフに重ねて表示
-- 凡例（legend）を表示：各ゲージ名＋**ヘッダーと同じアイコン表示**（money の凡例ラベルは「お金 (百円)」）
-- **同一時刻の複数データポイント**: gaugeSteps がある場合、複数のポイントが同一時刻にプロット（垂直方向に変化）
-
-#### 色定義
-
-| ゲージ | 色変数                    |
-| ------ | ------------------------- |
-| life   | `var(--color-life10)`     |
-| mental | `var(--color-mental10)`   |
-| charge | `var(--color-charge10)`   |
-| money  | `var(--color-money10)`    |
-
-#### UIパターン
-
-- セクション3（プレイ統計）と同じカードスタイル
-- 幅 `90%`、背景 `var(--color-base10)`、角丸 `2vh`
-- ヘッダー（`text-maintext`）＋ グラフ領域 ＋ 凡例（`text-subtext`）の3段構成
-- ヘッダー行はプレイ統計と同じ（`paddingX: 4%`, `paddingY: 1vh`）
-- ヘッダー下線はプレイ統計と同じ（`borderBottom: 0.1vh solid var(--color-base131)`）
-- ボディ行は `paddingX: 4%`, `paddingTop: 1vh`, `paddingBottom: 2vh`
-- ヘッダーとグラフ領域の間隔: `0.8vh`
-- グラフ領域と凡例の間隔: `0.8vh`
-
-#### フォールバック時の表示
-
-- 状況: `gaugeHistoryAtom` が空配列
-- UI: 同じカード形式を保持
-- 内容:
-  1. ヘッダー: 「ゲージ推移」（text-maintext）
-  2. メッセージ: 「ゲージ推移データがありません」（text-maintext）
-  3. 凡例: グラフの代わりに凡例のみを表示
-
-> ※ ダミーデータによるフォールバックは行わない。`gaugeHistoryAtom` の実データをそのまま `GaugeChart` に渡す。
-> ゲームプレイ中に `useMonologueLogic.js` がイベント処理毎に `gaugeHistoryAtom` に `{ time, life, mental, charge, money }` を追加するため、
-> ゲーム終了時には必ずデータが存在する。
-
-#### gaugeHistory の初期データポイント仕様
-
-プロローグイベント完了時に、**ゲージ変動前**の初期値を `gaugeHistory` の先頭データポイントとして記録する。
-これにより GaugeChart のグラフが「ゲーム開始時点のゲージ状態」から始まり、全プレイ期間を正確に描画できる。
-
-**記録タイミング:** `useMonologueLogic.js` の `handleButtonClick` でプロローグ処理時
-**記録データ:** `{ time: currentTime, life, mental, charge, money }`（変動前の Atom 値）
-
-> ※ プロローグの `gaugeChange` は全て 0 のため、変動前 = 変動後。
-> ただし将来プロローグにゲージ変動が追加された場合を考慮し、「変動前の値を記録」を仕様とする。
-
-#### 実装方針
-
-- 外部ライブラリ不使用：SVG の `<polyline>` で描画
-#### 実装方針
-
-- グラフ領域のサイズ：幅 `100%`、高さ `15vh`、背景色 `var(--color-base12)`、角丸 `1vh`
-- グラフ領域の枠線：**外側描画**で線端を隠さない（`outline` または `box-shadow` で描画）
-- SVG viewBox: `0 0 500 350`
-- `preserveAspectRatio="none"` でコンテナ全体に引き伸ばし（**左右余白ゼロ**）
-- **左右余白**：折れ線の端が枠に触れない程度に小さく確保（`padding.left/right = 10`）
-- 目盛り/時刻ラベルは **SVGの外** に配置して可読性を確保
-  - 縦軸ラベル：左カラムの左側に別要素で縦並び
-  - 横軸ラベル：グラフ直下に別要素で左右配置
-- 上下の可読性確保のため `padding.top/bottom` は維持
-- **XY軸の罫線は表示しない**
-- 横グリッド線：**視認性を優先**して不透明にする（`opacity: 1`）
-- ゲージ折れ線：各ゲージ色で描画、線幅は **2倍（現状比）**
-- 凡例：グラフ下部に、`flexWrap` で配置（**ヘッダーと同じアイコン表示**、money は「お金 (百円)」）
-
-#### コンポーネント設計
-
-- `GaugeChart` として新規作成
-- Atom を直接読み取らない（純粋な表示コンポーネント）
-- 親の `ResultPage` から props で値を渡す
-
-```jsx
-<GaugeChart
-  gaugeHistory={gaugeHistory}  // gaugeHistoryAtom の値
-/>
-```
-
----
-
-### セクション 5: 生死を分けた選択
-
-`eventHistoryAtom` と `eventList`（ローカルデータ）を突合し、`type === "walk"` のイベントのみ抽出してプレイヤーの重大な移動選択を時系列で振り返る。
+#### 4.5.2 表示要件
 
-#### デザイン
-
-- 他セクションと同じカード形式（ヘッダー + ボディ）
-- ヘッダーテキスト: `"生死を分けた選択"`
-- 各エントリは `borderBottom` で区切り（最後のエントリは区切りなし）
+1. 折れ線グラフで `life/mental/charge/money` を同時表示する。
+2. 凡例ラベルは `体力 (%)` / `精神力 (%)` / `充電 (%)` / `お金 (百円)`。
+3. 同時刻の複数ポイント（`gaugeSteps` 由来）をそのまま描画する。
 
-#### データソース
+#### 4.5.3 空データ時の扱い
 
-> ❗ `eventHistoryAtom` のデータ構造は `{ id, time }` のみ。`type` や `locationId` フィールドは含まれない。
-> そのため、walk イベントの判別には `eventList`（ローカルデータ）との突合が必要。
+- 正常系前提: `gaugeHistoryAtom` は1件以上存在する。
+- 例外系: 空配列の場合は `ゲージ推移データがありません` を表示し、凡例のみ表示する。
+- QA上は「例外系」として扱う。
 
-1. `eventHistoryAtom` からイベント履歴を取得（`[{ id, time }]`）
-2. 各エントリの `id` を `eventList`（`temporary-database`）で検索し、`type === "walk"` のものだけフィルタ
-3. ヒットしたイベントの `locationId` → `facilityList` で施設情報を取得
-4. 施設の `type` → `spotTypeList` で日本語名を取得
-5. 施設ごとの意義テキスト → `facilitySignificanceText` で取得
+### 4.6 生死を分けた選択
 
-> ※ ダミーデータによるフォールバックは行わない。データが空の場合はフォールバックメッセージを表示する。
+#### 4.6.1 抽出ルール
 
-#### 📘 将来設計：MongoDB 連携時の注意点
+1. `eventHistoryAtom` を時系列で走査する。
+2. `eventList` と突合し、`type` が `walk` / `epilogue` / `sns` のみ採用する。
+3. `walk` / `epilogue` は `facilityList` と `spotTypeList` で施設名・施設種別名を解決する。
 
-> MongoDB の `events` コレクションには `type` フィールドが含まれているため、
-> 将来的にバックエンドからイベントデータを取得する際は以下の設計変更が望ましい：
->
-> **推奨設計：**
-> 1. `eventHistoryAtom` の構造を `{ id, time }` から `{ id, time, type, locationId }` に拡張
-> 2. `useMonologueLogic.js` でイベント追加時に `type` と `locationId` も保存
-> 3. `buildTimelineData()` では `eventList` との突合が不要になり、`e.type === "walk"` で直接フィルタ可能
->
-> これにより：
-> - MongoDB から取得したイベントデータをそのまま Atom に格納可能
-> - ローカルデータとの突合ロジックが不要になり、コードがシンプルに
-> - フィルタ処理のパフォーマンスが向上
->
-> **現在の実装は暂定的な回避策であり、将来のリファクタリングを前提としている。**
+#### 4.6.2 1エントリ表示
 
-#### 表示内容（1エントリあたり）
+- 時刻: `HH:mm`
+- アクション名:
+  - `walk/epilogue`: `{施設タイプ名}へ移動`
+  - `sns`: `SNS を確認`
+- 地点:
+  - `walk/epilogue`: `地点：{施設名}`
+  - `sns`: 非表示
+- 意義テキスト: 施設IDまたはSNS固定文から取得
 
-```
-15:00                          ← 時刻（text-subtext）
-モバイルバッテリースタンドへ移動  ← 施設タイプ名 + "へ移動"（赤太字, text-maintext）
-地点：CHARGESPOT HUB 渋谷センター街店  ← "地点：" + 施設名（text-subtext）
-                               ← 空行
-電源を確保。精神を回復し、...    ← 意義テキスト（text-subtext）
-```
+#### 4.6.3 空データ時
 
-| 表示項目       | データソース                                              | スタイル                              |
-| -------------- | --------------------------------------------------------- | ------------------------------------- |
-| 時刻           | `eventHistory[i].time` を `HH:mm` フォーマット            | `text-subtext`                        |
-| アクション名   | `spotTypeList[facility.type].name` + `"へ移動"`           | `text-maintext`, `color: red`, `bold` |
-| 地点           | `"地点：" + facility.name`                                | `text-subtext`                        |
-| 意義テキスト   | `facilitySignificanceText[facility.id]`                   | `text-subtext`                        |
+- `行動履歴がありません` を表示する。
 
-#### 施設ごとの意義テキスト定義（`facilitySignificanceText`）
+### 4.7 防災に向けてのヒント
 
-ResultPage 内、または `temporary-database` 内に以下のマッピングを定義する。
+#### 4.7.1 生成ルール
 
-```js
-const facilitySignificanceText = {
-  fac_001: "電源を確保。精神を回復し、後のSNS利用やマップ閲覧が可能に。",
-  fac_002: "壁の矢印が示す避難方向を確認。土地勘がなくても正しい方角を把握できた。",
-  fac_003: "水や食料を調達。体力と気力を回復し、次の行動に備えた。",
-  fac_004: "受け入れ施設の情報を取得し、行動範囲が広がった。",
-  fac_005: "施設が満員になる寸前に滑り込み、夜の安全を確保。",
-};
-```
+0. **行動履歴がない場合（`timelineData.length === 0`）は空配列を返す**（ヒントを生成しない）。
+1. 施設訪問ヒント（訪問/未訪問）を評価する。
+2. ゲージ条件ヒント（money/charge/mental）を評価する。
+3. 重複テーマを避ける条件（例: money=0 と `fac_003` 未訪問）を適用する。
+4. 候補が3件以上の場合はランダムシャッフル後に2件採用する。
 
-> ※ `fac_000`（渋谷駅前）はゲーム開始地点のため、タイムラインには表示しない。
+#### 4.7.2 空データ時
 
-#### コンポーネント構成
+- `生存のヒントがありません` を表示する。
 
-- 新規: `ResultTimelineItem.jsx`（1エントリ分の表示）
-- props: `{ time, facilityTypeName, facilityName, significanceText }`
-- ResultPage 側でデータを組み立てて props で渡す
+### 4.8 アプリ紹介
 
----
+- 既存表示を維持する（本文、外部リンク）。
 
-### セクション 6: 防災に向けてのヒント
+### 4.9 ボタン群
 
-ゲーム中のプレイヤーの選択に基づいて、現実の防災に活かせるヒントを動的に表示するセクション。「あれば～かもしれない」という反事実的な視点で学習を促進。
+1. SNS共有ボタン
+- 文言: `避難の記録をSNSに投稿する`
+- 動作: `setIsShareOpen(true)`
 
-#### デザイン
+2. タイトルに戻るボタン
+- 文言: `タイトルに戻る`
+- 動作: 確認ダイアログ -> `resetAllAtom` -> `/` へ遷移
 
-- 他セクションと同じカード形式（ヘッダー + ボディ）
-- ヘッダーテキスト: `"防災に向けて～生存のヒント～"`
-- ボディ：赤太字テキストで1～複数のヒントを表示
+### 4.10 ダミー画像
 
-#### データソース
+- `dummy-result.png` は開発用表示。
+- 本番リリースでは削除対象。
 
-- `visitedFacilitiesAtom` に基づく：特定の施設を訪問したかどうか
-- `gaugeHistoryAtom` に基づく：ゲージが 0 になった項目の有無
+## 5. ShareModal仕様
 
-#### 表示内容（例）
+### 5.1 表示方式
 
-```
-防災に向けて～生存のヒント～
+1. ResultPage内オーバーレイ（ボトムシート）で表示する。
+2. 別ページ遷移はしない。
+3. ルート追加はしない。
 
-現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。
+### 5.2 コンポーネント契約
 
-モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減少させたかもしれない。
-```
+`ShareModal` は以下を props で受け取る。
 
-#### ヒント生成ロジック
+- `isOpen: boolean`
+- `onClose: () => void`
+- `shareData`:
+  - `survived`
+  - `visitedCount`
+  - `totalDistance`
+  - `elapsedTime: { hours, minutes }`
+  - `snsCount`
+  - `money`
+  - `life`, `mental`, `charge`
+  - `playDate`
 
-各条件に応じたヒントを定義し、該当する条件がある場合のみ表示。
+### 5.3 画像生成仕様
 
-| 条件                                           | ヒントテキスト                                               |
-| ---------------------------------------------- | ------------------------------------------------------------ |
-| `visitedFacilities` に `fac_003` (コンビニ) **なし** | 「現金があれば、キャッシュレス決済が使えなくなっても皮てすぐに済んだかもしれない。」 |
-| `visitedFacilities` に `fac_001` (モバイルバッテリー) **なし** | 「モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。」 |
-| 最終 `moneyAtom` が 0 | 「小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。」 |
-| 最終 `chargeAtom` が 0 | 「スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。」 |
-| 最終 `mentalAtom` が 30 未満 | 「複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。」 |
+1. Canvasサイズは `1080x1920`（9:16）固定。
+2. レイアウトは絶対座標の固定値ではなく、キャンバス比率ベースで配置する。
+3. 文言可変に備え、各セクションに最小余白と折り返し上限を持たせる。
+4. 生成画像にはRouteMapを含めない。
 
-#### UIパターン
+### 5.4 フォント仕様
 
-- セクション5（生死を分けた選択）と同じカードスタイル
-- 幅 `90%`、背景 `var(--color-base10)`、角丸 `2vh`
-- ヘッダー行：`text-maintext`、`paddingX: 4%`, `paddingY: 1vh`, `borderBottom: 0.1vh solid var(--color-base131)`
-- ボディ行：`paddingX: 4%`, `paddingTop: 1vh`, `paddingBottom: 2vh`、`flexDirection: column`, `gap: 1vh`
-- 各ヒントテキスト：`text-maintext`、黒字（デフォルトのテキスト色）
+1. 描画前に `document.fonts.ready` を待機する。
+2. 指定フォント未読込時はフォールバックフォントで描画する。
+3. フォールバック時も要素が重ならないよう、テキスト幅再計測で配置を再計算する。
 
-#### コンポーネント構成
+### 5.5 保存仕様
 
-- ResultPage 内で直接レンダリング（新規コンポーネント不要）
-- ヒント配列を動的に生成してマッピング表示
+1. 二重押下防止として `isSaving` を使う。
+2. デスクトップは `download` 属性で保存する。
+3. iOS Safari ではプレビュー表示 + 長押し保存案内を出す。
 
----
+## 6. サーバー連携仕様（`POST /api/results`）
 
-### セクション 7: アプリ紹介（既存維持）
+### 6.1 送信タイミング
 
-変更なし。オープンデータに関する説明と外部リンク。
-セクション間隔: `mt="2vh"`
+1. 送信は「`/result` への遷移確定時」に1回行う。
+2. ResultPageの初回描画では送信しない。
+3. `/result` 再訪問・リロード時に自動再送しない。
 
----
+### 6.2 リクエスト
 
-### セクション 8: タイトルに戻るボタン（既存維持）
-
-- 確認ダイアログ → `resetAllAtom` で全リセット → `/` に遷移
-- セクション間隔: `mt="2vh"`
-- ※ `Button` コンポーネントは Chakra UI コンポーネントではないため `mt` props を受け取れない。`Flex` で囲んで `mt` を適用すること。
-
----
-
-### ダミー画像（開発用・最終削除予定）
-
-- タイトルに戻るボタンの**下**に配置
-- 最終リリース前に削除予定
-- `<img src="/assets/image/dummy-result.png" />`
-
----
-
-## サーバー連携
-
-### 結果保存
-
-ResultPage の **初回レンダリング時** に `POST /api/results` を呼び出す。
-
-#### リクエストボディ
+`Content-Type: application/json`
 
 ```json
 {
@@ -480,63 +272,185 @@ ResultPage の **初回レンダリング時** に `POST /api/results` を呼び
 }
 ```
 
-> ⚠️ Atom は日本語文字列（`"20代"`, `"男性"`）を保持しており、`staticDataList` のキー（`y20`, `male`）とは異なる。  
-> 現時点では **Atom の値をそのまま送信** する。統計集計時にサーバー側で正規化する方針とする。  
-> 将来的に Atom 自体をキーで保持するよう統一する場合は別タスクで対応。
+#### 6.2.1 フィールド定義
 
-#### Atom → フィールド対応
+| フィールド | 型 | 必須 | 備考 |
+| --- | --- | --- | --- |
+| `AgeType` | `string \| null` | 任意 | Atom値をそのまま送信 |
+| `Gender` | `string \| null` | 任意 | Atom値をそのまま送信 |
+| `ResidenceType` | `string \| null` | 任意 | Atom値をそのまま送信 |
+| `EventHistory` | `Array<{id:string,time:string}>` | 任意 | `time` は ISO8601 UTC |
 
-| API フィールド | Atom                  | 値の形式               |
-| -------------- | --------------------- | ---------------------- |
-| AgeType        | `playerAgeAtom`       | 日本語文字列（`"20代"`） |
-| Gender         | `playerGenderAtom`    | 日本語文字列（`"男性"`） |
-| ResidenceType  | `playerResidenceAtom` | 日本語文字列（`"渋谷区在学"`） |
-| EventHistory   | `eventHistoryAtom`    | `[{ id, time }]`      |
+### 6.3 レスポンス
 
-#### 注意事項
+| HTTP | body | 意味 |
+| --- | --- | --- |
+| `201` | `{ "_id": "..." }` | 保存成功 |
+| `500` | `{ "error": "..." }` | 保存失敗 |
 
-- 二重送信防止: `useRef` で送信済みフラグを管理
-- エラー時: コンソールに警告のみ（リザルト表示には影響させない）
+### 6.4 通信失敗時の挙動
 
----
+1. 結果保存失敗でも画面遷移は継続する（UIはブロックしない）。
+2. 自動リトライは行わない。
+3. タイムアウトはブラウザ標準設定（明示指定なし）を使う。
 
-## 使用する Atom 一覧
+### 6.5 冪等性と重複
 
-| Atom                    | 用途                   |
-| ----------------------- | ---------------------- |
-| `survivedAtom`          | 成功/失敗判定          |
-| `criticalReasonAtom`    | 死因/サバイバルポイント |
-| `lifeAtom`              | 最終体力               |
-| `mentalAtom`            | 最終精神力             |
-| `chargeAtom`            | 最終充電               |
-| `moneyAtom`             | 最終所持金             |
-| `currentTimeAtom`       | ゲーム内現在時刻       |
-| `eventHistoryAtom`      | イベント履歴           |
-| `gaugeHistoryAtom`      | ゲージ推移履歴         |
-| `visitedFacilitiesAtom` | 訪問済み施設ID一覧     |
-| `resetAllAtom`          | 全リセット             |
+1. 現行仕様では `Idempotency-Key` を使用しない。
+2. 同一プレイの重複送信をサーバー側で完全排除する仕様は持たない。
+3. 分析時の重複排除は別系統で扱う（本画面仕様の対象外）。
 
----
+### 6.6 データ取り扱い
 
-## 使用する API
+1. 送信対象は年齢区分・性別区分・居住属性・イベント履歴のみ。
+2. `playerName` 等の個人識別に近い情報は送信しない。
+3. `EventHistory.time` はUTC基準で扱う。
 
-| メソッド | エンドポイント       | 用途                 |
-| -------- | -------------------- | -------------------- |
-| GET      | `/api/events/:id`    | イベント詳細取得     |
-| GET      | `/api/facilities`    | 施設一覧取得         |
+## 7. コンポーネント責務
 
----
+| コンポーネント | 責務 | Atom直接参照 |
+| --- | --- | --- |
+| `ResultPage` | 画面コンテナ、Atom読取、値算出、props受け渡し、ルーティング | あり |
+| `StatsSummary` | 統計表示（純粋表示） | なし |
+| `GaugeChart` | グラフ表示（純粋表示） | なし |
+| `ResultTimelineItem` | タイムライン1行表示（純粋表示） | なし |
+| `ShareModal` | モーダルUI・画像生成（純粋表示） | なし |
+| `resultPageLogic` | 純粋関数群（算出・整形） | なし |
 
-## ファイル構成（変更対象）
+## 8. 依存リソース
 
-| ファイル                                        | 変更種別 | 内容                         |
-| ----------------------------------------------- | -------- | ---------------------------- |
-| `client/src/pages/ResultPage.jsx`               | 改修     | 全面改修                     |
-| `client/src/components/game-page/ResultTimelineItem.jsx` | 新規 | タイムライン1行コンポーネント |
-| `client/src/components/game-page/GaugeChart.jsx`         | 新規 | ゲージ推移の可視化           |
-| `client/src/components/game-page/StatsSummary.jsx`       | 新規 | 統計サマリーカード           |
-| `client/src/components/game-page/index.js`      | 改修     | 新規コンポーネントの export  |
-| `client/src/atoms/playerAtoms.js`               | 修正     | `criticalReasonAtom` 初期値修正・`resetAllAtom` に追加 |
-| `server/index.js`                               | 修正     | エラーハンドラ重複削除       |
+### 8.1 Atom
 
+- `survivedAtom`
+- `criticalReasonAtom`
+- `lifeAtom`
+- `mentalAtom`
+- `chargeAtom`
+- `moneyAtom`
+- `currentTimeAtom`
+- `eventHistoryAtom`
+- `gaugeHistoryAtom`
+- `visitedFacilitiesAtom`
+- `resetAllAtom`
 
+### 8.2 ローカルマスタ
+
+- `eventList`
+- `facilityList`
+- `spotTypeList`
+
+### 8.3 API
+
+- `POST /api/results`
+
+注記:
+
+- `GET /api/events/:id` と `GET /api/facilities` はゲーム進行側の仕様であり、ResultPage仕様の依存APIには含めない。
+
+## 9. 受け入れ条件（QA）
+
+1. 目次・章本文・ルーティング定義の間で `/result/share` の記述不整合がない。
+2. 統計サマリーの総移動距離が `null` にならない。
+3. `fac_000` は訪問施設数に含まれない。
+4. `money` が百円単位で表示時に円換算される。
+5. `gaugeHistory` 空配列時に例外系フォールバック表示となる。
+6. タイムラインで `sns` は地点行を表示しない。
+7. ShareModalはルーティング遷移なしで開閉できる。
+8. Result保存失敗時でも `/result` へ遷移する。
+
+## 10. 文書運用ルール
+
+1. 仕様変更時は本書（What）を先に更新する。
+2. 実装詳細変更時は本書の第11章（設計）を更新する。
+3. Issue対応やテスト結果は `docs/tasks/` の該当タスクに追記する。
+4. 本書に「完了済みIssue履歴」や「テスト実行ログ」を混在させない。
+
+## 11. 設計（How）
+
+### 11.1 設計方針
+
+1. 算出ロジックは `client/src/utils/resultPageLogic.js` に集約し、UIコンポーネントから分離する。
+2. `ResultPage` はコンテナとして Atom を読み、表示コンポーネントへ props を渡す。
+3. 表示コンポーネントは副作用を持たない（`ShareModal` も同様）。
+
+### 11.2 データフロー
+
+```text
+Atom / ローカルマスタ
+  -> ResultPage（算出・整形）
+    -> StatsSummary / GaugeChart / ResultTimelineItem / ShareModal
+```
+
+- 施設名・施設タイプは `eventHistoryAtom` 単体では復元できないため、`eventList` / `facilityList` / `spotTypeList` を突合する。
+
+### 11.3 算出ロジック設計
+
+#### 11.3.1 総移動距離
+
+1. `visitedFacilities` の隣接ペアごとに Haversine 距離（km）を合算する。
+2. 小数点1桁で丸める。
+3. 不正IDまたは座標欠損セグメントはスキップする。
+
+#### 11.3.2 訪問施設数
+
+- `fac_000` は開始地点なので除外する。
+
+#### 11.3.3 ヒント選定
+
+1. 施設系ヒント + 条件ヒントを作成する。
+2. 3件以上はシャッフルして2件選択する。
+
+### 11.4 `gaugeSteps` と `charge` / `battery` の扱い
+
+#### 11.4.1 背景
+
+- イベント定義（`eventList` / API `gaugeChange`）は `battery` キーを使用。
+- 表示系（`gaugeHistory`, ResultPage, GaugeChart）は `charge` キーを使用。
+
+#### 11.4.2 実装ルール
+
+1. イベント処理段階で `battery` を `charge` に適用して確定値を作る。
+2. `gaugeHistory` への記録は常に `charge` キーで保存する。
+3. ResultPage 配下は `battery` を直接参照しない。
+
+#### 11.4.3 後方互換
+
+1. `gaugeSteps` がないイベントは `gaugeChange` を1ステップとして扱う。
+2. `gaugeSteps` があるイベントは各ステップを同一時刻で順次適用する。
+
+### 11.5 ShareModal 実装設計
+
+#### 11.5.1 Canvas 生成
+
+1. 画像サイズは `1080x1920`。
+2. 出力形式は PNG。
+3. 地図は含めない。
+
+#### 11.5.2 レイアウト設計
+
+1. 固定座標値への依存を避け、比率ベースでレイアウトする。
+2. セクションごとに高さ比率を定義し、縦方向フローで配置する。
+
+#### 11.5.3 フォントロード
+
+1. 描画前に `document.fonts.ready` を待機する。
+2. フォールバック時は `ctx.measureText` で再レイアウトして重なりを防ぐ。
+
+#### 11.5.4 保存挙動
+
+1. 通常ブラウザは `a[download]` 経由。
+2. iOS Safari はプレビューURL表示 + 長押し保存誘導。
+3. `isSaving` フラグで多重起動防止。
+
+### 11.6 API送信の実装設計
+
+1. 送信箇所は `useMonologueLogic` の `postResultIfNeeded(nextPath)`。
+2. `/result` 遷移時のみ送信する。
+3. 失敗時は警告ログのみで遷移を継続する。
+
+### 11.7 将来対応（非対象）
+
+1. `eventHistoryAtom` に `type`, `locationId` を保持し、`eventList` 突合を減らす。
+2. `POST /api/results` に冪等性キーを導入する。
+3. Share画像に地図を含める場合は Static Maps API 等の別設計を行う。
+4. `AgeType/Gender/ResidenceType` の送信値を表示ラベルから正規化キーへ統一する。

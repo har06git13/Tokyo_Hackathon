@@ -8,9 +8,9 @@ import { LifeIcon, MentalIcon, ChargeIcon, MoneyIcon } from "../icons";
  */
 const GaugeChart = ({ gaugeHistory }) => {
   const legendItems = [
-    { label: "体力", Icon: LifeIcon },
-    { label: "精神力", Icon: MentalIcon },
-    { label: "充電", Icon: ChargeIcon },
+    { label: "体力 (%)", Icon: LifeIcon },
+    { label: "精神力 (%)", Icon: MentalIcon },
+    { label: "充電 (%)", Icon: ChargeIcon },
     { label: "お金 (百円)", Icon: MoneyIcon },
   ];
   const legendIconSize = "2.2vh";
@@ -46,7 +46,7 @@ const GaugeChart = ({ gaugeHistory }) => {
           </Text>
 
           {/* 凡例 */}
-          <Flex gap="2vh" flexWrap="wrap" justifyContent="center">
+          <Flex gap="1vh" flexWrap="nowrap" justifyContent="center">
             {legendItems.map(({ label, Icon }) => (
               <Flex key={label} alignItems="center" gap="0.6vh">
                 <Box height={legendIconSize} width={legendIconSize}>
@@ -227,7 +227,7 @@ const GaugeChart = ({ gaugeHistory }) => {
       </Flex>
 
         {/* 凡例 */}
-        <Flex gap="1.5vh" flexWrap="wrap" justifyContent="center">
+        <Flex gap="1vh" flexWrap="nowrap" justifyContent="center">
           {legendItems.map(({ label, Icon }) => (
             <Flex key={label} alignItems="center" gap="0.6vh">
               <Box height={legendIconSize} width={legendIconSize}>
