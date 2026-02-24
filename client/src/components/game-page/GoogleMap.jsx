@@ -12,6 +12,9 @@ const defaultMapContainerStyle = {
   borderRadius: "8px",
 };
 
+// Google Maps JS API で使用するライブラリ（コンポーネント外に定義することで、レンダリングごとの配列再生成を防ぐ）
+const GOOGLE_MAPS_LIBRARIES = ['places'];
+
 // 渋谷駅周辺の初期座標
 const center = { lat: 35.6581, lng: 139.7017 };
 
@@ -132,7 +135,7 @@ export const GoogleMapComponent = ({
   const { isLoaded: isApiLoaded, loadError: apiLoadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const onLoad = useCallback((map) => {

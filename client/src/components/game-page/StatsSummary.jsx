@@ -11,12 +11,16 @@ import PropTypes from "prop-types";
  * @param {number} moneyValue - 所持金（百円単位 0-100、表示時に円変換）
  * @param {number} snsCount - SNS利用回数
  */
+import RouteMap from "./RouteMap";
+
 export const StatsSummary = ({
   totalDistance,
   visitedCount,
   elapsedTime,
   moneyValue,
   snsCount,
+  visitedFacilities,
+  facilityList,
 }) => {
   // 表示項目（順番：総移動距離 → 経過時間 → 訪問施設数 → 使用したお金 → SNS利用回数）
   const stats = [
@@ -33,7 +37,7 @@ export const StatsSummary = ({
       value: `${visitedCount} 箇所`,
     },
     {
-      label: "所持金",
+      label: "使用したお金",
       value: `${(moneyValue * 100).toLocaleString()} 円`,
     },
     {
@@ -93,6 +97,8 @@ export const StatsSummary = ({
             </Flex>
           ))}
         </Flex>
+        {/* 経路地図（下半分）: カード本体の paddingX(4%) に統一するため追加 px は不要 */}
+        <RouteMap visitedFacilities={visitedFacilities} facilityList={facilityList} mapBorderRadius="1vh" />
       </Flex>
     </Flex>
   );
@@ -107,4 +113,6 @@ StatsSummary.propTypes = {
   }).isRequired,
   moneyValue: PropTypes.number.isRequired,
   snsCount: PropTypes.number.isRequired,
+  visitedFacilities: PropTypes.arrayOf(PropTypes.string).isRequired,
+  facilityList: PropTypes.array.isRequired,
 };
