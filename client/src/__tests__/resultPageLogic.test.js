@@ -9,9 +9,14 @@ import {
   buildHints,
   countSnsEvents,
   calcElapsedTime,
+  calcTotalDistance,
+  calcVisitedCount,
   formatTime,
   getFlavorText,
   facilitySignificanceText,
+  snsSignificanceText,
+  facilityHintMap,
+  fallbackHints,
 } from "../utils/resultPageLogic";
 import { eventList, facilityList, spotTypeList } from "../temporary-database";
 
@@ -71,46 +76,79 @@ describe("ResultPage ロジック - TDD 検証", () => {
   // ----------------------------------------------------------
   describe("buildTimelineData - タイムライン生成", () => {
 
-    test("フルプレイ: walk イベントのみが抽出される（prologue/sns/epilogue/time は除外）", () => {
+    test("フルプレイ: walk + sns + epilogue イベントが抽出される（prologue/time は除外）", () => {
       const timeline = buildTimelineData(fullPlayEventHistory, eventList, facilityList, spotTypeList);
       
-      // walk_001, walk_003, walk_004 の3件のみ
-      expect(timeline).toHaveLength(3);
+      // sns_001(14:00), walk_001(14:30), sns_002(15:00), walk_003(15:30), walk_004(16:00), epilogue_001(16:30) の6件
+      expect(timeline).toHaveLength(6);
     });
 
-    test("フルプレイ: 各タイムラインアイテムに正しい施設名が表示される", () => {
+    test("フルプレイ: 各タイムラインアイテムに正しい施設名・isSns フラグが設定される", () => {
       const timeline = buildTimelineData(fullPlayEventHistory, eventList, facilityList, spotTypeList);
       
-      expect(timeline[0].facilityName).toBe("CHARGESPOT HUB 渋谷センター街店");
-      expect(timeline[1].facilityName).toBe("ファミリーマート 渋谷公園通り店");
-      expect(timeline[2].facilityName).toBe("代々木公園");
+      // [0] sns_001 → isSns: true, facilityName: null
+      expect(timeline[0].isSns).toBe(true);
+      expect(timeline[0].facilityName).toBeNull();
+      // [1] walk_001 → CHARGESPOT HUB
+      expect(timeline[1].isSns).toBe(false);
+      expect(timeline[1].facilityName).toBe("CHARGESPOT HUB 渋谷センター街店");
+      // [2] sns_002 → isSns: true
+      expect(timeline[2].isSns).toBe(true);
+      // [3] walk_003 → ファミリーマート
+      expect(timeline[3].facilityName).toBe("ファミリーマート 渋谷公園通り店");
+      // [4] walk_004 → 代々木公園
+      expect(timeline[4].facilityName).toBe("代々木公園");
+      // [5] epilogue_001 → ウィズ原宿
+      expect(timeline[5].facilityName).toBe("ウィズ原宿");
     });
 
     test("フルプレイ: 施設タイプ名が spotTypeList から正しく取得される", () => {
       const timeline = buildTimelineData(fullPlayEventHistory, eventList, facilityList, spotTypeList);
 
-      // fac_001 → type="mobilebattery"
-      expect(timeline[0].facilityTypeName).toBe("モバイルバッテリースタンド");
-      // fac_003 → type="restaurant"
-      expect(timeline[1].facilityTypeName).toBe("飲食店・コンビニなど");
-      // fac_004 → type="evacuation"
-      expect(timeline[2].facilityTypeName).toBe("避難所");
+      // [1] fac_001 → type="mobilebattery"
+      expect(timeline[1].facilityTypeName).toBe("モバイルバッテリースタンド");
+      // [3] fac_003 → type="restaurant"
+      expect(timeline[3].facilityTypeName).toBe("飲食店・コンビニなど");
+      // [4] fac_004 → type="evacuation"
+      expect(timeline[4].facilityTypeName).toBe("避難所");
+      // [5] fac_005 → type="shelter"
+      expect(timeline[5].facilityTypeName).toBe("帰宅困難者受け入れ施設");
+      // SNS アイテムは facilityTypeName = null
+      expect(timeline[0].facilityTypeName).toBeNull();
     });
 
     test("フルプレイ: 各アイテムに意義テキストが設定されている", () => {
       const timeline = buildTimelineData(fullPlayEventHistory, eventList, facilityList, spotTypeList);
       
-      expect(timeline[0].significanceText).toBe(facilitySignificanceText["fac_001"]);
-      expect(timeline[1].significanceText).toBe(facilitySignificanceText["fac_003"]);
-      expect(timeline[2].significanceText).toBe(facilitySignificanceText["fac_004"]);
+      expect(timeline[0].significanceText).toBe(snsSignificanceText); // sns
+      expect(timeline[1].significanceText).toBe(facilitySignificanceText["fac_001"]);
+      expect(timeline[2].significanceText).toBe(snsSignificanceText); // sns
+      expect(timeline[3].significanceText).toBe(facilitySignificanceText["fac_003"]);
+      expect(timeline[4].significanceText).toBe(facilitySignificanceText["fac_004"]);
+      expect(timeline[5].significanceText).toBe(facilitySignificanceText["fac_005"]);
     });
 
     test("フルプレイ: 時刻が HH:MM 形式でフォーマットされている", () => {
       const timeline = buildTimelineData(fullPlayEventHistory, eventList, facilityList, spotTypeList);
       
-      expect(timeline[0].time).toBe("14:30");
-      expect(timeline[1].time).toBe("15:30");
-      expect(timeline[2].time).toBe("16:00");
+      expect(timeline[0].time).toBe("14:00"); // sns_001
+      expect(timeline[1].time).toBe("14:30"); // walk_001
+      expect(timeline[2].time).toBe("15:00"); // sns_002
+      expect(timeline[3].time).toBe("15:30"); // walk_003
+      expect(timeline[4].time).toBe("16:00"); // walk_004
+      expect(timeline[5].time).toBe("16:30"); // epilogue
+    });
+
+    test("epilogue イベント単体: 帰宅困難者受け入れ施設として表示される", () => {
+      const epilogueOnlyHistory = [
+        { id: "event_epilogue_001", time: new Date(2026, 1, 23, 16, 30) },
+      ];
+      const timeline = buildTimelineData(epilogueOnlyHistory, eventList, facilityList, spotTypeList);
+      expect(timeline).toHaveLength(1);
+      expect(timeline[0].facilityName).toBe("ウィズ原宿");
+      expect(timeline[0].facilityTypeName).toBe("帰宅困難者受け入れ施設");
+      expect(timeline[0].significanceText).toBe(facilitySignificanceText["fac_005"]);
+      expect(timeline[0].isSns).toBe(false);
     });
 
     test("イベント履歴が空の場合、空配列が返る", () => {
@@ -118,13 +156,17 @@ describe("ResultPage ロジック - TDD 検証", () => {
       expect(timeline).toHaveLength(0);
     });
 
-    test("SNSイベントのみの場合、空配列が返る", () => {
+    test("SNSイベントのみの場合、SNSアイテムが返る", () => {
       const snsOnlyHistory = [
         { id: "event_sns_001", time: new Date(2026, 1, 23, 14, 0) },
         { id: "event_sns_002", time: new Date(2026, 1, 23, 15, 0) },
       ];
       const timeline = buildTimelineData(snsOnlyHistory, eventList, facilityList, spotTypeList);
-      expect(timeline).toHaveLength(0);
+      expect(timeline).toHaveLength(2);
+      expect(timeline[0].isSns).toBe(true);
+      expect(timeline[0].facilityName).toBeNull();
+      expect(timeline[0].facilityTypeName).toBeNull();
+      expect(timeline[0].significanceText).toBe(snsSignificanceText);
     });
 
     test("eventList に存在しない id のイベントは無視される", () => {
@@ -237,7 +279,7 @@ describe("ResultPage ロジック - TDD 検証", () => {
   // ----------------------------------------------------------
   describe("buildHints - 防災ヒント生成", () => {
 
-    test("全施設訪問・十分なゲージ: ヒントなし", () => {
+    test("全施設訪問・十分なゲージ: 訪問済み施設のポジティブヒント 2件が返る", () => {
       // fac_001, fac_003 訪問済み、money>0, charge>0, mental>=30
       const hints = buildHints(
         ["fac_000", "fac_001", "fac_003", "fac_004"],
@@ -245,7 +287,9 @@ describe("ResultPage ロジック - TDD 検証", () => {
         50,  // charge
         70   // mental
       );
-      expect(hints).toHaveLength(0);
+      expect(hints).toHaveLength(2);
+      expect(hints).toContain(facilityHintMap.fac_001.visited);
+      expect(hints).toContain(facilityHintMap.fac_003.visited);
     });
 
     test("fac_003 未訪問: 現金ヒントが出る", () => {
@@ -262,10 +306,21 @@ describe("ResultPage ロジック - TDD 検証", () => {
       );
     });
 
-    test("money=0: 小銭ヒントが出る", () => {
+    test("money=0 かつ fac_003 訪問済み: 小銭ヒントが出る", () => {
       const hints = buildHints(["fac_000", "fac_001", "fac_003"], 0, 50, 70);
       expect(hints).toContain(
         "小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。"
+      );
+    });
+
+    test("money=0 かつ fac_003 未訪問: 小銭ヒントは出ない（fac_003.notVisited と重複するため）", () => {
+      const hints = buildHints(["fac_000", "fac_001"], 0, 50, 70);
+      expect(hints).not.toContain(
+        "小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。"
+      );
+      // 代わりに fac_003.notVisited が出る
+      expect(hints).toContain(
+        "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。"
       );
     });
 
@@ -283,10 +338,65 @@ describe("ResultPage ロジック - TDD 検証", () => {
       );
     });
 
-    test("最悪ケース: 5つ全てのヒントが出る", () => {
+    test("最悪ケース（fac_003未訪問）: 小銭ヒントはスキップされ4件", () => {
       // fac_001 & fac_003 未訪問, money=0, charge=0, mental=10
+      // money=0 だが fac_003 未訪問 → 小銭ヒントは fac_003.notVisited と重複するためスキップ
       const hints = buildHints(["fac_000"], 0, 0, 10);
+      expect(hints).toHaveLength(4);
+      expect(hints).not.toContain(
+        "小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。"
+      );
+    });
+
+    test("最悪ケース（fac_003訪問済み）: 小銭ヒントも出て5件", () => {
+      // fac_001 未訪問, fac_003 訪問済み, money=0, charge=0, mental=10
+      const hints = buildHints(["fac_000", "fac_003"], 0, 0, 10);
       expect(hints).toHaveLength(5);
+      expect(hints).toContain(
+        "小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。"
+      );
+    });
+  });
+
+  // ----------------------------------------------------------
+  // セクション 6: 施設ベースヒント（task-0223-07）
+  // ----------------------------------------------------------
+  describe("buildHints - 施設ベースのヒント", () => {
+
+    test("fac_001 訪問済みの場合、ポジティブヒントが含まれる", () => {
+      const hints = buildHints(["fac_000", "fac_001", "fac_003"], 50, 50, 70);
+      expect(hints).toContain(facilityHintMap.fac_001.visited);
+      expect(hints).not.toContain(facilityHintMap.fac_001.notVisited);
+    });
+
+    test("fac_001 未訪問の場合、反省ヒントが含まれる", () => {
+      const hints = buildHints(["fac_000", "fac_003"], 50, 50, 70);
+      expect(hints).toContain(facilityHintMap.fac_001.notVisited);
+      expect(hints).not.toContain(facilityHintMap.fac_001.visited);
+    });
+
+    test("fac_003 訪問済みの場合、ポジティブヒントが含まれる", () => {
+      const hints = buildHints(["fac_000", "fac_001", "fac_003"], 50, 50, 70);
+      expect(hints).toContain(facilityHintMap.fac_003.visited);
+      expect(hints).not.toContain(facilityHintMap.fac_003.notVisited);
+    });
+
+    test("fac_003 未訪問の場合、反省ヒントが含まれる", () => {
+      const hints = buildHints(["fac_000", "fac_001"], 50, 50, 70);
+      expect(hints).toContain(facilityHintMap.fac_003.notVisited);
+      expect(hints).not.toContain(facilityHintMap.fac_003.visited);
+    });
+
+    test("fac_001・fac_003 共に訪問済み + ゲージ正常 → ポジティブヒント 2件", () => {
+      const hints = buildHints(["fac_000", "fac_001", "fac_003"], 50, 50, 70);
+      expect(hints).toHaveLength(2);
+      expect(hints[0]).toBe(facilityHintMap.fac_001.visited);
+      expect(hints[1]).toBe(facilityHintMap.fac_003.visited);
+    });
+
+    test("フォールバックの定義と内容を確認（安全網テスト）", () => {
+      expect(fallbackHints).toHaveLength(1);
+      expect(fallbackHints[0]).toContain("防災用品");
     });
   });
 
@@ -537,6 +647,64 @@ describe("ResultPage ロジック - TDD 検証", () => {
     test("未定義の死因: デフォルト失敗テキスト", () => {
       const text = getFlavorText(false, "unknownReason");
       expect(text).toBe("避難に失敗してしまった…");
+    });
+  });
+
+  // ----------------------------------------------------------  // セクション 3.3: 訪問施設数（calcVisitedCount）
+  // ----------------------------------------------------------
+  describe("calcVisitedCount - スタート地点除外", () => {
+
+    test("fac_000 のみ（未プレイ相当）→ 0 を返す", () => {
+      expect(calcVisitedCount(["fac_000"])).toBe(0);
+    });
+
+    test("フルプレイ: fac_000 を除く 4 施設をカウント", () => {
+      // ["fac_000", "fac_001", "fac_003", "fac_004", "fac_005"] → 4
+      expect(calcVisitedCount(fullPlayVisitedFacilities)).toBe(4);
+    });
+
+    test("fac_000 が含まれない配列はそのままカウント", () => {
+      expect(calcVisitedCount(["fac_001", "fac_003"])).toBe(2);
+    });
+  });
+
+  // ----------------------------------------------------------  // セクション 3.3: 総移動距離（calcTotalDistance）
+  // ----------------------------------------------------------
+  describe("calcTotalDistance - 総移動距離算出（Haversine）", () => {
+
+    test("空配列 → 0 を返す", () => {
+      expect(calcTotalDistance([], facilityList)).toBe(0);
+    });
+
+    test("施設1件のみ → 0 を返す", () => {
+      expect(calcTotalDistance(["fac_000"], facilityList)).toBe(0);
+    });
+
+    test("fac_000→fac_001 の距離が 0.1〜0.4 km の範囲内", () => {
+      // fac_000: (35.658, 139.7017), fac_001: (35.6595, 139.7005) → 約 0.2 km
+      const dist = calcTotalDistance(["fac_000", "fac_001"], facilityList);
+      expect(dist).toBeGreaterThan(0.1);
+      expect(dist).toBeLessThan(0.4);
+    });
+
+    test("存在しない施設ID が含まれる場合、そのセグメントをスキップして計算継続", () => {
+      // fac_000→unknown→fac_001: unknown のセグメントはスキップ、合計は 0
+      const dist = calcTotalDistance(["fac_000", "fac_unknown_999", "fac_001"], facilityList);
+      // fac_000→unknown: スキップ、unknown→fac_001: スキップ → 0
+      expect(dist).toBe(0);
+    });
+
+    test("フルプレイ訪問順で正の値かつ 10 km 未満", () => {
+      // fac_000→fac_001→fac_003→fac_004→fac_005（渋谷〜代々木公園〜原宿）
+      const dist = calcTotalDistance(fullPlayVisitedFacilities, facilityList);
+      expect(dist).toBeGreaterThan(0);
+      expect(dist).toBeLessThan(10);
+    });
+
+    test("返り値は小数点1桁に丸められている", () => {
+      const dist = calcTotalDistance(fullPlayVisitedFacilities, facilityList);
+      // 小数点1桁: 10倍してから整数であることを確認
+      expect(dist * 10).toBe(Math.round(dist * 10));
     });
   });
 

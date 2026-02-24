@@ -134,7 +134,7 @@ export const ActionPage = () => {
   }, {});
 
   useEffect(() => {
-    console.log("spotSelected changed:", spotSelected);
+    // console.log("spotSelected changed:", spotSelected);
   }, [spotSelected]);
 
   // 施設選択（GoogleMapComponentからは facility オブジェクトが来る想定。ID文字列でもOK）

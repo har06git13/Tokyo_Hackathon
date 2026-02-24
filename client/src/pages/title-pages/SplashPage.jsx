@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const MotionImage = motion.img;
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 export const SplashPage = () => {
   const [loading, setLoading] = useState(true);

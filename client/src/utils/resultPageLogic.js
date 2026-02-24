@@ -12,6 +12,26 @@ export const facilitySignificanceText = {
   fac_005: "施設が満員になる寸前に滑り込み、夜の安全を確保。",
 };
 
+// SNS イベントの意義テキスト（施設に紐づかない固定テキスト）
+export const snsSignificanceText = "SNSで情報を収集した。デマと正確な情報が混在する中、冷静な判断力が求められた。";
+
+// 施設ベースのヒント（訪問有無で内容が変わる）
+export const facilityHintMap = {
+  fac_001: {
+    visited: "充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。",
+    notVisited: "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
+  },
+  fac_003: {
+    visited: "食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。",
+    notVisited: "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
+  },
+};
+
+// フォールバック（全条件が0件の場合のみ使用）
+export const fallbackHints = [
+  "防災用品（非常食・水・懐中電灯・現金）を定期的に点検し、家族との連絡方法や避難場所を事前に確認しておきましょう。",
+];
+
 // criticalReason → フレーバーテキスト対応表
 const flavorTextMap = {
   lowLife: "体力が限界に達し、倒れてしまった…",
@@ -38,7 +58,8 @@ export const formatTime = (date) => {
 };
 
 /**
- * 「生死を分けた選択」セクション用 - walk イベントをフィルタして時系列データを組み立て
+ * 「生死を分けた選択」セクション用 - walk / epilogue イベントをフィルタして時系列データを組み立て
+ * epilogue イベントは帰宅困難者受け入れ施設への到達を表し、タイムラインに含める。
  * @param {Array} eventHistory - [{id, time}]
  * @param {Array} eventList - ローカルイベント定義
  * @param {Array} facilityList - ローカル施設定義
@@ -46,14 +67,25 @@ export const formatTime = (date) => {
  * @returns {Array} タイムラインデータ
  */
 export const buildTimelineData = (eventHistory, eventList, facilityList, spotTypeList) => {
-  const walkEvents = eventHistory.filter(e => {
+  const timelineEvents = eventHistory.filter(e => {
     const eventDef = eventList.find(ev => ev.id === e.id);
-    return eventDef && eventDef.type === "walk";
+    return eventDef && (eventDef.type === "walk" || eventDef.type === "epilogue" || eventDef.type === "sns");
   });
 
-  return walkEvents.map(event => {
+  return timelineEvents.map(event => {
     const eventDef = eventList.find(ev => ev.id === event.id);
     if (!eventDef) return null;
+
+    // SNS イベント: 施設に紐づかないため専用データを返す
+    if (eventDef.type === "sns") {
+      return {
+        time: formatTime(event.time),
+        isSns: true,
+        facilityTypeName: null,
+        facilityName: null,
+        significanceText: snsSignificanceText,
+      };
+    }
 
     const facility = facilityList.find(f => f.id === eventDef.locationId);
     if (!facility) return null;
@@ -63,6 +95,7 @@ export const buildTimelineData = (eventHistory, eventList, facilityList, spotTyp
 
     return {
       time: formatTime(event.time),
+      isSns: false,
       facilityTypeName,
       facilityName: facility.name,
       significanceText: facilitySignificanceText[facility.id] || "行動の詳細が記録されていません。",
@@ -79,6 +112,18 @@ export const countSnsEvents = (eventHistory) => {
   return eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
 };
 
+/** ゲーム開始地点（fac_000）は自動セットのため除外 */
+const STARTING_FACILITY_ID = "fac_000";
+
+/**
+ * プレイヤーが選択して訪問した施設数を返す（スタート地点 fac_000 を除外）
+ * @param {string[]} visitedFacilities - 訪問済み施設ID配列
+ * @returns {number}
+ */
+export const calcVisitedCount = (visitedFacilities) => {
+  return visitedFacilities.filter((id) => id !== STARTING_FACILITY_ID).length;
+};
+
 /**
  * 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
  * @param {Array} visitedFacilities - 訪問済み施設IDの配列
@@ -90,23 +135,60 @@ export const countSnsEvents = (eventHistory) => {
 export const buildHints = (visitedFacilities, money, charge, mental) => {
   const hints = [];
 
-  if (!visitedFacilities.includes("fac_003")) {
-    hints.push("現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。");
-  }
-  if (!visitedFacilities.includes("fac_001")) {
-    hints.push("モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。");
-  }
-  if (money === 0) {
-    hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
-  }
-  if (charge === 0) {
-    hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
-  }
-  if (mental < 30) {
-    hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
+  // ① 施設ベースのヒント（訪問有無で内容が変わる）
+  for (const [facilityId, { visited, notVisited }] of Object.entries(facilityHintMap)) {
+    hints.push(visitedFacilities.includes(facilityId) ? visited : notVisited);
   }
 
-  return hints;
+  // ② ゲージ条件ヒント
+  // ② ゲージ条件ヒント
+  // money=0 は fac_003 訪問済みの場合のみ（未訪問時は① の notVisited と重複するため）
+  if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
+  if (charge === 0) hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
+  if (mental < 30) hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
+
+  // ③ フォールバック
+  return hints.length > 0 ? hints : fallbackHints;
+};
+
+/**
+ * 訪問施設間の直線距離（Haversine）を km 単位で返す
+ */
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+/**
+ * 訪問施設間の累積直線距離を算出（Haversine）
+ * @param {string[]} visitedFacilities - 訪問順の施設ID配列
+ * @param {Array} facilityList - 座標付き施設定義（{ id, coordinates: { lat, lng } }）
+ * @returns {number} 総移動距離 km（小数点1桁）
+ */
+export const calcTotalDistance = (visitedFacilities, facilityList) => {
+  if (!visitedFacilities || visitedFacilities.length < 2) return 0;
+  let total = 0;
+  for (let i = 0; i < visitedFacilities.length - 1; i++) {
+    const from = facilityList.find((f) => f.id === visitedFacilities[i]);
+    const to = facilityList.find((f) => f.id === visitedFacilities[i + 1]);
+    if (!from?.coordinates || !to?.coordinates) continue;
+    total += haversineKm(
+      from.coordinates.lat,
+      from.coordinates.lng,
+      to.coordinates.lat,
+      to.coordinates.lng
+    );
+  }
+  return Math.round(total * 10) / 10;
 };
 
 /**
