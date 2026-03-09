@@ -3,6 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ObjectId } = require('mongodb');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { GoogleGenAI } = require('@google/genai');
+const { initGeminiFiles } = require('./gemini-files');
 
 const app = express();
 app.use(cors());
@@ -13,6 +18,47 @@ const uri = process.env.MONGODB_URI;
 if (!uri) {
   console.error('MONGODB_URI not set in .env');
   process.exit(1);
+}
+
+// ---- Gemini Advice ----
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const ADVICE_CACHE_FILE = path.join(__dirname, 'advice_cache.json');
+const ADVICE_SYSTEM_PROMPT =
+  'あなたは渋谷での地震避難を体験したユーザーにフィードバックする防災アドバイザーです。' +
+  '添付の防災資料のみを根拠にして、ユーザーの行動に対するアドバイスを' +
+  '改行・箇条書き・段落分けを一切使わず、100字前後のワンセンテンスで返してください。' +
+  '資料名やページ番号は出力に含めないでください。';
+const ADVICE_SCENARIO =
+  '【状況】土曜の午後14時、渋谷駅ハチ公前で都心南部直下地震（M7.3、震度6強）が発生。' +
+  'あなたは帰宅困難者の一人として次の行動を取りました。';
+
+// レートリミット状態
+let _lastCallTime = 0;
+const RATE_LIMIT_MS = 2000;
+
+// Gemini クライアント・アップロード済みファイル
+let genaiClient = null;
+let geminiFiles = [];
+
+function loadAdviceCache() {
+  try {
+    if (fs.existsSync(ADVICE_CACHE_FILE)) {
+      return JSON.parse(fs.readFileSync(ADVICE_CACHE_FILE, 'utf8'));
+    }
+  } catch (_) {}
+  return {};
+}
+
+function saveAdviceCache(cache) {
+  try {
+    fs.writeFileSync(ADVICE_CACHE_FILE, JSON.stringify(cache, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[advice] キャッシュ保存失敗:', e.message);
+  }
+}
+
+function adviceCacheKey(actions) {
+  return crypto.createHash('sha256').update(actions.trim()).digest('hex');
 }
 
 const client = new MongoClient(uri);
@@ -33,6 +79,19 @@ async function start() {
     console.log(`Server listening on http://localhost:${PORT}`)
   );
   console.log('✅ MongoDB connected');
+
+  // Gemini Files API 初期化（PDFアップロード、起動時1回のみ）
+  if (GEMINI_API_KEY) {
+    genaiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    initGeminiFiles(genaiClient)
+      .then(files => {
+        geminiFiles = files;
+        console.log(`✅ Gemini Files 準備完了 (${files.length}件)`);
+      })
+      .catch(e => console.warn('[gemini-files] 初期化失敗（フォールバック継続）:', e.message));
+  } else {
+    console.warn('[advice] GEMINI_API_KEY 未設定: LLMアドバイスは無効（ルールベースフォールバックのみ）');
+  }
 }
 start().catch(err => {
   console.error('Mongo connect error:', err);
@@ -120,6 +179,66 @@ app.get('/api/sns', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+
+// ---- Gemini 防災アドバイス API ----
+app.get('/api/advice', async (req, res) => {
+  const actions = (req.query.actions || '').trim();
+  if (!actions) return res.json({ advice: null, fromCache: false });
+
+  // キャッシュ確認
+  const cache = loadAdviceCache();
+  const key = adviceCacheKey(actions);
+  if (cache[key]) return res.json({ advice: cache[key], fromCache: true });
+
+  // Gemini 未初期化 or PDFなし
+  if (!genaiClient || geminiFiles.length === 0) {
+    return res.json({ advice: null, fromCache: false });
+  }
+
+  // レートリミット
+  const elapsed = Date.now() - _lastCallTime;
+  if (elapsed < RATE_LIMIT_MS) await new Promise(r => setTimeout(r, RATE_LIMIT_MS - elapsed));
+
+  try {
+    const parts = [
+      { text: ADVICE_SYSTEM_PROMPT },
+      ...geminiFiles.map(f => ({ fileData: { fileUri: f.uri, mimeType: 'application/pdf' } })),
+      { text: `${ADVICE_SCENARIO}\n【ユーザーの行動】${actions}\n\n100字前後でアドバイスしてください。` },
+    ];
+
+    const MAX_RETRIES = 3;
+    let response;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        response = await genaiClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts }],
+          config: { temperature: 0.2, maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
+        });
+        break;
+      } catch (e) {
+        const status = e?.status || e?.code;
+        if ((status === 503 || status === 429) && attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 5000 * (2 ** (attempt - 1))));
+        } else throw e;
+      }
+    }
+
+    _lastCallTime = Date.now();
+    const rawText = response?.text || '';
+    const advice = rawText.replace(/\n+/g, '').trim() || null;
+
+    if (advice) {
+      cache[key] = advice;
+      saveAdviceCache(cache);
+    }
+
+    res.json({ advice, fromCache: false });
+  } catch (e) {
+    console.error('[advice] Gemini API エラー:', e.message);
+    res.json({ advice: null, fromCache: false });
+  }
+});
 
 // ---- 結果保存 API（モデル無し：ネイティブドライバ）----
 app.post('/api/results', async (req, res, next) => {
