@@ -75,6 +75,31 @@ npm install leaflet react-leaflet
 import 'leaflet/dist/leaflet.css';
 ```
 
+### 6.0 タイルレイヤー仕様
+
+**OSM 標準タイル** を使用する（APIキー不要・無償）。
+
+- 実世界の建物名・施設名・街路名が表示されるため、渋谷エリアの地理的文脈が出る
+- `GoogleMap.jsx` と `RouteMap.jsx` の両方に適用する
+
+```js
+// TileLayer 設定
+url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+```
+
+### 6.1.1 マーカースタイル仕様
+
+- 施設名ラベルは**表示しない**（タップ時の MapSpotInfo カードで確認する）
+- ピンに `drop-shadow` フィルタを付与してモダンな見た目にする
+- GPS ドットも `drop-shadow` を付与する
+
+```js
+// ピン SVG に CSS drop-shadow を追加
+`<div style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+   <svg ...>ピン</svg>
+ </div>`
+
 ### 6.2 カスタムマーカー → `L.divIcon`
 
 現行の `getMarkerIcon()` は Google Maps SVG Symbol 形式。Leaflet は `L.divIcon` でインライン SVG を使用する。

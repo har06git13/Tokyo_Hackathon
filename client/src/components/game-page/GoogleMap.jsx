@@ -31,9 +31,11 @@ const getMarkerIcon = (facility, isSelected, isVisited, isCurrentLocation) => {
     : "#f4a261"; // 移動可能
 
   return L.divIcon({
-    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 51.5313" width="21" height="31">
-             <path d="${MAPMARKER_SVG_PATH}" fill="${color}" stroke="#fff" stroke-width="1.2"/>
-           </svg>`,
+    html: `<div style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 51.5313" width="21" height="31">
+               <path d="${MAPMARKER_SVG_PATH}" fill="${color}" stroke="#fff" stroke-width="1.2"/>
+             </svg>
+           </div>`,
     className: '',
     iconSize: [21, 31],
     iconAnchor: [10.5, 31],
@@ -42,7 +44,7 @@ const getMarkerIcon = (facility, isSelected, isVisited, isCurrentLocation) => {
 
 // GPS ドットアイコン
 const GPS_DOT_ICON = L.divIcon({
-  html: '<div style="width:16px;height:16px;border-radius:50%;background:#393994;border:2px solid #fff;box-sizing:border-box;"></div>',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#393994;border:2px solid #fff;box-sizing:border-box;filter:drop-shadow(0 2px 4px rgba(57,57,148,0.5));"></div>',
   className: '',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
@@ -145,8 +147,6 @@ export const GoogleMapComponent = ({
         center={MAP_CENTER}
         zoom={14}
         zoomControl={showControls}
-        scrollWheelZoom={showControls}
-        dragging={showControls}
         style={containerStyle || defaultMapContainerStyle}
       >
         <TileLayer
