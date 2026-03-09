@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Flex, Text, Link, Box } from "@chakra-ui/react";
 import {
   survivedAtom,
@@ -18,8 +18,26 @@ import { LifeGauge, Header, Button } from "../components/common";
 import { StatsSummary, GaugeChart, ResultTimelineItem, ShareModal, WorldChoices } from "../components/game-page";
 import { eventList, facilityList, spotTypeList } from "../temporary-database";
 import { useNavigate } from "react-router-dom";
-import { buildTimelineData, calcTotalDistance, calcVisitedCount, calcElapsedTime, buildHints, getFlavorText } from "../utils/resultPageLogic";
+import { buildTimelineData, calcTotalDistance, calcVisitedCount, calcElapsedTime, buildHints, getFlavorText, buildActionSummary } from "../utils/resultPageLogic";
 
+
+const ADVICE_KEYWORDS = [
+  "モバイルバッテリー", "充電", "現金", "食料", "飲料水", "避難場所",
+  "ハザードマップ", "帰宅困難", "SNS", "安否", "備蓄", "非常食",
+  "防災", "避難訓練", "情報収集", "一時避難",
+];
+
+// テキスト中の防災キーワードを赤字 span で囲んだ JSX 配列を返す
+function highlightKeywords(text) {
+  if (!text) return null;
+  const pattern = new RegExp(`(${ADVICE_KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+  const parts = text.split(pattern);
+  return parts.map((part, i) =>
+    ADVICE_KEYWORDS.includes(part)
+      ? <span key={i} style={{ color: 'var(--color-accent10, #e53e3e)', fontWeight: 'bold' }}>{part}</span>
+      : part
+  );
+}
 
 export const ResultPage = () => {
   const [survived] = useAtom(survivedAtom);
@@ -57,8 +75,30 @@ export const ResultPage = () => {
   // resultPageLogic.js の buildTimelineData を使用（SNS対応済み）
   const timelineData = buildTimelineData(eventHistory, eventList, facilityList, spotTypeList);
 
-  // 「防災に向けてのヒント」セクション用 - 行動履歴がない場合はヒントを生成しない
-  const hintsData = timelineData.length === 0 ? [] : buildHints(visitedFacilities, money, charge, mental);
+  // 「防災に向けてのヒント」セクション用
+  // 主経路: Gemini LLM アドバイス / フォールバック: ルールベース buildHints()
+  const [adviceState, setAdviceState] = useState({ text: null, loading: false, isLLM: false });
+
+  useEffect(() => {
+    if (timelineData.length === 0) return; // 行動履歴なし → フォールバック直行
+    const summary = buildActionSummary(visitedFacilities, eventHistory);
+    setAdviceState({ text: null, loading: true, isLLM: false });
+    fetch(`/api/advice?actions=${encodeURIComponent(summary)}`)
+      .then(r => r.json())
+      .then(({ advice }) => {
+        if (advice) {
+          setAdviceState({ text: advice, loading: false, isLLM: true });
+        } else {
+          const fallback = buildHints(visitedFacilities, money, charge, mental);
+          setAdviceState({ text: fallback.join('\n'), loading: false, isLLM: false });
+        }
+      })
+      .catch(() => {
+        const fallback = buildHints(visitedFacilities, money, charge, mental);
+        setAdviceState({ text: fallback.join('\n'), loading: false, isLLM: false });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
@@ -276,12 +316,22 @@ export const ResultPage = () => {
             borderRadius={"0 0 2vh 2vh"}
             gap="1vh"
           >
-            {hintsData.length > 0 ? (
-              hintsData.map((hint, index) => (
-                <Text key={index} className="text-maintext">
-                  {hint}
+            {adviceState.loading ? (
+              <Text className="text-maintext" color="var(--color-base13)">
+                アドバイスを生成中...
+              </Text>
+            ) : adviceState.text ? (
+              adviceState.isLLM ? (
+                // LLM アドバイス: キーワード赤字表示
+                <Text className="text-maintext">
+                  {highlightKeywords(adviceState.text)}
                 </Text>
-              ))
+              ) : (
+                // フォールバック: ルールベース（複数行）
+                adviceState.text.split('\n').map((hint, index) => (
+                  <Text key={index} className="text-maintext">{hint}</Text>
+                ))
+              )
             ) : (
               <Text className="text-maintext" color="var(--color-base13)">
                 生存のヒントがありません

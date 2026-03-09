@@ -215,6 +215,25 @@ export const calcTotalDistance = (visitedFacilities, facilityList) => {
 };
 
 /**
+ * ユーザーの行動履歴から Gemini API へ渡すアクションサマリー文字列を生成する
+ * @param {string[]} visitedFacilities - 訪問済み施設ID配列
+ * @param {Array} eventHistory - [{id, time}]
+ * @returns {string} 「〜、〜した」形式の文字列（空の場合は空文字列）
+ */
+export const buildActionSummary = (visitedFacilities, eventHistory) => {
+  const items = [];
+  if (visitedFacilities.includes('fac_001')) items.push('充電スポットで充電した');
+  if (visitedFacilities.includes('fac_002')) items.push('避難誘導サインを確認した');
+  if (visitedFacilities.includes('fac_003')) items.push('食料と現金を確保した');
+  if (visitedFacilities.includes('fac_004')) items.push('帰宅困難者受け入れ施設の情報を取得した');
+  if (visitedFacilities.includes('fac_005')) items.push('一時避難場所（ウィズ原宿）に到達した');
+  const hasSns = Array.isArray(eventHistory) && eventHistory.some(e => e.id?.startsWith('event_sns_'));
+  if (hasSns) items.push('SNSで安否情報を発信・収集した');
+  if (items.length === 0) return '行動せずに移動した';
+  return items.join('、');
+};
+
+/**
  * 経過時間を算出
  * @param {Date} currentTime - ゲーム内現在時刻
  * @param {Date} startTime - ゲーム開始時刻
