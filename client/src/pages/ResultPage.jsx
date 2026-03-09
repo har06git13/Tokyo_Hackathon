@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Flex, Text, Link, Box } from "@chakra-ui/react";
 import {
   survivedAtom,
@@ -15,49 +15,10 @@ import {
 } from "../atoms/playerAtoms";
 import { useAtom, useSetAtom } from "jotai";
 import { LifeGauge, Header, Button } from "../components/common";
-import { StatsSummary, GaugeChart, ResultTimelineItem, ShareModal } from "../components/game-page";
+import { StatsSummary, GaugeChart, ResultTimelineItem, ShareModal, WorldChoices } from "../components/game-page";
 import { eventList, facilityList, spotTypeList } from "../temporary-database";
 import { useNavigate } from "react-router-dom";
-import { buildTimelineData, calcTotalDistance, calcVisitedCount } from "../utils/resultPageLogic";
-
-// criticalReason → フレーバーテキスト対応表
-const flavorTextMap = {
-  // survived === false
-  lowLife: "体力が限界に達し、倒れてしまった…",
-  timeup: "時間切れ。避難場所に辿り着くことができなかった…",
-};
-const defaultSuccessText =
-  "ギリギリの判断を重ね、無事に一時避難場所に辿り着くことができた。電源確保・現金取得・人とのつながり、どれもが生存に直結する選択だった。";
-const defaultFailureText = "避難に失敗してしまった…";
-
-const getFlavorText = (survived, criticalReason) => {
-  if (survived) return defaultSuccessText;
-  return flavorTextMap[criticalReason] || defaultFailureText;
-};
-
-// 施設ベースのヒント（訪問有無で内容が変わる）
-const facilityHintMap = {
-  fac_001: {
-    visited: "充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。",
-    notVisited: "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
-  },
-  fac_002: {
-    visited: "避難方向の目印を確認しました。日頃から地域のハザードマップや避難誘導サインを意識しておくと、緊急時も迷わず行動できます。",
-    notVisited: "避難誘導サインは見えても見落としやすい。平時から街中の避難経路を意識して歩く習慣をつけておきましょう。",
-  },
-  fac_003: {
-    visited: "食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。",
-    notVisited: "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
-  },
-  fac_004: {
-    visited: "受け入れ施設の情報を取得しました。平時から地域の一時避難場所の場所を確認しておけば、緊急時も素早く行動できます。",
-    notVisited: "避難先の情報を事前に調べておけば、混乱した状況でも迷わず行動できたかもしれない。",
-  },
-  fac_005: {
-    visited: "一時避難場所に辿り着きました！地域の避難訓練への参加や、家族との避難場所の事前共有が、いざという時に命を救います。",
-    // notVisited なし: ゲームの目的地のため未訪問時はヒントを表示しない
-  },
-};
+import { buildTimelineData, calcTotalDistance, calcVisitedCount, calcElapsedTime, buildHints, getFlavorText } from "../utils/resultPageLogic";
 
 
 export const ResultPage = () => {
@@ -78,22 +39,15 @@ export const ResultPage = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // 統計サマリーの算出
-  const createStartTime = () => {
+  // startTime はマウント時に1回だけ生成する（毎レンダリングで new Date() を呼ばない）
+  const startTime = useMemo(() => {
     const now = new Date();
-    return new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      14,
-      0,
-      0,
-      0
-    );
-  };
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0, 0, 0);
+  }, []);
 
-  const elapsedMs = currentTime.getTime() - createStartTime().getTime();
-  const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
-  const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+  const { hours: elapsedHours, minutes: elapsedMinutes } = calcElapsedTime(currentTime, startTime);
+
+  const finalDestination = [...visitedFacilities].reverse().find(id => id !== "fac_000") ?? "fac_000";
 
   const visitedCount = calcVisitedCount(visitedFacilities);
   const snsCount = eventHistory.filter(e => e.id && e.id.startsWith("event_sns_")).length;
@@ -103,43 +57,8 @@ export const ResultPage = () => {
   // resultPageLogic.js の buildTimelineData を使用（SNS対応済み）
   const timelineData = buildTimelineData(eventHistory, eventList, facilityList, spotTypeList);
 
-  // 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
-  const buildHints = () => {
-    // 行動履歴がない場合はヒントを生成しない（visitedFacilities が初期値のみで全未訪問扱いになるため）
-    if (timelineData.length === 0) return [];
-
-    const hints = [];
-
-    // ① 施設ベースのヒント（訪問有無で内容が変わる）
-    for (const [facilityId, hintDef] of Object.entries(facilityHintMap)) {
-      const isVisited = visitedFacilities.includes(facilityId);
-      if (isVisited && hintDef.visited) {
-        hints.push(hintDef.visited);
-      } else if (!isVisited && hintDef.notVisited) {
-        hints.push(hintDef.notVisited);
-      }
-      // notVisited が未定義の場合（fac_005 など）はヒントをスキップ
-    }
-
-    // ② ゲージ条件ヒント
-    // money=0 は fac_003 訪問済みの場合のみ（未訪問時は① の notVisited と重複するため）
-    if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
-    if (charge === 0) hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
-    if (mental < 30) hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
-
-    // ③ ランダムに2件を選択して返す（2件以下の場合はそのまま）
-    if (hints.length > 2) {
-      for (let i = hints.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [hints[i], hints[j]] = [hints[j], hints[i]];
-      }
-      return hints.slice(0, 2);
-    }
-    // ヒントが 0 件の場合は空配列のまま返す（JSX 側で「生存のヒントがありません」を表示）
-    return hints;
-  };
-
-  const hintsData = buildHints();
+  // 「防災に向けてのヒント」セクション用 - 行動履歴がない場合はヒントを生成しない
+  const hintsData = timelineData.length === 0 ? [] : buildHints(visitedFacilities, money, charge, mental);
 
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
@@ -274,10 +193,10 @@ export const ResultPage = () => {
           facilityList={facilityList}
         />
 
-        {/* セクション 5: ゲージ推移 */}
+        {/* セクション 4: ゲージ推移 */}
         <GaugeChart gaugeHistory={gaugeHistory} />
 
-        {/* セクション 6: 生死を分けた選択 */}
+        {/* セクション 5: 生死を分けた選択 */}
         <Flex
           className="result-timeline"
           width={"90%"}
@@ -325,7 +244,11 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        {/* セクション 6: 防災に向けてのヒント */}
+        {/* セクション 6: みんなの選択 */}
+        <WorldChoices finalDestination={finalDestination} />
+
+        {/* セクション 7: 防災に向けてのヒント */}
+
         <Flex
           className="disaster-hints"
           width={"90%"}
@@ -367,7 +290,7 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        {/* セクション 7: アプリ紹介 */}
+        {/* セクション 8: アプリ紹介 */}
         <Flex
           className="app-introduction"
           width={"90%"}
@@ -433,7 +356,7 @@ export const ResultPage = () => {
           </Flex>
         </Flex>
 
-        {/* セクション 8: ボタン群（SNS共有・タイトル遷移） */}
+        {/* セクション 9: ボタン群（SNS共有・タイトル遷移） */}
         {/* ① SNS 共有ボタン */}
         <Flex width="90%" mt={"2vh"}>
           <Button
@@ -457,8 +380,8 @@ export const ResultPage = () => {
           />
         </Flex>
 
-        {/* ダミー画像（開発用・最終削除予定） */}
-        <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%" }} />
+        {/* ダミー画像（開発用・非表示） */}
+        <img src="/assets/image/dummy-result.png" alt="リザルト" style={{ width: "100%", display: "none" }} />
       </Flex>
 
       {/* SNS シェアモーダル（page-container 直下でオーバーレイ） */}
@@ -467,7 +390,7 @@ export const ResultPage = () => {
       {/* タイトルに戻る 確認ダイアログ */}
       {isConfirmOpen && (
         <Flex
-          position="absolute"
+          position="fixed"
           top={0}
           left={0}
           width="100%"

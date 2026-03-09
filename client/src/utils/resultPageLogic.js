@@ -16,21 +16,29 @@ export const facilitySignificanceText = {
 export const snsSignificanceText = "SNSで情報を収集した。デマと正確な情報が混在する中、冷静な判断力が求められた。";
 
 // 施設ベースのヒント（訪問有無で内容が変わる）
+// notVisited が undefined の施設（fac_005）は未訪問時のヒントをスキップする
 export const facilityHintMap = {
   fac_001: {
     visited: "充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。",
     notVisited: "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
   },
+  fac_002: {
+    visited: "避難方向の目印を確認しました。日頃から地域のハザードマップや避難誘導サインを意識しておくと、緊急時も迷わず行動できます。",
+    notVisited: "避難誘導サインは見えても見落としやすい。平時から街中の避難経路を意識して歩く習慣をつけておきましょう。",
+  },
   fac_003: {
     visited: "食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。",
     notVisited: "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
   },
+  fac_004: {
+    visited: "受け入れ施設の情報を取得しました。平時から地域の一時避難場所の場所を確認しておけば、緊急時も素早く行動できます。",
+    notVisited: "避難先の情報を事前に調べておけば、混乱した状況でも迷わず行動できたかもしれない。",
+  },
+  fac_005: {
+    visited: "一時避難場所に辿り着きました！地域の避難訓練への参加や、家族との避難場所の事前共有が、いざという時に命を救います。",
+    // notVisited なし: ゲームの目的地のため未訪問時はヒントを表示しない
+  },
 };
-
-// フォールバック（全条件が0件の場合のみ使用）
-export const fallbackHints = [
-  "防災用品（非常食・水・懐中電灯・現金）を定期的に点検し、家族との連絡方法や避難場所を事前に確認しておきましょう。",
-];
 
 // criticalReason → フレーバーテキスト対応表
 const flavorTextMap = {
@@ -126,29 +134,44 @@ export const calcVisitedCount = (visitedFacilities) => {
 
 /**
  * 「防災に向けてのヒント」セクション用 - 条件に基づいてヒントを生成
+ * 行動履歴がない場合（timelineData.length === 0）の判定は呼び出し元で行い、
+ * その場合はこの関数を呼ばずに空配列を使うこと。
  * @param {Array} visitedFacilities - 訪問済み施設IDの配列
  * @param {number} money - 最終所持金（ゲージ値）
  * @param {number} charge - 最終充電（ゲージ値）
  * @param {number} mental - 最終精神力（ゲージ値）
- * @returns {Array<string>} ヒントテキストの配列
+ * @returns {Array<string>} ヒントテキストの配列（0件時は空配列）
  */
 export const buildHints = (visitedFacilities, money, charge, mental) => {
   const hints = [];
 
   // ① 施設ベースのヒント（訪問有無で内容が変わる）
-  for (const [facilityId, { visited, notVisited }] of Object.entries(facilityHintMap)) {
-    hints.push(visitedFacilities.includes(facilityId) ? visited : notVisited);
+  for (const [facilityId, hintDef] of Object.entries(facilityHintMap)) {
+    const isVisited = visitedFacilities.includes(facilityId);
+    if (isVisited && hintDef.visited) {
+      hints.push(hintDef.visited);
+    } else if (!isVisited && hintDef.notVisited) {
+      hints.push(hintDef.notVisited);
+    }
+    // notVisited が未定義の施設（fac_005 など）はスキップ
   }
 
-  // ② ゲージ条件ヒント
   // ② ゲージ条件ヒント
   // money=0 は fac_003 訪問済みの場合のみ（未訪問時は① の notVisited と重複するため）
   if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
   if (charge === 0) hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
   if (mental < 30) hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
 
-  // ③ フォールバック
-  return hints.length > 0 ? hints : fallbackHints;
+  // ③ 3件以上はランダムシャッフル後に2件採用
+  if (hints.length > 2) {
+    for (let i = hints.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [hints[i], hints[j]] = [hints[j], hints[i]];
+    }
+    return hints.slice(0, 2);
+  }
+
+  return hints;
 };
 
 /**
