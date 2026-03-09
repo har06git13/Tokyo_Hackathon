@@ -151,11 +151,77 @@ app.post('/api/results', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// エラーハンドラ
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: String(err.message || err) });
+// ---- 統計 API ----
+const FAC_AREA_MAP = {
+  fac_000: '渋谷駅周辺', fac_001: '渋谷駅周辺',
+  fac_002: '道玄坂エリア', fac_003: '青山エリア',
+  fac_004: '代々木エリア', fac_005: '原宿エリア',
+};
+const EVENT_LOCATION_MAP = {
+  event_walk_001: 'fac_001', event_walk_002: 'fac_002',
+  event_walk_003: 'fac_003', event_walk_004: 'fac_004',
+  event_epilogue_001: 'fac_005',
+};
+const FAC_NAME_MAP = {
+  fac_000: '渋谷駅前', fac_001: '渋谷センター街',
+  fac_002: '道玄坂', fac_003: '公園通り',
+  fac_004: '代々木公園', fac_005: 'ウィズ原宿',
+};
+
+app.get('/api/results/stats', async (req, res, next) => {
+  try {
+    const finalDestination = req.query.finalDestination ?? null;
+    const allResults = await Results.find({}).toArray();
+    const total = allResults.length;
+    if (total === 0) return res.json({
+      total: 0, finalDestinationDist: [],
+      sameDestinationRate: 0, batteryRentalRate: 0,
+      cashWithdrawRate: 0, noSnsRate: 0, sameDestinationFacilityName: null,
+    });
+
+    const getFinalFac = (hist) => {
+      if (!Array.isArray(hist)) return null;
+      const sorted = [...hist].sort((a, b) => new Date(a.time) - new Date(b.time));
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        const fac = EVENT_LOCATION_MAP[sorted[i].id];
+        if (fac) return fac;
+      }
+      return null;
+    };
+
+    const areaCounts = {};
+    for (const r of allResults) {
+      const area = FAC_AREA_MAP[getFinalFac(r.EventHistory)] ?? '不明';
+      areaCounts[area] = (areaCounts[area] ?? 0) + 1;
+    }
+    const finalDestinationDist = Object.entries(areaCounts).map(([area, count]) => ({
+      area, count, rate: Math.round(count / total * 100),
+    }));
+
+    const sameCount = finalDestination
+      ? allResults.filter(r => getFinalFac(r.EventHistory) === finalDestination).length : 0;
+    const batteryCount = allResults.filter(r =>
+      Array.isArray(r.EventHistory) && r.EventHistory.some(e => e.id === 'event_walk_001')
+    ).length;
+    const cashCount = allResults.filter(r =>
+      Array.isArray(r.EventHistory) && r.EventHistory.some(e => e.id === 'event_walk_003')
+    ).length;
+    const noSnsCount = allResults.filter(r =>
+      !Array.isArray(r.EventHistory) || !r.EventHistory.some(e => e.id?.startsWith('event_sns_'))
+    ).length;
+
+    res.json({
+      total,
+      finalDestinationDist,
+      sameDestinationRate: Math.round(sameCount / total * 100),
+      batteryRentalRate: Math.round(batteryCount / total * 100),
+      cashWithdrawRate: Math.round(cashCount / total * 100),
+      noSnsRate: Math.round(noSnsCount / total * 100),
+      sameDestinationFacilityName: FAC_NAME_MAP[finalDestination] ?? null,
+    });
+  } catch (e) { next(e); }
 });
+
 // エラーハンドラ
 app.use((err, _req, res, _next) => {
   console.error(err);
