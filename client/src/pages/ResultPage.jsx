@@ -80,7 +80,12 @@ export const ResultPage = () => {
   const [adviceState, setAdviceState] = useState({ text: null, loading: false, isLLM: false });
 
   useEffect(() => {
-    if (timelineData.length === 0) return; // 行動履歴なし → フォールバック直行
+    if (timelineData.length === 0) {
+      // 行動履歴なし → buildHints() フォールバック直行
+      const fallback = buildHints(visitedFacilities, money, charge, mental);
+      setAdviceState({ text: fallback.join('\n'), loading: false, isLLM: false });
+      return;
+    }
     const summary = buildActionSummary(visitedFacilities, eventHistory);
     setAdviceState({ text: null, loading: true, isLLM: false });
     fetch(`/api/advice?actions=${encodeURIComponent(summary)}`)
@@ -321,17 +326,25 @@ export const ResultPage = () => {
                 アドバイスを生成中...
               </Text>
             ) : adviceState.text ? (
-              adviceState.isLLM ? (
-                // LLM アドバイス: キーワード赤字表示
-                <Text className="text-maintext">
-                  {highlightKeywords(adviceState.text)}
+              <>
+                {adviceState.isLLM ? (
+                  // LLM アドバイス: キーワード赤字表示
+                  <Text className="text-maintext">
+                    {highlightKeywords(adviceState.text)}
+                  </Text>
+                ) : (
+                  // フォールバック: ルールベース（複数行）
+                  adviceState.text.split('\n').map((hint, index) => (
+                    <Text key={index} className="text-maintext">{hint}</Text>
+                  ))
+                )}
+                <Text className="text-subtext" color="var(--color-base13)">
+                  {adviceState.isLLM
+                    ? "※このアドバイスは不正確な情報を含む場合があります。実際の避難行動は自治体・公的機関の指示に従ってください。"
+                    : "※このアドバイスは不正確な情報を含む場合があります。実際の避難行動は自治体・公的機関の指示に従ってください。"
+                  }
                 </Text>
-              ) : (
-                // フォールバック: ルールベース（複数行）
-                adviceState.text.split('\n').map((hint, index) => (
-                  <Text key={index} className="text-maintext">{hint}</Text>
-                ))
-              )
+              </>
             ) : (
               <Text className="text-maintext" color="var(--color-base13)">
                 生存のヒントがありません

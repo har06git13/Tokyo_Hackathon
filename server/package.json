@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "node index.js",
     "seed:events": "node ./scripts/import_events.mjs",
     "seed:users": "node ./scripts/import_users.mjs",
@@ -23,5 +23,9 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mongodb": "^6.18.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2"
   }
 }

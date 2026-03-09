@@ -19,23 +19,23 @@ export const snsSignificanceText = "SNSで情報を収集した。デマと正�
 // notVisited が undefined の施設（fac_005）は未訪問時のヒントをスキップする
 export const facilityHintMap = {
   fac_001: {
-    visited: "充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。",
-    notVisited: "モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。",
+    visited: "モバイルバッテリーを日頃から満充電にしておきましょう。停電時もスマートフォンが使えると、情報収集や安否確認の手段が確保できます。",
+    notVisited: "モバイルバッテリーを常備しておきましょう。停電時に充電が切れると情報収集も安否確認もできなくなります。",
   },
   fac_002: {
-    visited: "避難方向の目印を確認しました。日頃から地域のハザードマップや避難誘導サインを意識しておくと、緊急時も迷わず行動できます。",
-    notVisited: "避難誘導サインは見えても見落としやすい。平時から街中の避難経路を意識して歩く習慣をつけておきましょう。",
+    visited: "地域のハザードマップや避難誘導サインを日頃から意識しておきましょう。見慣れた情報だけが、パニック時の道標になります。",
+    notVisited: "平時から街の避難誘導サインと避難経路を確認しておきましょう。緊急時に地図を調べる余裕はありません。",
   },
   fac_003: {
-    visited: "食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。",
-    notVisited: "現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。",
+    visited: "水・非常食（最低3日分）と現金を日頃から備蓄しておきましょう。停電・通信障害時はキャッシュレス決済が使えなくなります。",
+    notVisited: "財布には常に小銭を含む現金を入れておきましょう。停電や通信障害でキャッシュレス決済が使えなくなる場面に備えましょう。",
   },
   fac_004: {
-    visited: "受け入れ施設の情報を取得しました。平時から地域の一時避難場所の場所を確認しておけば、緊急時も素早く行動できます。",
-    notVisited: "避難先の情報を事前に調べておけば、混乱した状況でも迷わず行動できたかもしれない。",
+    visited: "近隣の一時避難場所と帰宅困難者受け入れ施設を、平時のうちに地図で確認しておきましょう。",
+    notVisited: "地域の一時避難場所や帰宅困難者受け入れ施設を事前に調べておきましょう。緊急時に検索する時間的・精神的余裕はありません。",
   },
   fac_005: {
-    visited: "一時避難場所に辿り着きました！地域の避難訓練への参加や、家族との避難場所の事前共有が、いざという時に命を救います。",
+    visited: "地域の避難訓練に参加し、家族と避難場所・連絡手段を事前に共有しておきましょう。決めておいた行動が命を守ります。",
     // notVisited なし: ゲームの目的地のため未訪問時はヒントを表示しない
   },
 };
@@ -142,7 +142,7 @@ export const calcVisitedCount = (visitedFacilities) => {
  * @param {number} mental - 最終精神力（ゲージ値）
  * @returns {Array<string>} ヒントテキストの配列（0件時は空配列）
  */
-export const buildHints = (visitedFacilities, money, charge, mental) => {
+export const buildHints = (visitedFacilities, money, charge, mental, { shuffle = true } = {}) => {
   const hints = [];
 
   // ① 施設ベースのヒント（訪問有無で内容が変わる）
@@ -158,15 +158,17 @@ export const buildHints = (visitedFacilities, money, charge, mental) => {
 
   // ② ゲージ条件ヒント
   // money=0 は fac_003 訪問済みの場合のみ（未訪問時は① の notVisited と重複するため）
-  if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。");
-  if (charge === 0) hints.push("スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。");
-  if (mental < 30) hints.push("複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。");
+  if (money === 0 && visitedFacilities.includes("fac_003")) hints.push("非常時に備え、財布には常に小銭を含む現金を入れておきましょう。現金は停電時の最後の決済手段です。");
+  if (charge === 0) hints.push("スマートフォンは日頃から充電し、外出時はモバイルバッテリーを携帯しましょう。充電切れは情報と繋がりを同時に失います。");
+  if (mental < 30) hints.push("近隣の複数の避難場所をあらかじめ把握しておきましょう。選択肢があるだけで、緊急時の判断力が大きく変わります。");
 
-  // ③ 3件以上はランダムシャッフル後に2件採用
+  // ③ 3件以上はシャッフル後に2件採用（shuffle: false でテスト時は順序固定）
   if (hints.length > 2) {
-    for (let i = hints.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [hints[i], hints[j]] = [hints[j], hints[i]];
+    if (shuffle) {
+      for (let i = hints.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [hints[i], hints[j]] = [hints[j], hints[i]];
+      }
     }
     return hints.slice(0, 2);
   }

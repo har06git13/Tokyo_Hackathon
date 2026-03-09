@@ -3,11 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ObjectId } = require('mongodb');
-const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 const { initGeminiFiles } = require('./gemini-files');
+const { getAdvice, cacheKey } = require('./adviceService');
 
 const app = express();
 app.use(cors());
@@ -23,22 +23,14 @@ if (!uri) {
 // ---- Gemini Advice ----
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ADVICE_CACHE_FILE = path.join(__dirname, 'advice_cache.json');
-const ADVICE_SYSTEM_PROMPT =
-  'あなたは渋谷での地震避難を体験したユーザーにフィードバックする防災アドバイザーです。' +
-  '添付の防災資料のみを根拠にして、ユーザーの行動に対するアドバイスを' +
-  '改行・箇条書き・段落分けを一切使わず、100字前後のワンセンテンスで返してください。' +
-  '資料名やページ番号は出力に含めないでください。';
-const ADVICE_SCENARIO =
-  '【状況】土曜の午後14時、渋谷駅ハチ公前で都心南部直下地震（M7.3、震度6強）が発生。' +
-  'あなたは帰宅困難者の一人として次の行動を取りました。';
 
-// レートリミット状態
+// レートリミット状態（adviceService に渡す）
 let _lastCallTime = 0;
-const RATE_LIMIT_MS = 2000;
 
 // Gemini クライアント・アップロード済みファイル
 let genaiClient = null;
 let geminiFiles = [];
+let geminiInitPromise = null; // 初期化完了を待つための Promise
 
 function loadAdviceCache() {
   try {
@@ -57,10 +49,6 @@ function saveAdviceCache(cache) {
   }
 }
 
-function adviceCacheKey(actions) {
-  return crypto.createHash('sha256').update(actions.trim()).digest('hex');
-}
-
 const client = new MongoClient(uri);
 let db, Users, Events, Facilities, SnsPosts, Results;
 
@@ -75,15 +63,13 @@ async function start() {
   Results = db.collection('results');
 
 
-  app.listen(PORT, () =>
-    console.log(`Server listening on http://localhost:${PORT}`)
-  );
   console.log('✅ MongoDB connected');
 
-  // Gemini Files API 初期化（PDFアップロード、起動時1回のみ）
+  // Gemini Files API 初期化（非同期・バックグラウンド）
+  // サーバー起動をブロックせず、/api/advice の初回リクエスト時に完了を待つ
   if (GEMINI_API_KEY) {
     genaiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    initGeminiFiles(genaiClient)
+    geminiInitPromise = initGeminiFiles(genaiClient)
       .then(files => {
         geminiFiles = files;
         console.log(`✅ Gemini Files 準備完了 (${files.length}件)`);
@@ -91,7 +77,12 @@ async function start() {
       .catch(e => console.warn('[gemini-files] 初期化失敗（フォールバック継続）:', e.message));
   } else {
     console.warn('[advice] GEMINI_API_KEY 未設定: LLMアドバイスは無効（ルールベースフォールバックのみ）');
+    geminiInitPromise = Promise.resolve();
   }
+
+  app.listen(PORT, () =>
+    console.log(`Server listening on http://localhost:${PORT}`)
+  );
 }
 start().catch(err => {
   console.error('Mongo connect error:', err);
@@ -185,55 +176,22 @@ app.get('/api/advice', async (req, res) => {
   const actions = (req.query.actions || '').trim();
   if (!actions) return res.json({ advice: null, fromCache: false });
 
-  // キャッシュ確認
+  // 初期化がまだ完了していない場合は待つ（初回リクエスト時のみ遅延が発生）
+  if (geminiInitPromise) await geminiInitPromise;
+
   const cache = loadAdviceCache();
-  const key = adviceCacheKey(actions);
-  if (cache[key]) return res.json({ advice: cache[key], fromCache: true });
-
-  // Gemini 未初期化 or PDFなし
-  if (!genaiClient || geminiFiles.length === 0) {
-    return res.json({ advice: null, fromCache: false });
-  }
-
-  // レートリミット
-  const elapsed = Date.now() - _lastCallTime;
-  if (elapsed < RATE_LIMIT_MS) await new Promise(r => setTimeout(r, RATE_LIMIT_MS - elapsed));
+  const fromCache = !!cache[cacheKey(actions)];
 
   try {
-    const parts = [
-      { text: ADVICE_SYSTEM_PROMPT },
-      ...geminiFiles.map(f => ({ fileData: { fileUri: f.uri, mimeType: 'application/pdf' } })),
-      { text: `${ADVICE_SCENARIO}\n【ユーザーの行動】${actions}\n\n100字前後でアドバイスしてください。` },
-    ];
-
-    const MAX_RETRIES = 3;
-    let response;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        response = await genaiClient.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts }],
-          config: { temperature: 0.2, maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
-        });
-        break;
-      } catch (e) {
-        const status = e?.status || e?.code;
-        if ((status === 503 || status === 429) && attempt < MAX_RETRIES) {
-          await new Promise(r => setTimeout(r, 5000 * (2 ** (attempt - 1))));
-        } else throw e;
-      }
-    }
-
-    _lastCallTime = Date.now();
-    const rawText = response?.text || '';
-    const advice = rawText.replace(/\n+/g, '').trim() || null;
-
-    if (advice) {
-      cache[key] = advice;
-      saveAdviceCache(cache);
-    }
-
-    res.json({ advice, fromCache: false });
+    const advice = await getAdvice(actions, {
+      genaiClient,
+      geminiFiles,
+      cache,
+      saveCache: saveAdviceCache,
+      getLastCallTime: () => _lastCallTime,
+      setLastCallTime: (t) => { _lastCallTime = t; },
+    });
+    res.json({ advice, fromCache });
   } catch (e) {
     console.error('[advice] Gemini API エラー:', e.message);
     res.json({ advice: null, fromCache: false });
