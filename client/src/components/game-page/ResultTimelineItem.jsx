@@ -29,10 +29,17 @@ export const ResultTimelineItem = ({
       borderBottom={isLast ? "none" : "0.05vh solid var(--color-base131)"}
       width="100%"
     >
-      {/* 時刻 */}
-      <Text className="text-subtext" color="var(--color-base13)">
-        {time}
-      </Text>
+      {/* 時刻・地点（同一行） */}
+      <Flex gap="1ch" alignItems="baseline">
+        <Text className="text-subtext" color="var(--color-base13)">
+          {time}
+        </Text>
+        {!isSns && (
+          <Text className="text-subtext" color="var(--color-base13)">
+            地点：{facilityName}
+          </Text>
+        )}
+      </Flex>
 
       {/* アクション名（赤太字）: SNS は固定テキスト、walk/epilogue は施設タイプ名 */}
       <Text
@@ -42,13 +49,6 @@ export const ResultTimelineItem = ({
       >
         {isSns ? "SNS を確認" : `${facilityTypeName}へ移動`}
       </Text>
-
-      {/* 地点: SNS は locationId が null のため非表示 */}
-      {!isSns && (
-        <Text className="text-subtext" color="var(--color-base13)">
-          地点：{facilityName}
-        </Text>
-      )}
 
       {/* 意義テキスト */}
       <Text className="text-maintext">
