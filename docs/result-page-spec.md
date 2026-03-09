@@ -1,8 +1,8 @@
 # リザルトページ仕様書（確定仕様）
 
 - 文書ID: `result-page-spec`
-- バージョン: `2.0`
-- 最終更新: `2026-02-24`
+- バージョン: `3.0`
+- 最終更新: `2026-03-10`
 - 対象画面: `Route /result`
 
 ## 0. この文書の位置づけ
@@ -19,9 +19,10 @@
 
 ### 1.1 今回リリースの対象
 
-1. `ResultPage` の表示（結果ヘッダー、想定地震情報、統計サマリー、ゲージ推移、行動タイムライン、防災ヒント、アプリ紹介、ボタン群）
+1. `ResultPage` の表示（結果ヘッダー、想定地震情報、統計サマリー、ゲージ推移、行動タイムライン、みんなの選択、防災ヒント、アプリ紹介、ボタン群）
 2. `ShareModal` の表示と画像保存
 3. 結果保存API `POST /api/results` の送信
+4. 統計取得API `GET /api/results/stats` の取得
 
 ### 1.2 今回リリースの非対象
 
@@ -40,7 +41,8 @@
 | 統計サマリー | `visitedFacilitiesAtom`, `currentTimeAtom`, `moneyAtom`, `eventHistoryAtom` | `facilityList`（ローカル） | 距離はローカル座標で算出 |
 | ゲージ推移 | `gaugeHistoryAtom` | - | 表示キーは `life/mental/charge/money` |
 | 生死を分けた選択 | `eventHistoryAtom` | `eventList` + `facilityList` + `spotTypeList`（ローカル） | `walk/epilogue/sns` を抽出 |
-| 防災ヒント | `visitedFacilitiesAtom`, `moneyAtom`, `chargeAtom`, `mentalAtom` | 施設ヒント定義 | 最大2件表示 |
+| みんなの選択 | `GET /api/results/stats` | `visitedFacilitiesAtom`（finalDestination算出） | サーバー集計値 |
+| 防災ヒント | `visitedFacilitiesAtom`, `moneyAtom`, `chargeAtom`, `mentalAtom` | 施設ヒント定義（第4.7.3節） | 最大2件表示 |
 | ShareModal表示内容 | ResultPageで計算した値（props） | - | ShareModalはAtomを直接読まない |
 | 結果保存 | `POST /api/results` | - | 送信仕様は第6章 |
 
@@ -81,10 +83,12 @@
 3. 統計サマリー
 4. ゲージ推移
 5. 生死を分けた選択
-6. 防災に向けてのヒント
-7. アプリ紹介
-8. ボタン群（SNS共有、タイトルに戻る）
-9. ダミー画像（開発用のみ）
+6. みんなの選択
+7. 防災に向けてのヒント
+8. アプリ紹介
+9. ボタン群（SNS共有、タイトルに戻る）
+
+注記: 開発用ダミー画像（`dummy-result.png`）は**非表示**とする（コードは保持し、表示のみ無効化する）。
 
 ### 4.2 結果ヘッダー
 
@@ -173,38 +177,136 @@
 
 - `行動履歴がありません` を表示する。
 
-### 4.7 防災に向けてのヒント
+### 4.7 みんなの選択
 
-#### 4.7.1 生成ルール
+#### 4.7.1 概要
+
+他プレイヤーの統計を `GET /api/results/stats` から取得し、円グラフ・ドーナツグラフで表示する。
+
+#### 4.7.2 UI構成
+
+```
+┌─────────────────────────────────┐
+│ みんなの選択                      │
+├─────────────────────────────────┤
+│         最終到達地点              │
+│       [円グラフ（SVG）]           │
+│      [エリア凡例（wrap）]         │
+│                                 │
+│  [ドーナツ]   [ドーナツ]          │
+│  同一到達地点  バッテリー          │
+│    XX%         XX%              │
+│                                 │
+│  [ドーナツ]   [ドーナツ]          │
+│  現金を下ろした 誰とも話さなかった  │
+│    XX%          XX%             │
+└─────────────────────────────────┘
+```
+
+- データ取得中はローディングテキストを表示する。
+- 取得失敗時は `データを取得できませんでした` を**左詰め**で表示する。
+- `total === 0` の場合は `データがまだありません` を**左詰め**で表示する。
+- 「すべての選択を見る」ボタンは実装しない。
+
+#### 4.7.2.1 円グラフ レイアウト制約
+
+- スライス内にエリア名テキストは**表示しない**。
+- スライス内に**割合（%）の数値のみ**表示する（例: `40%`）。
+- スライスが小さすぎる場合（`rate < 10`）は数値を省略する。
+- エリアの識別は凡例（下部 wrap 行）で行う。
+- グラフ直上に `「全 {total} 人のデータ」` を小テキスト・**デフォルト文字色（黒）**で表示する。
+
+#### 4.7.2.3 凡例 レイアウト制約
+
+- 各凡例アイテムは `● {エリア名}` 形式で表示する（rate% は表示しない）。
+- 「その他」の色ドット（灰色）は白背景との判別のため細いボーダーを付ける。
+
+#### 4.7.2.2 ドーナツグラフ レイアウト制約
+
+- 4つを**必ず2×2グリッド**で配置する（1列縦並び禁止）。
+- 横並び2列を実現するため、各ドーナツの幅は gap を考慮した `calc(50% - <half-gap>)` とする。
+- `width="50%"` をそのまま使い、かつ `gap` を持つ flex コンテナに入れてはならない（100%超えによる折り返しが発生するため）。
+
+#### 4.7.3 色定義・表示順
+
+エリアの表示順（円グラフ・凡例とも）は以下の固定順に従う。APIレスポンスの順序に依存しない。
+
+| 順 | エリア表示名 | 色 | APIレスポンス値 |
+|----|------------|-----|--------------|
+| 1 | 渋谷駅周辺 | `#e63946` | `"渋谷駅周辺"` |
+| 2 | 道玄坂エリア | `#393994` | `"道玄坂エリア"` |
+| 3 | 代々木エリア | `#f4a261` | `"代々木エリア"` |
+| 4 | 青山エリア | `#74c6cc` | `"青山エリア"` |
+| 5 | その他 | `#cccccc` | `"不明"`（クライアントで変換） |
+
+注記: APIは `"不明"` を返すが、クライアント側で `"その他"` に変換して表示する。
+
+#### 4.7.4 ドーナツグラフ4項目
+
+| ラベル | APIフィールド | 表示値の算出 |
+|-------|-------------|------------|
+| 同じ避難先だった\n{施設名} | `sameDestinationRate` | そのまま |
+| 充電スポットに立ち寄った | `batteryRentalRate` | そのまま |
+| 現金を確保した | `cashWithdrawRate` | そのまま |
+| SNSで情報を集めた | `noSnsRate` | `100 - noSnsRate`（クライアントで反転） |
+
+#### 4.7.5 `finalDestination` の算出（クライアント側）
+
+`visitedFacilitiesAtom` を末尾から走査し、`fac_000` 以外の最初の施設IDを `finalDestination` とする。
+訪問施設が `fac_000` のみの場合は `"fac_000"` を使用する。
+
+### 4.8 防災に向けてのヒント
+
+#### 4.8.1 生成ルール
 
 0. **行動履歴がない場合（`timelineData.length === 0`）は空配列を返す**（ヒントを生成しない）。
-1. 施設訪問ヒント（訪問/未訪問）を評価する。
+1. 施設訪問ヒント（訪問/未訪問）を第4.8.2節の定義に従い評価する。
 2. ゲージ条件ヒント（money/charge/mental）を評価する。
-3. 重複テーマを避ける条件（例: money=0 と `fac_003` 未訪問）を適用する。
+3. 重複テーマを避ける条件（例: money=0 かつ `fac_003` 訪問済みの場合のみ現金ヒントを追加）を適用する。
 4. 候補が3件以上の場合はランダムシャッフル後に2件採用する。
 
-#### 4.7.2 空データ時
+#### 4.8.2 施設ヒント定義（正規定義）
+
+以下が `facilityHintMap` の正規定義。`resultPageLogic.js` のみで定義し、`ResultPage.jsx` はこれをインポートして使用する。
+
+| 施設ID | visited（訪問済み） | notVisited（未訪問） |
+|--------|-------------------|------------------|
+| `fac_001` | 充電スポットを確保しました！停電時でもスマートフォンが使えるよう、日頃からモバイルバッテリーを満充電にしておきましょう。 | モバイルバッテリーを持ち歩いていれば、電源を心配する場面を減らせたかもしれない。 |
+| `fac_002` | 避難方向の目印を確認しました。日頃から地域のハザードマップや避難誘導サインを意識しておくと、緊急時も迷わず行動できます。 | 避難誘導サインは見えても見落としやすい。平時から街中の避難経路を意識して歩く習慣をつけておきましょう。 |
+| `fac_003` | 食料と現金を確保しました！非常時に備えて、水・非常食（3日分）と現金を日頃から備蓄しておきましょう。 | 現金があれば、キャッシュレス決済が使えなくなっても慌てずに済んだかもしれない。 |
+| `fac_004` | 受け入れ施設の情報を取得しました。平時から地域の一時避難場所の場所を確認しておけば、緊急時も素早く行動できます。 | 避難先の情報を事前に調べておけば、混乱した状況でも迷わず行動できたかもしれない。 |
+| `fac_005` | 一時避難場所に辿り着きました！地域の避難訓練への参加や、家族との避難場所の事前共有が、いざという時に命を救います。 | （なし：ゲームの目的地のため未訪問ヒントを表示しない） |
+
+#### 4.8.3 ゲージ条件ヒント
+
+| 条件 | ヒントテキスト |
+|------|------------|
+| `money === 0` かつ `fac_003` 訪問済み | 小銭を常に持ち歩いていれば、緊急時の行動選択肢が広がったかもしれない。 |
+| `charge === 0` | スマートフォンの充電を日ごろから心がけていれば、情報収集が途絶えなかったかもしれない。 |
+| `mental < 30` | 複数の避難場所を事前に把握していれば、精神的な余裕が生まれたかもしれない。 |
+
+#### 4.8.4 空データ時
 
 - `生存のヒントがありません` を表示する。
 
-### 4.8 アプリ紹介
+### 4.9 アプリ紹介
 
 - 既存表示を維持する（本文、外部リンク）。
 
-### 4.9 ボタン群
+### 4.10 ボタン群
 
 1. SNS共有ボタン
-- 文言: `避難の記録をSNSに投稿する`
-- 動作: `setIsShareOpen(true)`
+   - 文言: `避難の記録をSNSに投稿する`
+   - 動作: `setIsShareOpen(true)`
 
 2. タイトルに戻るボタン
-- 文言: `タイトルに戻る`
-- 動作: 確認ダイアログ -> `resetAllAtom` -> `/` へ遷移
+   - 文言: `タイトルに戻る`
+   - 動作: 確認ダイアログ -> `resetAllAtom` -> `/` へ遷移
 
-### 4.10 ダミー画像
-
-- `dummy-result.png` は開発用表示。
-- 本番リリースでは削除対象。
+3. 確認ダイアログ
+   - 全画面オーバーレイ（`position: fixed`）で表示する。
+   - ダイアログ外タップでキャンセル。
+   - ボタン: `キャンセル` / `やり直す`
 
 ## 5. ShareModal仕様
 
@@ -306,7 +408,72 @@
 2. `playerName` 等の個人識別に近い情報は送信しない。
 3. `EventHistory.time` はUTC基準で扱う。
 
-## 7. コンポーネント責務
+## 7. サーバー連携仕様（`GET /api/results/stats`）
+
+### 7.1 エンドポイント
+
+```
+GET /api/results/stats?finalDestination={facilityId}
+```
+
+- `finalDestination` は任意。省略時は `sameDestinationRate` を `0` で返す。
+
+### 7.2 レスポンス
+
+```json
+{
+  "total": 100,
+  "finalDestinationDist": [
+    { "area": "渋谷駅周辺", "count": 40, "rate": 40 },
+    { "area": "道玄坂エリア", "count": 20, "rate": 20 }
+  ],
+  "sameDestinationRate": 12,
+  "batteryRentalRate": 44,
+  "cashWithdrawRate": 37,
+  "noSnsRate": 4,
+  "sameDestinationFacilityName": "ウィズ原宿"
+}
+```
+
+- `total === 0` の場合: `finalDestinationDist: []`, 各rate `0`, `sameDestinationFacilityName: null`
+
+### 7.3 施設マッピング定義（サーバー管理）
+
+```js
+// イベントID → 施設ID（最終到達地点算出用）
+EVENT_LOCATION_MAP = {
+  event_walk_001: "fac_001",
+  event_walk_002: "fac_002",
+  event_walk_003: "fac_003",
+  event_walk_004: "fac_004",
+  event_epilogue_001: "fac_005",
+}
+
+// 施設ID → エリア名
+FAC_AREA_MAP = {
+  fac_000: "渋谷駅周辺", fac_001: "渋谷駅周辺",
+  fac_002: "道玄坂エリア", fac_003: "青山エリア",
+  fac_004: "代々木エリア", fac_005: "原宿エリア",
+}
+
+// 施設ID → 施設名
+FAC_NAME_MAP = {
+  fac_000: "渋谷駅前", fac_001: "渋谷センター街",
+  fac_002: "道玄坂", fac_003: "公園通り",
+  fac_004: "代々木公園", fac_005: "ウィズ原宿",
+}
+```
+
+### 7.4 最終到達地点の算出ロジック（サーバー）
+
+`EventHistory` を `time` 昇順ソート後、末尾から走査して最初に `EVENT_LOCATION_MAP` にヒットした `id` の施設IDを最終到達地点とする。
+
+### 7.5 通信失敗時の挙動
+
+- API失敗時はエラー状態として `データを取得できませんでした` を表示する。
+- ページ全体の表示はブロックしない。
+
+## 8. コンポーネント責務
 
 | コンポーネント | 責務 | Atom直接参照 |
 | --- | --- | --- |
@@ -314,12 +481,13 @@
 | `StatsSummary` | 統計表示（純粋表示） | なし |
 | `GaugeChart` | グラフ表示（純粋表示） | なし |
 | `ResultTimelineItem` | タイムライン1行表示（純粋表示） | なし |
+| `WorldChoices` | みんなの選択表示、API取得（副作用あり） | なし |
 | `ShareModal` | モーダルUI・画像生成（純粋表示） | なし |
-| `resultPageLogic` | 純粋関数群（算出・整形） | なし |
+| `resultPageLogic` | 純粋関数群（算出・整形）の**唯一の定義場所** | なし |
 
-## 8. 依存リソース
+## 9. 依存リソース
 
-### 8.1 Atom
+### 9.1 Atom
 
 - `survivedAtom`
 - `criticalReasonAtom`
@@ -333,21 +501,22 @@
 - `visitedFacilitiesAtom`
 - `resetAllAtom`
 
-### 8.2 ローカルマスタ
+### 9.2 ローカルマスタ
 
 - `eventList`
 - `facilityList`
 - `spotTypeList`
 
-### 8.3 API
+### 9.3 API
 
-- `POST /api/results`
+- `POST /api/results`（結果保存）
+- `GET /api/results/stats`（統計取得）
 
 注記:
 
 - `GET /api/events/:id` と `GET /api/facilities` はゲーム進行側の仕様であり、ResultPage仕様の依存APIには含めない。
 
-## 9. 受け入れ条件（QA）
+## 10. 受け入れ条件（QA）
 
 1. 目次・章本文・ルーティング定義の間で `/result/share` の記述不整合がない。
 2. 統計サマリーの総移動距離が `null` にならない。
@@ -357,100 +526,147 @@
 6. タイムラインで `sns` は地点行を表示しない。
 7. ShareModalはルーティング遷移なしで開閉できる。
 8. Result保存失敗時でも `/result` へ遷移する。
+9. `WorldChoices` がデータ取得中・失敗・zero件それぞれで正しく表示される。
+9a. ドーナツグラフが2×2グリッドで表示される（1列縦並びにならない）。
+9b. 円グラフのスライス内にエリア名ではなく % 数値が表示される（rate < 10 のスライスは省略）。
+9b2. 円グラフ上部に「全 N 人のデータ」が表示される。
+9b3. 凡例が `エリア名` のみで表示される（rate% は表示しない）。
+9c. 円グラフ・凡例のエリア表示順が「渋谷駅周辺→道玄坂エリア→代々木エリア→青山エリア→その他」になっている。
+9d. API の `"不明"` が `"その他"` として表示される。
+9e. ドーナツの「SNSで情報を集めた」が `100 - noSnsRate` の値で表示される。
+10. 確認ダイアログがスクロール位置に依存せず画面中央に表示される。
+11. `resultPageLogic.js` 以外に `facilityHintMap` / `buildHints` / `getFlavorText` の実装が存在しない。
+12. ダミー画像（`dummy-result.png`）が非表示（`display: none` 相当）になっている。
 
-## 10. 文書運用ルール
+## 11. 文書運用ルール
 
 1. 仕様変更時は本書（What）を先に更新する。
-2. 実装詳細変更時は本書の第11章（設計）を更新する。
+2. 実装詳細変更時は本書の第12章（設計）を更新する。
 3. Issue対応やテスト結果は `docs/tasks/` の該当タスクに追記する。
 4. 本書に「完了済みIssue履歴」や「テスト実行ログ」を混在させない。
 
-## 11. 設計（How）
+## 12. 設計（How）
 
-### 11.1 設計方針
+### 12.1 設計方針
 
 1. 算出ロジックは `client/src/utils/resultPageLogic.js` に集約し、UIコンポーネントから分離する。
 2. `ResultPage` はコンテナとして Atom を読み、表示コンポーネントへ props を渡す。
-3. 表示コンポーネントは副作用を持たない（`ShareModal` も同様）。
+3. 表示コンポーネントは副作用を持たない（`WorldChoices` を除く）。
 
-### 11.2 データフロー
+### 12.2 ロジック集約ルール（重複禁止）
+
+以下の関数・定数は `resultPageLogic.js` のみで定義し、`ResultPage.jsx` はインポートして使う。
+`ResultPage.jsx` 内にインライン再定義を行わない。
+
+| 対象 | 定義場所 |
+|------|---------|
+| `facilityHintMap` | `resultPageLogic.js` |
+| `buildHints` | `resultPageLogic.js` |
+| `getFlavorText` | `resultPageLogic.js` |
+| `flavorTextMap` | `resultPageLogic.js`（内部使用） |
+| `calcElapsedTime` | `resultPageLogic.js` |
+| `buildTimelineData` | `resultPageLogic.js` |
+| `calcTotalDistance` | `resultPageLogic.js` |
+| `calcVisitedCount` | `resultPageLogic.js` |
+
+### 12.3 データフロー
 
 ```text
 Atom / ローカルマスタ
   -> ResultPage（算出・整形）
-    -> StatsSummary / GaugeChart / ResultTimelineItem / ShareModal
+    -> StatsSummary / GaugeChart / ResultTimelineItem / WorldChoices / ShareModal
 ```
 
 - 施設名・施設タイプは `eventHistoryAtom` 単体では復元できないため、`eventList` / `facilityList` / `spotTypeList` を突合する。
 
-### 11.3 算出ロジック設計
+### 12.4 算出ロジック設計
 
-#### 11.3.1 総移動距離
+#### 12.4.1 総移動距離
 
 1. `visitedFacilities` の隣接ペアごとに Haversine 距離（km）を合算する。
 2. 小数点1桁で丸める。
 3. 不正IDまたは座標欠損セグメントはスキップする。
 
-#### 11.3.2 訪問施設数
+#### 12.4.2 訪問施設数
 
 - `fac_000` は開始地点なので除外する。
 
-#### 11.3.3 ヒント選定
+#### 12.4.3 経過時間
 
-1. 施設系ヒント + 条件ヒントを作成する。
-2. 3件以上はシャッフルして2件選択する。
+- `resultPageLogic.js` の `calcElapsedTime(currentTime, startTime)` を使う。
+- `startTime` は `ResultPage` マウント時に1回だけ生成する（`useMemo` で固定）。
+- 毎レンダリングで `new Date()` を呼んで再生成しない。
 
-### 11.4 `gaugeSteps` と `charge` / `battery` の扱い
+#### 12.4.4 ヒント選定
 
-#### 11.4.1 背景
+1. `resultPageLogic.js` の `buildHints(visitedFacilities, money, charge, mental)` を使う。
+2. `timelineData.length === 0` の場合は `buildHints` を呼ばず空配列を返す（呼び出し元 `ResultPage` で制御）。
+3. 3件以上はシャッフルして2件選択する。
+4. 0件の場合は `生存のヒントがありません` を表示する（フォールバックヒントは使わない）。
+
+### 12.5 `gaugeSteps` と `charge` / `battery` の扱い
+
+#### 12.5.1 背景
 
 - イベント定義（`eventList` / API `gaugeChange`）は `battery` キーを使用。
 - 表示系（`gaugeHistory`, ResultPage, GaugeChart）は `charge` キーを使用。
 
-#### 11.4.2 実装ルール
+#### 12.5.2 実装ルール
 
 1. イベント処理段階で `battery` を `charge` に適用して確定値を作る。
 2. `gaugeHistory` への記録は常に `charge` キーで保存する。
 3. ResultPage 配下は `battery` を直接参照しない。
 
-#### 11.4.3 後方互換
+#### 12.5.3 後方互換
 
 1. `gaugeSteps` がないイベントは `gaugeChange` を1ステップとして扱う。
 2. `gaugeSteps` があるイベントは各ステップを同一時刻で順次適用する。
 
-### 11.5 ShareModal 実装設計
+### 12.6 確認ダイアログ実装
 
-#### 11.5.1 Canvas 生成
+- `position: fixed` を使い、スクロール位置に依存しない全画面オーバーレイを実現する。
+- `position: absolute` は使用しない。
+
+### 12.7 `WorldChoices` コンポーネント設計
+
+1. `finalDestination` を props として受け取り、`useEffect` で `GET /api/results/stats` を取得する。
+2. `sameDestinationFacilityName` を含むラベルの改行は、`<Text whiteSpace="pre-line">` + 文字列中の `\n` で表現する。
+3. 円グラフ・ドーナツグラフは外部ライブラリなし raw SVG で実装する。
+
+### 12.8 ShareModal 実装設計
+
+#### 12.8.1 Canvas 生成
 
 1. 画像サイズは `1080x1920`。
 2. 出力形式は PNG。
 3. 地図は含めない。
 
-#### 11.5.2 レイアウト設計
+#### 12.8.2 レイアウト設計
 
 1. 固定座標値への依存を避け、比率ベースでレイアウトする。
 2. セクションごとに高さ比率を定義し、縦方向フローで配置する。
 
-#### 11.5.3 フォントロード
+#### 12.8.3 フォントロード
 
 1. 描画前に `document.fonts.ready` を待機する。
 2. フォールバック時は `ctx.measureText` で再レイアウトして重なりを防ぐ。
 
-#### 11.5.4 保存挙動
+#### 12.8.4 保存挙動
 
 1. 通常ブラウザは `a[download]` 経由。
 2. iOS Safari はプレビューURL表示 + 長押し保存誘導。
 3. `isSaving` フラグで多重起動防止。
 
-### 11.6 API送信の実装設計
+### 12.9 API送信の実装設計
 
 1. 送信箇所は `useMonologueLogic` の `postResultIfNeeded(nextPath)`。
 2. `/result` 遷移時のみ送信する。
 3. 失敗時は警告ログのみで遷移を継続する。
 
-### 11.7 将来対応（非対象）
+### 12.10 将来対応（非対象）
 
 1. `eventHistoryAtom` に `type`, `locationId` を保持し、`eventList` 突合を減らす。
 2. `POST /api/results` に冪等性キーを導入する。
 3. Share画像に地図を含める場合は Static Maps API 等の別設計を行う。
 4. `AgeType/Gender/ResidenceType` の送信値を表示ラベルから正規化キーへ統一する。
+5. `GET /api/results/stats` のパフォーマンス改善（データ増加時のメモリ対策）。
