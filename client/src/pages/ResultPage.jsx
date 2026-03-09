@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Flex, Text, Link } from "@chakra-ui/react";
+import { Flex, Text, Link, Box } from "@chakra-ui/react";
 import {
   survivedAtom,
   criticalReasonAtom,
@@ -75,6 +75,7 @@ export const ResultPage = () => {
 
   const navigate = useNavigate();
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // 統計サマリーの算出
   const createStartTime = () => {
@@ -142,13 +143,13 @@ export const ResultPage = () => {
 
   // タイトルに戻るボタンの処理
   const handleReturnToTitle = () => {
-    const ok = window.confirm(
-      "これまでのプレイデータは削除されます。\n本当に最初からやり直しますか？"
-    );
-    if (ok) {
-      setAll(); // ここで全リセット
-      navigate("/");
-    }
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    setIsConfirmOpen(false);
+    setAll();
+    navigate("/");
   };
 
   return (
@@ -462,6 +463,59 @@ export const ResultPage = () => {
 
       {/* SNS シェアモーダル（page-container 直下でオーバーレイ） */}
       <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+
+      {/* タイトルに戻る 確認ダイアログ */}
+      {isConfirmOpen && (
+        <Flex
+          position="absolute"
+          top={0}
+          left={0}
+          width="100%"
+          height="100%"
+          backgroundColor="rgba(0,0,0,0.6)"
+          zIndex={10}
+          alignItems="center"
+          justifyContent="center"
+          onClick={() => setIsConfirmOpen(false)}
+        >
+          <Box
+            backgroundColor="var(--color-base10)"
+            borderRadius="2vh"
+            padding="4vh"
+            width="80%"
+            maxWidth="320px"
+            display="flex"
+            flexDirection="column"
+            gap="2vh"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Text className="text-sectiontitle" fontWeight="bold">
+              タイトルに戻りますか？
+            </Text>
+            <Text className="text-maintext" color="var(--color-base13)">
+              これまでのプレイデータは削除されます。
+            </Text>
+            <Flex gap="3%" width="100%">
+              <Button
+                width="100%"
+                height="3.6vh"
+                text="キャンセル"
+                color="var(--color-base13)"
+                isAvailable
+                onClick={() => setIsConfirmOpen(false)}
+              />
+              <Button
+                width="100%"
+                height="3.6vh"
+                text="やり直す"
+                color="var(--color-accent10)"
+                isAvailable
+                onClick={handleConfirmReset}
+              />
+            </Flex>
+          </Box>
+        </Flex>
+      )}
     </Flex>
   );
 };

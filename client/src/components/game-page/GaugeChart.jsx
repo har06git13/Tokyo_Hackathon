@@ -46,7 +46,7 @@ const GaugeChart = ({ gaugeHistory }) => {
           </Text>
 
           {/* 凡例 */}
-          <Flex gap="1vh" flexWrap="nowrap" justifyContent="center">
+          <Flex gap="1vh" flexWrap="wrap" justifyContent="center">
             {legendItems.map(({ label, Icon }) => (
               <Flex key={label} alignItems="center" gap="0.6vh">
                 <Box height={legendIconSize} width={legendIconSize}>
@@ -227,7 +227,7 @@ const GaugeChart = ({ gaugeHistory }) => {
       </Flex>
 
         {/* 凡例 */}
-        <Flex gap="1vh" flexWrap="nowrap" justifyContent="center">
+        <Flex gap="1vh" flexWrap="wrap" justifyContent="center">
           {legendItems.map(({ label, Icon }) => (
             <Flex key={label} alignItems="center" gap="0.6vh">
               <Box height={legendIconSize} width={legendIconSize}>

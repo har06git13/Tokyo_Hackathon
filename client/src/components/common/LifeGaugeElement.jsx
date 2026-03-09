@@ -54,7 +54,7 @@ export const LifeGaugeElement = ({ type, amount, onClick }) => {
 
       <Flex gap={"0.6%"} paddingRight={"14%"}>
         <Text className="text-subtext" whiteSpace="nowrap">
-          {type === "howto" ? "説明" : type === "money" ? amount * 100 : amount}
+          {type === "howto" ? "説明" : type === "money" ? (amount ?? 0) * 100 : (amount ?? 0)}
         </Text>
         <Text className="text-subtext">
           {type === "money" ? "円" : type === "howto" ? "" : "%"}
