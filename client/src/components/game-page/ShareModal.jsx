@@ -52,8 +52,8 @@ const MONEY_ICON_URL = makeIconDataUrl(
 
 // 区切り線ヘルパー
 const drawSep = (ctx, y, W) => {
-  ctx.globalAlpha = 0.25;
-  ctx.fillStyle = "#fdfdfd";
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(W * 0.08, y, W * 0.84, 2);
 };
 
@@ -77,149 +77,184 @@ const generateShareImage = async (
   canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  // ===== 背景 =====
-  ctx.fillStyle = survived ? "#e63946" : "#2d2d2d";
+  // ===== 背景（白地）=====
+  ctx.fillStyle = "#fdfdfd";
   ctx.fillRect(0, 0, W, H);
 
-  // ===== ロゴ =====
+  // ===== 外枠ボーダー（生存: 赤 / 失敗: 黒）=====
+  const BORDER = 32;
+  ctx.fillStyle = survived ? "#e63946" : "#1a1a1a";
+  ctx.fillRect(0, 0, W, BORDER);           // 上
+  ctx.fillRect(0, H - BORDER, W, BORDER);  // 下
+  ctx.fillRect(0, 0, BORDER, H);           // 左
+  ctx.fillRect(W - BORDER, 0, BORDER, H);  // 右
+
+  const ACCENT = survived ? "#e63946" : "#1a1a1a";
+  const CARD_BG = "#f4f4f4";
+  const CARD_R = 24;
+
+  // ===== ヘッダー帯（ロゴ + 日付）=====
+  const HEADER_H = 300;
+  ctx.fillStyle = ACCENT;
+  ctx.fillRect(BORDER, BORDER, W - BORDER * 2, HEADER_H);
+
+  // ロゴ
   if (logoImg && logoImg.naturalWidth > 0) {
-    const lh = 140;
+    const lh = 130;
     const lw = lh * (logoImg.naturalWidth / logoImg.naturalHeight);
-    ctx.globalAlpha = 0.92;
-    ctx.drawImage(logoImg, (W - lw) / 2, 60, lw, lh);
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(logoImg, (W - lw) / 2, BORDER + 40, lw, lh);
     ctx.globalAlpha = 1;
   }
-
-  // ===== 日付 =====
-  ctx.globalAlpha = 0.7;
+  // 日付（ヘッダー内・白文字）
+  ctx.globalAlpha = 0.75;
   ctx.fillStyle = "#fdfdfd";
-  ctx.font = "44px 'Rounded Mplus 1c'";
+  ctx.font = "40px 'Rounded Mplus 1c'";
   ctx.textAlign = "center";
-  ctx.fillText(playDate, W / 2, 260);
-
-  // ===== 区切り線① =====
-  drawSep(ctx, 295, W);
-
-  // ===== 結果テキスト（bold なし → Synthetic Bold による字形圧縮を防ぐ）=====
+  ctx.fillText(playDate, W / 2, BORDER + HEADER_H - 44);
   ctx.globalAlpha = 1;
-  ctx.fillStyle = "#fdfdfd";
-  ctx.font = "160px 'Dela Gothic One'";
+
+  // ===== 結果テキスト =====
+  ctx.fillStyle = ACCENT;
+  ctx.font = "155px 'Dela Gothic One'";
   ctx.textAlign = "center";
-  ctx.fillText(survived ? "避難成功！" : "避難失敗…", W / 2, 480);
+  ctx.fillText(survived ? "避難成功！" : "避難失敗…", W / 2, 510);
 
-  // ===== 区切り線② =====
-  drawSep(ctx, 540, W);
+  // ===== プレイ統計（統合カード）=====
+  const CARD_X = 60;
+  const CARD_W = W - 120;
+  const CARD_PAD = 56;
+  const MID_X = W / 2;
+  const STAT_TOP = 620;
+  const ROW_H = 158;
+  const STAT_CARD_H = ROW_H * 3;
 
-  // ===== プレイ統計（2列グリッド）=====
-  // 列設定: 左 x=80, 右 x=570, Row3 中央 x=540
-  const LEFT_X = 80;
-  const RIGHT_X = 570;
-  const rows = [
-    { label1: "総移動距離", val1: `${totalDistance} km`,   label2: "経過時間",     val2: `${hours}時間${minutes}分` },
-    { label1: "訪問施設数",  val1: `${visitedCount} 箇所`, label2: "使用したお金", val2: `${(money * 100).toLocaleString()} 円` },
+  // 統合カード背景（1枚）
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = CARD_BG;
+  ctx.beginPath();
+  ctx.roundRect(CARD_X, STAT_TOP, CARD_W, STAT_CARD_H, CARD_R);
+  ctx.fill();
+
+  // セクションラベル（カード上部）
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = "#1a1a1a";
+  ctx.font = "28px 'Rounded Mplus 1c'";
+  ctx.textAlign = "center";
+  ctx.fillText("プレイ統計", W / 2, STAT_TOP - 22);
+  ctx.globalAlpha = 1;
+
+  const statRows = [
+    { label1: "総移動距離", val1: `${totalDistance} km`,   label2: "経過時間",     val2: `${hours}時間${minutes}分`,              rowIndex: 0 },
+    { label1: "訪問施設数",  val1: `${visitedCount} 箇所`, label2: "使用したお金", val2: `${(money * 100).toLocaleString()} 円`,  rowIndex: 1 },
+    { label1: null,          val1: null,                    label2: "SNS利用回数",  val2: `${snsCount} 回`,    center: true,      rowIndex: 2 },
   ];
-  const ROW_Y = [620, 755]; // label Y の開始
 
-  rows.forEach(({ label1, val1, label2, val2 }, i) => {
-    const ly = ROW_Y[i];
-    const vy = ly + 45;
-    // 左列
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = "#fdfdfd";
-    ctx.font = "34px 'Rounded Mplus 1c'";
-    ctx.textAlign = "left";
-    ctx.fillText(label1, LEFT_X, ly);
-    ctx.globalAlpha = 1;
-    ctx.font = "bold 50px 'Rounded Mplus 1c'";
-    ctx.fillText(val1, LEFT_X, vy);
-    // 右列
-    ctx.globalAlpha = 0.7;
-    ctx.font = "34px 'Rounded Mplus 1c'";
-    ctx.fillText(label2, RIGHT_X, ly);
-    ctx.globalAlpha = 1;
-    ctx.font = "bold 50px 'Rounded Mplus 1c'";
-    ctx.fillText(val2, RIGHT_X, vy);
+  statRows.forEach(({ label1, val1, label2, val2, rowIndex, center }) => {
+    const rowY = STAT_TOP + rowIndex * ROW_H;
+
+    if (center) {
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "30px 'Rounded Mplus 1c'";
+      ctx.textAlign = "center";
+      ctx.fillText(label2, MID_X, rowY + 54);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = ACCENT;
+      ctx.font = "bold 52px 'Rounded Mplus 1c'";
+      ctx.fillText(val2, MID_X, rowY + 112);
+    } else {
+      const lx = CARD_X + CARD_PAD;
+      const rx = MID_X + CARD_PAD;
+      // 左列
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "30px 'Rounded Mplus 1c'";
+      ctx.textAlign = "left";
+      ctx.fillText(label1, lx, rowY + 54);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = ACCENT;
+      ctx.font = "bold 52px 'Rounded Mplus 1c'";
+      ctx.fillText(val1, lx, rowY + 112);
+      // 右列
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "30px 'Rounded Mplus 1c'";
+      ctx.textAlign = "left";
+      ctx.fillText(label2, rx, rowY + 54);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = ACCENT;
+      ctx.font = "bold 52px 'Rounded Mplus 1c'";
+      ctx.fillText(val2, rx, rowY + 112);
+    }
   });
 
-  // SNS利用回数（Row 3 - 中央）
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = "#fdfdfd";
-  ctx.font = "34px 'Rounded Mplus 1c'";
-  ctx.textAlign = "center";
-  ctx.fillText("SNS利用回数", W / 2, 890);
-  ctx.globalAlpha = 1;
-  ctx.font = "bold 50px 'Rounded Mplus 1c'";
-  ctx.fillText(`${snsCount} 回`, W / 2, 935);
-
-  // ===== 区切り線③ =====
-  drawSep(ctx, 975, W);
+  // カード底辺 = STAT_TOP + STAT_CARD_H
+  const STAT_BOTTOM = STAT_TOP + STAT_CARD_H;
 
   // ===== 最終ゲージ セクションラベル =====
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = "#fdfdfd";
-  ctx.font = "36px 'Rounded Mplus 1c'";
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "#1a1a1a";
+  ctx.font = "34px 'Rounded Mplus 1c'";
   ctx.textAlign = "center";
-  ctx.fillText("最終ゲージ", W / 2, 1050);
+  ctx.fillText("最終ゲージ", W / 2, STAT_BOTTOM + 80);
 
-  // ===== ゲージバー（アイコン付き）=====
-  const ICON_SIZE = 48;
-  const BAR_LEFT = 138;
+  // ===== ゲージバー（丸角・アイコン付き）=====
+  const ICON_SIZE = 52;
+  const BAR_LEFT = 148;
   const BAR_RIGHT = W - 80;
-  const BAR_W = BAR_RIGHT - BAR_LEFT; // 862
-  const BAR_H = 26;
-  const GAUGE_START_Y = 1110;
-  const GAUGE_STEP = 110;
+  const BAR_W = BAR_RIGHT - BAR_LEFT;
+  const BAR_H = 28;
+  const BAR_R = BAR_H / 2;
+  const GAUGE_START_Y = STAT_BOTTOM + 150;
+  const GAUGE_STEP = 120;
 
   const gauges = [
-    { label: "体力",  value: life,   color: "#06d6a0", display: `${life}%`,                        icon: lifeIcon },
-    { label: "精神",  value: mental, color: "#118ab2", display: `${mental}%`,                      icon: mentalIcon },
-    { label: "充電",  value: charge, color: "#fdc500", display: `${charge}%`,                      icon: chargeIcon },
+    { label: "体力",  value: life,   color: "#06d6a0", display: `${life}%`,                           icon: lifeIcon },
+    { label: "精神",  value: mental, color: "#118ab2", display: `${mental}%`,                         icon: mentalIcon },
+    { label: "充電",  value: charge, color: "#fdc500", display: `${charge}%`,                         icon: chargeIcon },
     { label: "お金",  value: money,  color: "#8d6e63", display: `${(money * 100).toLocaleString()}円`, icon: moneyIcon },
   ];
 
   gauges.forEach((g, i) => {
     const textY = GAUGE_START_Y + i * GAUGE_STEP;
-    const iconTop = textY - 40;
-    const barY = textY + 12;
+    const iconTop = textY - 44;
+    const barY = textY + 14;
 
-    // アイコン
     if (g.icon && g.icon.naturalWidth > 0) {
       ctx.globalAlpha = 0.95;
       ctx.drawImage(g.icon, 80, iconTop, ICON_SIZE, ICON_SIZE);
     }
-
-    // ラベル（左）
     ctx.globalAlpha = 0.9;
     ctx.fillStyle = g.color;
-    ctx.font = "38px 'Rounded Mplus 1c'";
+    ctx.font = "40px 'Rounded Mplus 1c'";
     ctx.textAlign = "left";
     ctx.fillText(g.label, BAR_LEFT, textY);
-
-    // 値（右）
     ctx.textAlign = "right";
     ctx.fillText(g.display, BAR_RIGHT, textY);
 
-    // バー背景
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = "#fdfdfd";
-    ctx.fillRect(BAR_LEFT, barY, BAR_W, BAR_H);
+    // バー背景（丸角）
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.beginPath();
+    ctx.roundRect(BAR_LEFT, barY, BAR_W, BAR_H, BAR_R);
+    ctx.fill();
 
-    // バー塗り
-    ctx.globalAlpha = 0.82;
+    // バー塗り（丸角）
+    const fillW = Math.max(BAR_W * Math.min(g.value, 100) / 100, BAR_H);
+    ctx.globalAlpha = 0.85;
     ctx.fillStyle = g.color;
-    const fillW = Math.max(BAR_W * Math.min(g.value, 100) / 100, 0);
-    ctx.fillRect(BAR_LEFT, barY, fillW, BAR_H);
+    ctx.beginPath();
+    ctx.roundRect(BAR_LEFT, barY, fillW, BAR_H, BAR_R);
+    ctx.fill();
   });
 
-  // ===== 区切り線④ =====
-  drawSep(ctx, 1490, W);
-
   // ===== ハッシュタグ =====
-  ctx.globalAlpha = 0.75;
-  ctx.fillStyle = "#fdfdfd";
-  ctx.font = "52px 'Rounded Mplus 1c'";
+  ctx.globalAlpha = 0.65;
+  ctx.fillStyle = "#1a1a1a";
+  ctx.font = "50px 'Rounded Mplus 1c'";
   ctx.textAlign = "center";
-  ctx.fillText("#渋谷歪譚  #防災", W / 2, 1660);
+  ctx.fillText("#渋谷歪譚  #防災", W / 2, 1800);
 
   return canvas;
 };

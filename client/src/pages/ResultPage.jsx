@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Flex, Text, Link, Box } from "@chakra-ui/react";
 import {
   survivedAtom,
@@ -78,12 +78,14 @@ export const ResultPage = () => {
   // 「防災に向けてのヒント」セクション用
   // 主経路: Gemini LLM アドバイス / フォールバック: ルールベース buildHints()
   const [adviceState, setAdviceState] = useState({ text: null, loading: false, isLLM: false });
+  const adviceRequested = useRef(false);
 
   useEffect(() => {
+    if (adviceRequested.current) return;
+    adviceRequested.current = true;
+
     if (timelineData.length === 0) {
-      // 行動履歴なし → buildHints() フォールバック直行
-      const fallback = buildHints(visitedFacilities, money, charge, mental);
-      setAdviceState({ text: fallback.join('\n'), loading: false, isLLM: false });
+      // 行動履歴なし → アドバイスなし
       return;
     }
     const summary = buildActionSummary(visitedFacilities, eventHistory);
@@ -282,7 +284,7 @@ export const ResultPage = () => {
                 />
               ))
             ) : (
-              <Text className="text-maintext" color="var(--color-base13)">
+              <Text className="text-maintext" color="var(--color-base13)" textAlign="center">
                 行動履歴がありません
               </Text>
             )}
@@ -321,7 +323,11 @@ export const ResultPage = () => {
             borderRadius={"0 0 2vh 2vh"}
             gap="1vh"
           >
-            {adviceState.loading ? (
+            {timelineData.length === 0 ? (
+              <Text className="text-maintext" color="var(--color-base13)" textAlign="center">
+                あなたの行動をもとにアドバイスが表示されます
+              </Text>
+            ) : adviceState.loading ? (
               <Text className="text-maintext" color="var(--color-base13)">
                 アドバイスを生成中...
               </Text>

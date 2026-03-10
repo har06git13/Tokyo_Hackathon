@@ -41,7 +41,7 @@ const GaugeChart = ({ gaugeHistory }) => {
           gap="1vh"
         >
           {/* メッセージ */}
-          <Text className="text-maintext" color="var(--color-base13)">
+          <Text className="text-maintext" color="var(--color-base13)" textAlign="center">
             ゲージ推移データがありません
           </Text>
 
