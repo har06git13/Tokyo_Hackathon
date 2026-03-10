@@ -325,7 +325,7 @@ export const ResultPage = () => {
           >
             {timelineData.length === 0 ? (
               <Text className="text-maintext" color="var(--color-base13)" textAlign="center">
-                あなたの行動をもとにアドバイスが表示されます
+                生存のヒントがありません
               </Text>
             ) : adviceState.loading ? (
               <Text className="text-maintext" color="var(--color-base13)">
