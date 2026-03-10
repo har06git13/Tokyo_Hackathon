@@ -259,7 +259,7 @@
 
 #### 4.8.0 方針（LLM 主経路 + ルールベース フォールバック）
 
-1. **主経路（LLM）**: サーバーの `GET /api/advice` が Gemini API（`gemini-2.5-flash-lite`）で防災ナレッジPDFを参照し、ユーザーの行動履歴をもとに **100字程度のアドバイス1件** を生成する。
+1. **主経路（LLM）**: サーバーの `GET /api/advice` が Gemini API（`gemini-2.0-flash-lite`）で防災ナレッジPDFを参照し、ユーザーの行動履歴をもとに **100字程度のアドバイス1件** を生成する。
 2. **フォールバック（ルールベース）**: API 呼び出しが失敗・タイムアウトした場合、または行動履歴が空の場合は従来の `buildHints()` を使用する（最大2件）。
 3. **キャッシュ**: サーバー側 `server/advice_cache.json` に SHA-256 キーで保存し、同一アクションサマリーへの重複 API 呼び出しを防ぐ。
 4. **キーワード赤字表示**: アドバイステキスト中の防災関連キーワード（§4.8.5 参照）を赤字（`color: red`）でハイライトする。
@@ -297,7 +297,7 @@
 - **キャッシュキー**: `SHA-256(actions.trim())`
 - **キャッシュファイル**: `server/advice_cache.json`
 - **PDF管理**: `server/gemini-files.js` が **サーバー起動時に1回だけ** `server/knowledge/` のPDFを Gemini Files API にアップロードし、取得した `fileUri` 群をメモリ内に保持する。`/api/advice` はそれを参照するだけでアップロードを行わない。
-- **モデル**: `gemini-2.5-flash-lite`, `temperature=0.2`, `thinking_budget=0`（Free Tier: 15 RPM / 1,000 RPD）
+- **モデル**: `gemini-2.0-flash-lite`, `temperature=0.2`, `thinking_budget=0`（Free Tier: 30 RPM / 1,500 RPD）
 - **システムプロンプト**: 渋谷での地震避難体験者へのフィードバック。防災資料のみ根拠とし、改行・箇条書きなしで100字前後のワンセンテンスで返す。口調は「〜行動できた。〜しよう！」形式（過去行動を事実として述べ、今後の備えを「〜しよう」「〜確認しよう」などの命令形・促し形で締める）。
 - **環境変数**: `server/.env` に `GEMINI_API_KEY` を追加する（`gemini-set/.env` から転記）。
 

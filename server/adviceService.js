@@ -79,7 +79,7 @@ async function getAdvice(actions, deps) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       response = await genaiClient.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash-lite',
         contents: [{ role: 'user', parts }],
         config: { temperature: 0.2, thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 500 },
       });
