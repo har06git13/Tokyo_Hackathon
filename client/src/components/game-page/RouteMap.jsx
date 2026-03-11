@@ -1,36 +1,31 @@
-import React, { useCallback } from "react";
+/*
+ * Map tiles: Esri World Street Map — © Esri, HERE, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors
+ *   Terms: https://www.esri.com/en-us/legal/terms/full-master-agreement (free for non-commercial / dev use)
+ * Map library: Leaflet (BSD 2-Clause) https://leafletjs.com
+ *              react-leaflet (Hippocratic License 3.0) https://react-leaflet.js.org
+ */
+import React, { useEffect } from "react";
 import { Text, Box } from "@chakra-ui/react";
-import { GoogleMap, Polyline, useJsApiLoader } from "@react-google-maps/api";
+import L from "leaflet";
+import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import PropTypes from "prop-types";
 
-// コンポーネント外でライブラリを定義（レンダリング毎の配列再生成を防ぐ）
-// GoogleMapComponent（ゲームページ）と同じ id・libraries を使用し競合を防ぐ
-const ROUTE_MAP_LIBRARIES = ["places"];
+const MAP_CENTER = [35.6581, 139.7017];
 
-
-
-// マップ設定
-const MAP_CENTER = { lat: 35.6581, lng: 139.7017 };
-const MAP_OPTIONS = {
-  disableDefaultUI: true,
-  gestureHandling: "none",
-  clickableIcons: false,
-  keyboardShortcuts: false,
+// fitBounds 用内部コンポーネント（useMap は MapContainer の子でしか使えない）
+const BoundsFitter = ({ points }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length < 1) return;
+    const bounds = L.latLngBounds(points.map(({ lat, lng }) => [lat, lng]));
+    map.fitBounds(bounds, { padding: [40, 30] });
+  }, [map, points]);
+  return null;
 };
+
 const RouteMap = ({ visitedFacilities, facilityList, mapBorderRadius = "1vh" }) => {
-const MAP_CONTAINER_STYLE_BASE = {
-  width: "100%",
-  height: "22vh",
-};
+  const MAP_CONTAINER_STYLE = { width: "100%", height: "22vh" };
 
-//
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "",
-    libraries: ROUTE_MAP_LIBRARIES,
-  });
-
-  // 訪問施設の座標リストを構築（Hooks のルール: 条件分岐前に計算）
   const points = visitedFacilities
     .map((id) => facilityList.find((f) => f.id === id))
     .filter((f) => f?.coordinates)
@@ -41,18 +36,7 @@ const MAP_CONTAINER_STYLE_BASE = {
       lng: Number(f.coordinates.lng),
     }));
 
-  const polylinePath = points.map(({ lat, lng }) => ({ lat, lng }));
-
-  // マップロード時に全マーカーが収まるよう fitBounds で自動調整（仕様書 3.4）
-  const handleMapLoad = useCallback(
-    (map) => {
-      if (points.length < 1) return;
-      const bounds = new window.google.maps.LatLngBounds();
-      points.forEach(({ lat, lng }) => bounds.extend({ lat, lng }));
-      map.fitBounds(bounds, { top: 40, right: 30, bottom: 30, left: 30 });
-    },
-    [points]
-  );
+  const polylinePositions = points.map(({ lat, lng }) => [lat, lng]);
 
   // フォールバック: 移動なし（fac_000 のみ）
   if (visitedFacilities.length <= 1) {
@@ -65,55 +49,36 @@ const MAP_CONTAINER_STYLE_BASE = {
     );
   }
 
-
-
   return (
     <Box width="100%" display="flex" justifyContent="center" alignItems="center">
-      {/* ローディング */}
-      {!isLoaded && !loadError && (
-        <Box width="100%" height="22vh" display="flex" alignItems="center" justifyContent="center"
-          backgroundColor="var(--color-base12)" borderRadius="1vh"
-        >
-          <Text className="text-maintext" color="var(--color-base13)">
-            🗺️ Loading Google Maps...
-          </Text>
-        </Box>
-      )}
-
-      {/* API ロードエラー */}
-      {loadError && (
-        <Box width="100%" height="22vh" display="flex" alignItems="center" justifyContent="center"
-          backgroundColor="var(--color-base12)" borderRadius="1vh"
-        >
-          <Text className="text-maintext" color="var(--color-base13)">
-            マップの読み込みに失敗しました
-          </Text>
-        </Box>
-      )}
-
-      {/* マップ表示 */}
-      {isLoaded && !loadError && (
-        <GoogleMap
-          mapContainerStyle={{ ...MAP_CONTAINER_STYLE_BASE, borderRadius: mapBorderRadius }}
-          center={MAP_CENTER}
-          zoom={14}
-          options={MAP_OPTIONS}
-          onLoad={handleMapLoad}
-        >
-          {/* 移動ルートポリライン */}
-          {polylinePath.length >= 2 && (
-            <Polyline
-              path={polylinePath}
-              options={{
-                strokeColor: "#e63946",
-                strokeWeight: 4,
-                strokeOpacity: 0.8,
-                geodesic: false,
-              }}
-            />
-          )}
-        </GoogleMap>
-      )}
+      <MapContainer
+        center={MAP_CENTER}
+        zoom={14}
+        dragging={false}
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        zoomControl={false}
+        touchZoom={false}
+        keyboard={false}
+        attributionControl={false}
+        style={{ ...MAP_CONTAINER_STYLE, borderRadius: mapBorderRadius }}
+      >
+        <TileLayer
+          attribution='Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Source: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+        />
+        <BoundsFitter points={points} />
+        {polylinePositions.length >= 2 && (
+          <Polyline
+            positions={polylinePositions}
+            pathOptions={{
+              color: "#e63946",
+              weight: 4,
+              opacity: 0.8,
+            }}
+          />
+        )}
+      </MapContainer>
     </Box>
   );
 };
