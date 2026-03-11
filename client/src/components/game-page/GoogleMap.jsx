@@ -1,3 +1,9 @@
+/*
+ * Map tiles: Esri World Street Map — © Esri, HERE, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors
+ *   Terms: https://www.esri.com/en-us/legal/terms/full-master-agreement (free for non-commercial / dev use)
+ * Map library: Leaflet (BSD 2-Clause) https://leafletjs.com
+ *              react-leaflet (Hippocratic License 3.0) https://react-leaflet.js.org
+ */
 import React, { useState, useEffect } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
@@ -147,11 +153,12 @@ export const GoogleMapComponent = ({
         center={MAP_CENTER}
         zoom={14}
         zoomControl={showControls}
+        attributionControl={false}
         style={containerStyle || defaultMapContainerStyle}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Source: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
         />
 
         {/* 施設マーカー */}

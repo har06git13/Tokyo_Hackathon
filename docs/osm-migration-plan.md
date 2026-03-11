@@ -1,8 +1,9 @@
 # OSM移行計画書
 
 - 文書ID: `osm-migration-plan`
-- バージョン: `1.0`
+- バージョン: `1.1`
 - 作成日: `2026-03-09`
+- 最終更新: `2026-03-11`
 - 担当: しま
 - 作業ブランチ: `feature_osm-migration_shima`（`feature_resultpage_shima` から分岐）
 
@@ -77,15 +78,29 @@ import 'leaflet/dist/leaflet.css';
 
 ### 6.0 タイルレイヤー仕様
 
-**OSM 標準タイル** を使用する（APIキー不要・無償）。
+**Esri World Street Map** を使用する（APIキー不要・非商用/開発用途は無償）。
 
+- Google Maps / Apple Maps に近い暖色系ベージュの見た目
 - 実世界の建物名・施設名・街路名が表示されるため、渋谷エリアの地理的文脈が出る
 - `GoogleMap.jsx` と `RouteMap.jsx` の両方に適用する
 
 ```js
 // TileLayer 設定
-url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+attribution='Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Source: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+```
+
+**ライセンス:**
+- Esri World Street Map: 非商用・開発用途無償。商用リリース時は ArcGIS Online 契約が必要。
+- ライセンス表記はコード冒頭コメントに明記済み（地図UI上の attribution は `attributionControl={false}` で非表示）。
+
+```
+/*
+ * Map tiles: Esri World Street Map — © Esri, HERE, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors
+ *   Terms: https://www.esri.com/en-us/legal/terms/full-master-agreement (free for non-commercial / dev use)
+ * Map library: Leaflet (BSD 2-Clause) https://leafletjs.com
+ *              react-leaflet (Hippocratic License 3.0) https://react-leaflet.js.org
+ */
 ```
 
 ### 6.1.1 マーカースタイル仕様
@@ -178,7 +193,7 @@ const polylinePositions = points.map(({ lat, lng }) => [lat, lng]);
 
 | 確認項目 | 期待結果 |
 |---------|---------|
-| ActionPage・MapPage で地図表示 | OSM タイルが渋谷エリアに表示される |
+| ActionPage・MapPage で地図表示 | Esri World Street Map タイルが渋谷エリアに表示される |
 | 施設マーカーの色分け | 現在地=紫 / 選択中=赤 / 訪問済み=グレー / 移動可能=オレンジ |
 | マーカークリック | 施設選択が動作する |
 | GPS位置表示 | 青ドット + 精度円が表示される |
@@ -187,7 +202,7 @@ const polylinePositions = points.map(({ lat, lng }) => [lat, lng]);
 
 | 確認項目 | 期待結果 |
 |---------|---------|
-| 地図表示 | OSM タイルが表示される |
+| 地図表示 | Esri World Street Map タイルが表示される |
 | ポリライン表示 | 赤線（#e63946）が正しいルートで表示される |
 | fitBounds | 全訪問施設が画面内に収まる |
 | 操作無効 | ドラッグ・スクロールズーム不可 |
