@@ -21,9 +21,6 @@ export const ActionConfirmDialog = ({
   const [currentCharge] = useAtom(chargeAtom);
   const isLowCharge = currentCharge === 0 ? true : false;
 
-  // 数値が0で来ている場合は±0と表示
-  const formatValue = (val) => (val === 0 ? "±0" : val);
-
   return (
     <Flex
       className="action-confirm-dialog"
@@ -52,10 +49,10 @@ export const ActionConfirmDialog = ({
         <Text className="text-maintext">想定所要ゲージ</Text>
         <LifeGauge
           howto={false}
-          life={formatValue(life)}
-          mental={formatValue(mental)}
-          charge={formatValue(charge)}
-          money={formatValue(money)}
+          life={life}
+          mental={mental}
+          charge={charge}
+          money={money}
         />
         <Text className="text-subtext">
           ※想定外の変動が起こることがあります。災害時は予測不能な事態が起こりうるため、ご注意ください。

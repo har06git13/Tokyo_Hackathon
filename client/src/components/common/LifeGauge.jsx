@@ -10,7 +10,7 @@ import {
   moneyAtom,
 } from "../../atoms/playerAtoms";
 
-export const LifeGauge = ({ howto = true, life, mental, charge, money }) => {
+export const LifeGauge = ({ howto = true, life = 0, mental = 0, charge = 0, money = 0 }) => {
   const currentlife = useAtomValue(lifeAtom);
   const currentmental = useAtomValue(mentalAtom);
   const currentcharge = useAtomValue(chargeAtom);
