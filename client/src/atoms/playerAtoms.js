@@ -70,7 +70,7 @@ export const criticalReasonList = [
   "goodMeal",
   "getInfo",
 ];
-export const criticalReasonAtom = atom("lowHealth"); // Listから1つ自動でセットされる
+export const criticalReasonAtom = atom("lowLife"); // Listから1つ自動でセットされる
 
 // デバイス現在地（GPS）
 export const deviceLocationAtom = atom({
@@ -104,5 +104,5 @@ export const resetAllAtom = atom(null, (get, set) => {
   set(eventHistoryAtom, []);
   set(visitedFacilitiesAtom, ["fac_000"]);
   set(survivedAtom, true);
-  set(criticalReasonAtom, "lowHealth");
+  set(criticalReasonAtom, "lowLife");
 });
