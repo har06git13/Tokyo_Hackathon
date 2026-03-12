@@ -92,6 +92,8 @@ export const ResultPage = () => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  const BASE_URL = process.env.REACT_APP_API_URL;
+
   // 統計サマリーの算出
   // startTime はマウント時に1回だけ生成する（毎レンダリングで new Date() を呼ばない）
   const startTime = useMemo(() => {
@@ -150,7 +152,7 @@ export const ResultPage = () => {
     }
     const summary = buildActionSummary(visitedFacilities, eventHistory);
     setAdviceState({ text: null, loading: true, isLLM: false });
-    fetch(`/api/advice?actions=${encodeURIComponent(summary)}`)
+    fetch(`${BASE_URL}/api/advice?actions=${encodeURIComponent(summary)}`)
       .then((r) => r.json())
       .then(({ advice }) => {
         if (advice) {
